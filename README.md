@@ -1,6 +1,4 @@
-# Welcome to your Expo app 👋
-
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+# Welcome to EchoEase 👋
 
 ## Get started
 
@@ -10,41 +8,85 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Install additional required dependencies
 
    ```bash
-    npx expo start
+   npx expo install react-native-appwrite react-native-url-polyfill
+   npm install nativewind tailwindcss react-native-reanimated react-native-safe-area-context
    ```
 
-In the output, you'll find options to open the app in a
+3. Start the app
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   npx expo start -c
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Project Structure
 
-## Get a fresh project
+### Key Directories
 
-When you're ready, run:
+- `/app` - Main application screens using file-based routing
+  - `/(auth)` - Authentication screens (sign-in, sign-up)
+  - `/(tabs)` - Main tab screens (home, schedule, finance, mood, history)
+- `/components` - Reusable UI components
+- `/constants` - App constants including colors, icons, and images
+- `/context` - Global state management
+- `/lib` - Utility functions and API configurations
+- `/assets` - Static assets (fonts, images, icons)
 
-```bash
-npm run reset-project
-```
+### Key Features
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+1. **Styling**
+   - Using NativeWind (Tailwind CSS for React Native)
+   - Custom color scheme defined in `tailwind.config.js`
+   - Custom Poppins font family integration
+
+2. **Authentication**
+   - Appwrite backend integration
+   - Email/password authentication
+   - User session management
+
+3. **Database Setup**
+   - Appwrite database configuration in `lib/appwrite.ts`
+   - Collections for users and other data
+
+4. **Navigation**
+   - File-based routing with Expo Router
+   - Tab-based navigation
+   - Stack navigation for auth flow
+
+### Screens
+
+1. **Authentication**
+   - Sign In
+   - Sign Up
+
+2. **Main Tabs**
+   - Home - Dashboard
+   - Schedule - Task management
+   - Finance - Financial tracking
+   - Mood - Mood tracking
+   - History - Activity history
+
+3. **Settings**
+   - User preferences
+   - Logout functionality
+
+### Development Notes
+
+- The project uses TypeScript for type safety
+- Custom fonts are loaded in `app/_layout.tsx`
+- Global state is managed using Context API
+- Tailwind styles can be customized in `tailwind.config.js`
+- Environment variables and API keys are in `lib/appwrite.ts`
 
 ## Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- [Expo documentation](https://docs.expo.dev/)
+- [NativeWind documentation](https://www.nativewind.dev/)
+- [Appwrite documentation](https://appwrite.io/docs)
 
 ## Join the community
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- [Expo on GitHub](https://github.com/expo/expo)
+- [Discord community](https://chat.expo.dev)
