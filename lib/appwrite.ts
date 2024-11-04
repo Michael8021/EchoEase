@@ -11,9 +11,9 @@ import {
 export const appwriteConfig = {
     endpoint: 'https://cloud.appwrite.io/v1',
     platform: 'com.platform.echoease',
-    projectId: '67261b4b001bc746d22c',
-    databaseId: '67266129002b84e4f69b',
-    userCollectionId: '6726614e000f46f60d7c',
+    projectId: '6728739400249b29108d',
+    databaseId: '672874b7001bef17e4d6',
+    userCollectionId: '672874c60003d32a2491',
 
 }
 
