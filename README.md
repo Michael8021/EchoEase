@@ -11,6 +11,7 @@
 
    ```bash
    npx expo install react-native-appwrite react-native-url-polyfill
+   npx expo install react-native-gifted-charts expo-linear-gradient react-native-svg
    npm install nativewind tailwindcss react-native-reanimated react-native-safe-area-context
    ```
 3. Start the app
