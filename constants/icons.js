@@ -16,6 +16,7 @@ import history from "../assets/icons/history.png";
 import mood from "../assets/icons/mood.png";
 import schedule from "../assets/icons/schedule.png";
 import settings from "../assets/icons/settings.png";
+// import dollar from "../assets/icons/dollar.png"
 
 export default {
   play,
@@ -36,4 +37,5 @@ export default {
   mood,
   schedule,
   settings,
+  // dollar
 };
