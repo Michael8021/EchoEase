@@ -7,18 +7,28 @@
    ```bash
    npm install
    ```
-
 2. Install additional required dependencies
 
    ```bash
    npx expo install react-native-appwrite react-native-url-polyfill
    npm install nativewind tailwindcss react-native-reanimated react-native-safe-area-context
    ```
-
 3. Start the app
 
    ```bash
-   npx expo start -c
+   npm start
+   ```
+
+   Android:
+
+   ```bash
+   npm run android
+   ```
+
+   Ios:
+
+   ```bash
+   npm run ios
    ```
 
 ## Project Structure
@@ -37,20 +47,21 @@
 ### Key Features
 
 1. **Styling**
+
    - Using NativeWind (Tailwind CSS for React Native)
    - Custom color scheme defined in `tailwind.config.js`
    - Custom Poppins font family integration
-
 2. **Authentication**
+
    - Appwrite backend integration
    - Email/password authentication
    - User session management
-
 3. **Database Setup**
+
    - Appwrite database configuration in `lib/appwrite.ts`
    - Collections for users and other data
-
 4. **Navigation**
+
    - File-based routing with Expo Router
    - Tab-based navigation
    - Stack navigation for auth flow
@@ -58,17 +69,18 @@
 ### Screens
 
 1. **Authentication**
+
    - Sign In
    - Sign Up
-
 2. **Main Tabs**
+
    - Home - Dashboard
    - Schedule - Task management
    - Finance - Financial tracking
    - Mood - Mood tracking
    - History - Activity history
-
 3. **Settings**
+
    - User preferences
    - Logout functionality
 
