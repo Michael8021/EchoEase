@@ -14,7 +14,7 @@ export const appwriteConfig = {
     projectId: '6728739400249b29108d',
     databaseId: '672874b7001bef17e4d6',
     userCollectionId: '672874c60003d32a2491',
-
+    scheduleCollectionId: '672878b6000297694b47',
 }
 
 

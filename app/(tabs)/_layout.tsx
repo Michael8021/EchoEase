@@ -6,6 +6,7 @@ import { ImageSourcePropType } from "react-native";
 import { icons } from "../../constants";
 import Loader from '../../components/Loader';
 import { useGlobalContext } from "../../context/GlobalProvider";
+import FloatingButton from '../../components/FloatingButton'; // Import FloatingButton
 
 interface TabIconProps {
   icon: ImageSourcePropType;
@@ -83,7 +84,6 @@ const TabLayout = () => {
             ),
           }}
         />
-
         <Tabs.Screen
           name="finance"
           options={{
@@ -114,7 +114,6 @@ const TabLayout = () => {
             ),
           }}
         />
-
         <Tabs.Screen
           name="history"
           options={{
@@ -133,6 +132,7 @@ const TabLayout = () => {
       </Tabs>
 
       <Loader isLoading={loading} />
+      <FloatingButton />
       <StatusBar backgroundColor="#161622" style="light" />
     </>
   );
