@@ -10,7 +10,7 @@
 2. Install additional required dependencies
 
    ```bash
-   npx expo install react-native-appwrite react-native-url-polyfill
+   npx expo install react-native-appwrite react-native-url-polyfillnexpo-localization
    npm install nativewind tailwindcss react-native-reanimated react-native-safe-area-context
    ```
 3. Start the app

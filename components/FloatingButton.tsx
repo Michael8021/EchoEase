@@ -1,15 +1,17 @@
 import React, { useState, useRef } from 'react';
-import { Modal, View, TextInput, TouchableOpacity, Text, StyleSheet, Platform, Dimensions } from 'react-native';
+import { Modal, View, TextInput, TouchableOpacity, Text, StyleSheet, Platform, Dimensions, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGlobalContext } from '../context/GlobalProvider';
-import { transcribeAudio, sendTextToChatbot } from '../lib/aiService';
+import { determineContentType, transcribeAudio, sendTextToSchedule } from '../lib/aiService';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
-import { ScheduleResponse } from '../lib/types';
+import { createHistory, createSchedule } from '../lib/appwrite';
+import { Schedule } from '../lib/types';
 
 const FloatingButton = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [promptText, setPromptText] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
     const { user } = useGlobalContext();
 
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -59,26 +61,25 @@ const FloatingButton = () => {
                 setRecording(null);
 
                 try {
+                    setIsProcessing(true);
                     const transcribedText = await transcribeAudio(uri);
+                    if (transcribedText.trim() === '') {
+                        alert('Please try again');
+                        return;
+                    }
                     console.log('Transcribed Text:', transcribedText);
-                    await handleChatbotResponse(transcribedText);
+                    await handleTextToWidget(transcribedText);
                 } catch (transcriptionError) {
-                    throw transcriptionError;
+                    console.error('Transcription error:', transcriptionError);
+                    alert('Failed to process audio. Please try again.');
+                } finally {
+                    setIsProcessing(false);
                 }
             }
         } catch (err) {
-            throw err;
-        }
-    };
-
-
-    const handleChatbotResponse = async (text: string) => {
-        try {
-            const schedule: ScheduleResponse = await sendTextToChatbot(text);
-            console.log('Schedule:', schedule);
-            // TODO: Handle the schedule response (e.g., update state or navigate)
-        } catch (error) {
-            console.error('Error handling chatbot response:', error);
+            console.error('Recording error:', err);
+            alert('Failed to process recording. Please try again.');
+            setIsProcessing(false);
         }
     };
 
@@ -87,17 +88,32 @@ const FloatingButton = () => {
             alert('Please enter a prompt');
             return;
         }
+        setIsProcessing(true);
         setModalVisible(false);
-        setPromptText('');
         try {
-            const schedule: ScheduleResponse = await sendTextToChatbot(promptText);
-            console.log('Schedule:', schedule);
-            // TODO: Handle the schedule response (e.g., update state or navigate)
-            
+            await handleTextToWidget(promptText);
         } catch (error) {
             console.error('Error handling chatbot response:', error);
+        } finally {
+            setIsProcessing(false);
+            setPromptText('');
         }
     };
+
+    const handleTextToWidget = async (text: string) => {
+        try {
+            const history = await createHistory(text);
+            const contentTypes = await determineContentType(text);
+            console.log('Content Types:', contentTypes);
+            const schedule: Schedule = await sendTextToSchedule(text, history.$id);
+            console.log('Schedule:', schedule);
+            const createdSchedule = await createSchedule(schedule);
+            console.log('Created Schedule:', createdSchedule);
+            return;
+        } catch (error) {
+            console.error('Error handling text to widget:', error);
+        }
+    }
 
     const closeModal = () => {
         setModalVisible(false);
@@ -157,27 +173,40 @@ const FloatingButton = () => {
                             onChangeText={setPromptText}
                             multiline
                         />
-                        <TouchableOpacity style={styles.submitButton} onPress={handleSubmitPrompt}>
-                            <Text style={styles.submitButtonText}>Submit</Text>
+                        <TouchableOpacity 
+                            style={[styles.submitButton, isProcessing && styles.submitButtonDisabled]}
+                            onPress={handleSubmitPrompt}
+                            disabled={isProcessing}
+                        >
+                            {isProcessing ? (
+                                <ActivityIndicator color="#000" />
+                            ) : (
+                                <Text style={styles.submitButtonText}>Submit</Text>
+                            )}
                         </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
 
             <TouchableOpacity
-                style={styles.button}
+                style={[styles.button, isProcessing && styles.buttonDisabled]}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 activeOpacity={0.7}
+                disabled={isProcessing}
             >
-                <Ionicons name={recording ? 'mic-off' : 'mic'} size={24} color="#000" />
+                {isProcessing ? (
+                    <ActivityIndicator color="#000" />
+                ) : (
+                    <Ionicons name={recording ? 'mic-off' : 'mic'} size={24} color="#000" />
+                )}
             </TouchableOpacity>
         </View>
     );
 };
 
 const TAB_BAR_HEIGHT = 84; // Match the height from the tab bar configuration
-const BOTTOM_SPACING = 16; 
+const BOTTOM_SPACING = 16;
 
 const styles = StyleSheet.create({
     container: {
@@ -254,6 +283,12 @@ const styles = StyleSheet.create({
     },
     closeButton: {
         padding: 5,
+    },
+    submitButtonDisabled: {
+        opacity: 0.7,
+    },
+    buttonDisabled: {
+        opacity: 0.7,
     },
 });
 
