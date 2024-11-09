@@ -8,52 +8,46 @@ interface ChatCompletionRequest {
 }
 
 export const transcribeAudio = async (audioUri: string): Promise<string> => {
-    try {
-      const formData = new FormData();
-      formData.append('file', {
-        uri: audioUri,
-        type: 'audio/m4a',
-        name: 'recording.m4a'
-      } as any);
-      formData.append('model', 'whisper-large-v3');
-      
-      const response = await fetch(`${process.env.EXPO_PUBLIC_OPENAI_API_URL}/audio/transcriptions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_OPENAI_API_KEY}`,
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData,
-      });
-  
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Transcription failed with status ${response.status}: ${errorText}`);
-      }
-  
-      const data = await response.json();
-      
-      // Clean up the audio file after successful transcription
-      try {
-        await FileSystem.deleteAsync(audioUri);
-      } catch (deleteError) {
-        console.warn('Failed to delete audio file:', deleteError);
-      }
+  try {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: audioUri,
+      type: 'audio/m4a',
+      name: 'audio.m4a',
+    } as any);
+    formData.append('model', 'whisper-1');
 
-      return data.text;
-    } catch (error) {
-      // Clean up the audio file even if transcription fails
-      try {
-        await FileSystem.deleteAsync(audioUri);
-      } catch (deleteError) {
-        console.warn('Failed to delete audio file:', deleteError);
-      }
+    console.log('API URL:', process.env.EXPO_PUBLIC_OPENAI_API_URL);
+    console.log('API Key:', process.env.EXPO_PUBLIC_OPENAI_API_KEY);
+    
+    const response = await fetch(`${process.env.EXPO_PUBLIC_OPENAI_API_URL}/audio/transcriptions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.EXPO_PUBLIC_OPENAI_API_KEY}`,
+        'Content-Type': 'multipart/form-data', 
+      },
+      body: formData,
+    });
 
-      console.error('Detailed transcription error:', error);
-      throw error;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Transcription API Error:', errorText);
+      throw new Error(`Failed to transcribe audio: ${response.status}`);
     }
-  };
-  
+
+    const data = await response.json();
+    return data.text;
+  } catch (error) {
+    console.error('Audio transcription error:', error);
+    throw error;
+  } finally {
+    try {
+      await FileSystem.deleteAsync(audioUri);
+    } catch (deleteError) {
+      console.error('Error deleting audio file:', deleteError);
+    }
+  }
+};
 
 export const sendTextToChatbot = async (text: string): Promise<ScheduleResponse> => {
   try {
