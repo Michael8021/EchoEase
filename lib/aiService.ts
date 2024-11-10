@@ -14,7 +14,7 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
       type: 'audio/m4a',
       name: 'audio.m4a',
     } as any);
-    formData.append('model', 'whisper-large-v3');
+    formData.append('model', 'whisper-1');
     formData.append('prompt', `Transcribe this audio in ${deviceLanguage} language`);
 
     const response = await fetch(`${process.env.EXPO_PUBLIC_OPENAI_API_URL}/audio/transcriptions`, {

@@ -179,6 +179,24 @@ export async function deleteHistory(documentId: string) {
   }
 }
 
+// Update History
+export async function updateHistory(documentId: string, data: Partial<Schedule>) {
+  try {
+    const updatedHistory = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.historyCollectionId,
+      documentId,
+      data
+    );
+
+    if (!updatedHistory) throw Error;
+
+    return updatedHistory;
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
 // Create Schedule
 export async function createSchedule(schedule: Omit<Schedule, '$id' | '$createdAt' | '$updatedAt' | 'userId'>) {
   try {
@@ -272,3 +290,4 @@ export async function deleteSchedule(documentId: string) {
     throw new Error(String(error));
   }
 }
+

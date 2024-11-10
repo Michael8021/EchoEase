@@ -19,3 +19,11 @@ export interface Schedule {
   userId: string;
   due_date?: string;
 }
+
+export interface History {
+  $id: string;
+  $createdAt: string;
+  $updatedAt: string;
+  transcribed_text: string;
+  userId: string;
+}
