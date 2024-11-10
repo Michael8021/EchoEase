@@ -8,16 +8,19 @@ interface HistoryItemProps {
   text: string;
   onDelete: () => void;
   createdAt: string;
+  onUpdate: (updatedText: string) => void;
 }
 
-const HistoryItem = ({ id, text, onDelete, createdAt }: HistoryItemProps) => {
+const HistoryItem = ({ id, text, onDelete, createdAt, onUpdate }: HistoryItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(text);
 
   const handleUpdate = async () => {
     try {
+      if (editedText.trim() === '') return;
       await updateHistory(id, { transcribed_text: editedText } as any);
       setIsEditing(false);
+      onUpdate(editedText);
     } catch (error) {
       Alert.alert('Error', 'Failed to update history');
     }
@@ -25,34 +28,37 @@ const HistoryItem = ({ id, text, onDelete, createdAt }: HistoryItemProps) => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
+    return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
     });
   };
 
   return (
-    <TouchableOpacity 
-      onPress={() => setIsEditing(true)}
-      className="bg-black-100 rounded-xl p-4 mb-3"
-    >
+    <View className="bg-black-100 rounded-xl p-4 mb-3">
       <View className="flex-row justify-between items-start">
-        {isEditing ? (
-          <TextInput
-            value={editedText}
-            onChangeText={setEditedText}
-            onBlur={handleUpdate}
-            autoFocus
-            multiline
-            className="flex-1 text-white font-pregular text-base mr-2"
-          />
-        ) : (
-          <Text className="flex-1 text-white font-pregular text-base mr-2">
-            {text}
-          </Text>
-        )}
+        <TouchableOpacity 
+          activeOpacity={0.7}
+          onPress={() => setIsEditing(true)}
+          className="flex-1 mr-2"
+        >
+          {isEditing ? (
+            <TextInput
+              value={editedText}
+              onChangeText={setEditedText}
+              multiline
+              autoFocus
+              className="text-white font-pregular text-base"
+              onSubmitEditing={handleUpdate}
+              onBlur={handleUpdate}
+              blurOnSubmit={true}
+            />
+          ) : (
+            <Text className="text-white font-pregular text-base">
+              {text}
+            </Text>
+          )}
+        </TouchableOpacity>
         
         <View className="flex-row items-center gap-3">
           <Text className="text-gray-100 text-xs">
@@ -63,7 +69,7 @@ const HistoryItem = ({ id, text, onDelete, createdAt }: HistoryItemProps) => {
           </TouchableOpacity>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 

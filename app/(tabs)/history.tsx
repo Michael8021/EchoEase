@@ -8,15 +8,11 @@ import { getHistory, deleteHistory } from '../../lib/appwrite'
 import HistoryItem from '../../components/HistoryItem'
 import { History } from '../../lib/types'
 import { Models } from 'react-native-appwrite'
-
-interface GroupedHistories {
-  date: string;
-  items: History[];
-}
+import { useHistories } from '../../context/HistoriesContext'
 
 const HistoryScreen = () => {
   const router = useRouter()
-  const [groupedHistories, setGroupedHistories] = useState<GroupedHistories[]>([])
+  const { groupedHistories, setGroupedHistories, addHistory, updateHistoryItem, removeHistory } = useHistories()
   const [refreshing, setRefreshing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -28,7 +24,7 @@ const HistoryScreen = () => {
 
     const groups = sortedHistories.reduce((acc: { [key: string]: History[] }, history) => {
       const date = new Date(history.$createdAt)
-      const dateStr = date.toLocaleDateString('zh-CN', { 
+      const dateStr = date.toLocaleDateString('en-US', { 
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -53,6 +49,7 @@ const HistoryScreen = () => {
     }
     try {
       const data = await getHistory()
+      // console.log('Fetched histories:', data)
       const mappedHistories = data.map((doc: Models.Document) => ({
         $id: doc.$id,
         $createdAt: doc.$createdAt,
@@ -61,8 +58,7 @@ const HistoryScreen = () => {
         userId: doc.userId,
       })) as History[]
       
-      const grouped = groupHistoriesByDate(mappedHistories)
-      setGroupedHistories(grouped)
+      setGroupedHistories(groupHistoriesByDate(mappedHistories))
     } catch (error) {
       console.error('Error fetching histories:', error)
     } finally {
@@ -73,13 +69,7 @@ const HistoryScreen = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteHistory(id)
-      setGroupedHistories(prevGroups => {
-        const newGroups = prevGroups.map(group => ({
-          ...group,
-          items: group.items.filter(item => item.$id !== id)
-        }))
-        return newGroups.filter(group => group.items.length > 0)
-      })
+      removeHistory(id);
     } catch (error) {
       console.error('Error deleting history:', error)
     }
@@ -102,7 +92,10 @@ const HistoryScreen = () => {
   )
 
   return (
-    <SafeAreaView className="flex-1 bg-primary">
+    <SafeAreaView 
+      className="flex-1 bg-primary" 
+      edges={['top', 'left', 'right']}
+    >
       <View className="flex-row justify-between items-center px-4 py-6">
         <Text className="text-3xl font-psemibold text-secondary">History</Text>
         <TouchableOpacity onPress={() => router.push('/settings')}>
@@ -116,7 +109,12 @@ const HistoryScreen = () => {
       <ScrollView 
         className="flex-1 px-4"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            tintColor="#CDCDE0"     
+            colors={["#CDCDE0"]}    
+          />
         }
       >
         {isLoading && !refreshing ? (
@@ -142,6 +140,10 @@ const HistoryScreen = () => {
                   text={history.transcribed_text}
                   onDelete={() => handleDelete(history.$id)}
                   createdAt={history.$createdAt}
+                  onUpdate={(updatedText: string) => {
+                    const updatedHistory = { ...history, transcribed_text: updatedText };
+                    updateHistoryItem(updatedHistory);
+                  }}
                 />
               ))}
             </View>

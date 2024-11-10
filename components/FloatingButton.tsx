@@ -1,18 +1,20 @@
 import React, { useState, useRef } from 'react';
-import { Modal, View, TextInput, TouchableOpacity, Text, StyleSheet, Platform, Dimensions, ActivityIndicator } from 'react-native';
+import { Modal, View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGlobalContext } from '../context/GlobalProvider';
 import { determineContentType, transcribeAudio, sendTextToSchedule } from '../lib/aiService';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
 import { createHistory, createSchedule } from '../lib/appwrite';
-import { Schedule } from '../lib/types';
+import { Schedule, History } from '../lib/types';
+import { useHistories } from '../context/HistoriesContext';
 
 const FloatingButton = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [promptText, setPromptText] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const { user } = useGlobalContext();
+    const { addHistory } = useHistories();
 
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [permissionResponse, requestPermission] = Audio.usePermissions();
@@ -102,16 +104,28 @@ const FloatingButton = () => {
 
     const handleTextToWidget = async (text: string) => {
         try {
-            const history = await createHistory(text);
+            const createdHistory = await createHistory(text);
+            const history: History = {
+                $id: createdHistory.$id,
+                $createdAt: createdHistory.$createdAt,
+                $updatedAt: createdHistory.$updatedAt,
+                transcribed_text: createdHistory.transcribed_text,
+                userId: createdHistory.userId,
+            };
+            
+            // console.log('Created History:', history);
+            addHistory(history);
+            
             const contentTypes = await determineContentType(text);
             console.log('Content Types:', contentTypes);
             const schedule: Schedule = await sendTextToSchedule(text, history.$id);
             console.log('Schedule:', schedule);
             const createdSchedule = await createSchedule(schedule);
-            console.log('Created Schedule:', createdSchedule);
-            return;
+            // console.log('Created Schedule:', createdSchedule);
+            return createdSchedule;
         } catch (error) {
             console.error('Error handling text to widget:', error);
+            throw error;
         }
     }
 
