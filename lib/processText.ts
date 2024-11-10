@@ -1,60 +1,63 @@
-import * as FileSystem from 'expo-file-system';
-import * as Localization from 'expo-localization';
-import {  CategorizedData } from './types';
-import { getCurrentUser } from './appwrite';
 
 
-export const transcribeAudio = async (audioUri: string): Promise<string> => {
+// Define the target JSON structure using TypeScript interfaces
+interface Schedule {
+  description: string;
+  due_date: string;
+  end_time: string;
+  historyId: string;
+  notify_at: string;
+  start_time: string;
+  status: 'pending' | 'completed';
+  title: string;
+  type: 'event' | 'reminder';
+}
 
-  try {
-    const deviceLanguage = Localization.getLocales()[0].languageCode;
-    const formData = new FormData();
-    formData.append('file', {
-      uri: audioUri,
-      type: 'audio/m4a',
-      name: 'audio.m4a',
-    } as any);
-    formData.append('model', 'whisper-1');
-    formData.append('prompt', `Transcribe this audio in ${deviceLanguage} language`);
+interface Finance {
+  transaction_type: 'expense' | 'income';
+  amount: number;
+  currency: string;
+  category: string;
+  date: string;
+  description: string;
+}
 
-    const response = await fetch(`${process.env.EXPO_PUBLIC_OPENAI_API_URL}/audio/transcriptions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.EXPO_PUBLIC_OPENAI_API_KEY}`,
-        'Content-Type': 'multipart/form-data',
-      },
-      body: formData,
-    });
+interface Mood {
+  mood_type: string;
+  description: string;
+  datetime: string;
+}
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Transcription API Error:', errorText);
-      throw new Error(`Failed to transcribe audio: ${response.status}`);
-    }
+interface Other {
+  title: string;
+  description: string;
+  datetime: string;
+}
 
-    const data = await response.json();
-    return data.text;
-  } catch (error) {
-    console.error('Audio transcription error:', error);
-    throw error;
-  } finally {
-    try {
-      await FileSystem.deleteAsync(audioUri);
-    } catch (deleteError) {
-      console.error('Error deleting audio file:', deleteError);
-    }
-  }
+interface CategorizedData {
+  schedule: Schedule[];
+  finance: Finance[];
+  mood: Mood[];
+  other: Other[];
+}
+
+// Utility function to get the current user (placeholder)
+const getCurrentUser = async () => {
+  // Implement your logic to get the current user
+  return { id: '67303984002fee2c27b5' };
 };
 
 // Main function to categorize and extract information
 export const categorizeAndExtractData = async (
-  text: string,
-  historyId: string
+  text: string
 ): Promise<CategorizedData> => {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error('User not found');
+
     // Define the chat request
     const chatRequest = {
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o-mini', // Replace with your actual model name
       messages: [
         {
           role: 'system',
@@ -102,15 +105,6 @@ export const categorizeAndExtractData = async (
     - datetime: ISO 8601 string
 
 **Instructions**:
-- You should be aware of the current time is ${new Intl.DateTimeFormat('en-US', {
-  day: '2-digit',
-  month: 'long', // Full month name
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: false // Use 24-hour format
-}).format(new Date())}.
 - Analyze the input text.
 - Categorize each relevant part into one or more of the above categories.
 - Extract the required fields for each categorized entry.
@@ -150,6 +144,7 @@ Return a JSON object with the following structure:
                     description: { type: 'string' },
                     due_date: { type: 'string' },
                     end_time: { type: 'string' },
+                    historyId: { type: 'string' },
                     notify_at: { type: 'string' },
                     start_time: { type: 'string' },
                     status: { type: 'string', enum: ['pending', 'completed'] },
@@ -160,6 +155,7 @@ Return a JSON object with the following structure:
                     'description',
                     'due_date',
                     'end_time',
+                    'historyId',
                     'notify_at',
                     'start_time',
                     'status',
@@ -247,35 +243,25 @@ Return a JSON object with the following structure:
     // Parse the response
     const data = await response.json();
     const categorizedData: CategorizedData = JSON.parse(data.choices[0].message.content);
+    console.log('Categorized Data:', categorizedData);
 
-    // Get current user
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw Error;
+    // Post-process to add historyId and datetime if needed
+    // (Assuming currentUser.id is to be used as historyId)
+    // And datetime is the current timestamp for simplicity
+
+    const currentDatetime = new Date().toISOString();
 
     // Process Schedule
     categorizedData.schedule = categorizedData.schedule.map((item) => ({
       ...item,
-      historyId: historyId,
-      userId: currentUser.$id,
-    }));
-    // Process Mood
-    categorizedData.mood = categorizedData.mood.map((item) => ({
-      ...item,
-      historyId: historyId,
-      userId: currentUser.$id,
-    }));
-    // Process Finance
-    categorizedData.finance = categorizedData.finance.map((item) => ({
-      ...item,
-      historyId: historyId,
-      userId: currentUser.$id,
+      historyId: currentUser.id,
+      datetime: currentDatetime, // Adding datetime if needed
     }));
 
     // Process Other
     categorizedData.other = categorizedData.other.map((item) => ({
       ...item,
-      historyId: historyId,
-      userId: currentUser.$id,
+      datetime: currentDatetime,
     }));
 
     return categorizedData;

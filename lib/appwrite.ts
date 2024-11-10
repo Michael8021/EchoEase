@@ -198,10 +198,8 @@ export async function updateHistory(documentId: string, data: Partial<Schedule>)
 }
 
 // Create Schedule
-export async function createSchedule(schedule: Omit<Schedule, '$id' | '$createdAt' | '$updatedAt' | 'userId'>) {
+export async function createSchedule(schedule: Omit<Schedule, '$id'>) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw Error;
 
     // Clean up date fields
     const cleanedSchedule = {
@@ -211,7 +209,7 @@ export async function createSchedule(schedule: Omit<Schedule, '$id' | '$createdA
       end_time: schedule.end_time || null,
       notify_at: schedule.notify_at || null,
       due_date: schedule.due_date || null,
-      userId: currentUser.$id
+      userId: schedule.userId
     };
 
     const newSchedule = await databases.createDocument(
@@ -253,12 +251,9 @@ export async function getSchedules() {
 // Update Schedule
 export async function updateSchedule(
   documentId: string,
-  schedule: Partial<Omit<Schedule, '$id' | '$createdAt' | '$updatedAt' | 'userId'>>
+  schedule: Partial<Omit<Schedule, '$id'>>
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw Error;
-
     const updatedSchedule = await databases.updateDocument(
       appwriteConfig.databaseId,
       appwriteConfig.scheduleCollectionId,

@@ -3,11 +3,12 @@ import {
   getSchedules, 
   updateSchedule, 
   deleteSchedule,
-  getHistory
+  getHistory,
+  getCurrentUser
 } from '../appwrite';
 import { Schedule } from '../types';
 
-async function testScheduleOperations() {
+export async function testScheduleOperations() {
   try {
     console.log('=== Starting Schedule Operations Test ===\n');
     const histories = await getHistory();
@@ -15,6 +16,8 @@ async function testScheduleOperations() {
       throw new Error('No histories found to link with schedule');
     }
     const validHistoryId = histories[0].$id;
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
 
     // 1. Create a Schedule
     console.log('1. Testing Schedule Creation...');
@@ -27,7 +30,8 @@ async function testScheduleOperations() {
       notify_at: new Date(Date.now() + 1800000).toISOString(),
       due_date: new Date(Date.now() + 86400000).toISOString(),
       historyId: validHistoryId,
-      type: "event" as const
+      type: "event" as const,
+      userId: currentUser.$id
     };
 
     const createdSchedule = await createSchedule(newSchedule);

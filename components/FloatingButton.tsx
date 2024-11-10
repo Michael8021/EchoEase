@@ -2,13 +2,14 @@ import React, { useState, useRef } from 'react';
 import { Modal, View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGlobalContext } from '../context/GlobalProvider';
-import { determineContentType, transcribeAudio, sendTextToSchedule } from '../lib/aiService';
+import { categorizeAndExtractData, transcribeAudio } from '../lib/aiService';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
 import { createHistory, createSchedule } from '../lib/appwrite';
 import { Schedule, History } from '../lib/types';
 import { useHistories } from '../context/HistoriesContext';
-
+import { CategorizedData } from '../lib/types';
+import { testScheduleOperations } from '../lib/test/scheduleTest';
 const FloatingButton = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [promptText, setPromptText] = useState('');
@@ -113,13 +114,13 @@ const FloatingButton = () => {
             };
             addHistory(history);
             
-            const contentTypes = await determineContentType(text);
-            console.log('Content Types:', contentTypes);
-            const schedule: Schedule = await sendTextToSchedule(text, history.$id);
-            console.log('Schedule:', schedule);
-            const createdSchedule = await createSchedule(schedule);
-            // console.log('Created Schedule:', createdSchedule);
-            return createdSchedule;
+            const contentData: CategorizedData = await categorizeAndExtractData(text, history.$id);
+            console.log('Content Data:', contentData);
+            contentData.schedule.forEach(async (item) => {
+                await createSchedule(item);
+            });
+            
+            return;
         } catch (error) {
             console.error('Error handling text to widget:', error);
             throw error;
