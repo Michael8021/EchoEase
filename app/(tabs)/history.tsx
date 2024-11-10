@@ -119,7 +119,7 @@ const HistoryScreen = () => {
       >
         {isLoading && !refreshing ? (
           <View className="flex-1 justify-center items-center mt-10">
-            <ActivityIndicator size="large" color="#FF9C01" />
+            <ActivityIndicator size="small" color="#FF9C01" />
           </View>
         ) : groupedHistories.length === 0 ? (
           <View className="flex-1 justify-center items-center mt-10">

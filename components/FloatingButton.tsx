@@ -72,7 +72,6 @@ const FloatingButton = () => {
                     console.log('Transcribed Text:', transcribedText);
                     await handleTextToWidget(transcribedText);
                 } catch (transcriptionError) {
-                    console.error('Transcription error:', transcriptionError);
                     alert('Failed to process audio. Please try again.');
                 } finally {
                     setIsProcessing(false);
@@ -112,8 +111,6 @@ const FloatingButton = () => {
                 transcribed_text: createdHistory.transcribed_text,
                 userId: createdHistory.userId,
             };
-            
-            // console.log('Created History:', history);
             addHistory(history);
             
             const contentTypes = await determineContentType(text);
