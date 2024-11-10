@@ -6,6 +6,8 @@ import { ImageSourcePropType } from "react-native";
 import { icons } from "../../constants";
 import Loader from '../../components/Loader';
 import { useGlobalContext } from "../../context/GlobalProvider";
+import FloatingButton from '../../components/FloatingButton'; // Import FloatingButton
+import { AppProviders } from '../../context/AppProviders';
 
 interface TabIconProps {
   icon: ImageSourcePropType;
@@ -39,7 +41,7 @@ const TabLayout = () => {
   if (!loading && !isLogged) return <Redirect href="/sign-in" />;
 
   return (
-    <>
+    <AppProviders>
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: "#FFA001",
@@ -83,7 +85,6 @@ const TabLayout = () => {
             ),
           }}
         />
-
         <Tabs.Screen
           name="finance"
           options={{
@@ -114,7 +115,6 @@ const TabLayout = () => {
             ),
           }}
         />
-
         <Tabs.Screen
           name="history"
           options={{
@@ -133,8 +133,9 @@ const TabLayout = () => {
       </Tabs>
 
       <Loader isLoading={loading} />
+      <FloatingButton />
       <StatusBar backgroundColor="#161622" style="light" />
-    </>
+    </AppProviders>
   );
 };
 
