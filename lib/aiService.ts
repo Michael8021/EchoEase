@@ -77,7 +77,7 @@ export const categorizeAndExtractData = async (
         - type: "reminder"
         - title: string
         - description: string
-        - notify_at: ISO 8601 string
+        - notify_at: ISO 8601 string (optional)
         - due_date: ISO 8601 string
         - status: "pending" or "completed"
         - start_time: leave blank
