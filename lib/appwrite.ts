@@ -16,10 +16,10 @@ export const appwriteConfig = {
     projectId: '6728739400249b29108d',
     databaseId: '672874b7001bef17e4d6',
     userCollectionId: '672874c60003d32a2491',
+    moodCollectionId: '672ce11300183b1fd08f',
     scheduleCollectionId: '672878b6000297694b47',
     historyCollectionId: '672eeced0003474523e6',
 }
-
 
 const client = new Client()
     .setEndpoint(appwriteConfig.endpoint)
@@ -116,6 +116,72 @@ export async function signOut() {
   } catch (error) {
     throw new Error(String(error));
   }
+}
+
+export async function addMood(username: string, date: string, mood: string, notes: string) {
+  try {
+    const existingMoods = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.moodCollectionId,
+      [
+        Query.equal("username", username),
+        Query.equal("date", date)
+      ]
+    );
+
+    if (existingMoods.total > 0) {
+      const moodId = existingMoods.documents[0].$id;
+      const updatedMood = await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.moodCollectionId,
+        moodId,
+        {
+          mood: mood,
+          notes: notes
+        }
+      );
+      return updatedMood;
+    } else {
+      const newMood = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.moodCollectionId,
+        ID.unique(),
+        {
+          username: username,
+          date: date,
+          mood: mood,
+          notes: notes
+        }
+      );
+      return newMood;
+    }
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+export async function getMoodsForWeek(username: string) {
+  const date = new Date();
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(date.setDate(diff));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const moods = await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.moodCollectionId,
+    [
+      Query.equal("username", username),
+      Query.greaterThanEqual("date", monday.toISOString().split('T')[0]),
+      Query.lessThanEqual("date", sunday.toISOString().split('T')[0])
+    ]
+  );
+
+  // Sort moods by date
+  const sortedMoods = moods.documents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  return sortedMoods;
 }
 
 // Create History
