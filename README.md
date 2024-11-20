@@ -11,7 +11,7 @@
 
    ```bash
    npx expo install react-native-appwrite react-native-url-polyfillnexpo-localization
-   npm install nativewind tailwindcss react-native-reanimated react-native-safe-area-context
+   npm install nativewind tailwindcss react-native-reanimated react-native-safe-area-context react-native-calendars
    ```
 3. Start the app
 
