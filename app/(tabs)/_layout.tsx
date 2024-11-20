@@ -16,16 +16,17 @@ interface TabIconProps {
 
 const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
   return (
-    <View className="flex items-center justify-center gap-2">
+    <View className="items-center justify-center w-16 pt-7">
       <Image
         source={icon}
         resizeMode="contain"
         tintColor={color}
-        className="w-6 h-6"
+        className="w-6 h-6 mb-2"
       />
       <Text
         className={`${focused ? "font-psemibold" : "font-pregular"} text-xs`}
         style={{ color: color }}
+        numberOfLines={1}
       >
         {name}
       </Text>
@@ -83,7 +84,6 @@ const TabLayout = () => {
             ),
           }}
         />
-
         <Tabs.Screen
           name="finance"
           options={{
@@ -114,7 +114,6 @@ const TabLayout = () => {
             ),
           }}
         />
-
         <Tabs.Screen
           name="history"
           options={{
@@ -131,9 +130,6 @@ const TabLayout = () => {
           }}
         />
       </Tabs>
-
-      <Loader isLoading={loading} />
-      <StatusBar backgroundColor="#161622" style="light" />
     </>
   );
 };

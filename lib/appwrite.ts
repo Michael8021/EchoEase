@@ -6,6 +6,8 @@ import {
     ID,
     Query,
     Storage,
+    Permission, 
+    Role
   } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -14,11 +16,11 @@ export const appwriteConfig = {
     projectId: '6728739400249b29108d',
     databaseId: '672874b7001bef17e4d6',
     userCollectionId: '672874c60003d32a2491',
-
+    expense_typeId: '673833fe0036fd646922',
 }
 
 
-const client = new Client()
+export const client = new Client()
     .setEndpoint(appwriteConfig.endpoint)
     .setProject(appwriteConfig.projectId)
     .setPlatform(appwriteConfig.platform);
@@ -52,7 +54,7 @@ export async function createUser(email: string, password: string, username: stri
         email: email,
         username: username,
         avatar: avatarUrl,
-      }
+      },
     );
 
     return newUser;
@@ -114,5 +116,40 @@ export async function signOut() {
     throw new Error(String(error));
   }
 }
+
+//save expense type
+export const handleSaveExpenseType = async (expenseCategory:string,selectedColor:string) => {
+  try {
+    await databases.createDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.expense_typeId, 
+      ID.unique(), 
+      {
+        category: expenseCategory,
+        amount:"0.0", 
+        color: selectedColor,
+      },
+    );
+  } catch (error) {
+    console.error('Error saving document:', error);
+    alert('Failed to save expense. Please try again.');
+  }
+};
+
+//get expense type
+export const getExpenseTypes = async () => {
+  try {
+    const ExpenseTypes = await databases.listDocuments(
+      appwriteConfig.databaseId, 
+      appwriteConfig.expense_typeId
+    );
+    return ExpenseTypes.documents;
+  } catch (error) {
+    console.error('Error retrieving expense types:', error);
+    alert('Failed to retrieve expense types. Please try again.');
+    return [];
+  }
+};
+
 
 
