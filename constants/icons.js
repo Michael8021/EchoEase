@@ -16,6 +16,9 @@ import history from "../assets/icons/history.png";
 import mood from "../assets/icons/mood.png";
 import schedule from "../assets/icons/schedule.png";
 import settings from "../assets/icons/settings.png";
+import deleteIcon from "../assets/icons/delete.png";
+import lock from "../assets/icons/lock.png";
+import user from "../assets/icons/user.png";
 
 export default {
   play,
@@ -36,4 +39,7 @@ export default {
   mood,
   schedule,
   settings,
+  deleteIcon,
+  lock,
+  user,
 };
