@@ -118,6 +118,92 @@ export async function signOut() {
   }
 }
 
+
+// Change Password
+export async function changePassword(oldPassword: string, newPassword: string) {
+  try {
+    const result = await account.updatePassword(newPassword, oldPassword);
+    if (!result) throw Error;
+    
+    return result;
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+// Delete User Account
+export async function deleteUserAccount(password: string) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("No user found");
+
+    const accountId = currentUser.accountId;
+    const documentId = currentUser.$id;
+
+    await signOut();
+
+    await databases.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      documentId
+    );
+
+    const response = await fetch(
+      'https://673dd58be61f61385d3d.appwrite.global/delete-user',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: accountId,
+        }),
+      }
+    );
+
+    if (response.status !== 204 && !response.ok) {
+      const text = await response.text();
+      throw new Error(text || 'Failed to delete user account');
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Delete account error:", error);
+    throw error;
+  }
+}
+
+// Update Username
+export async function updateUsername(newUsername: string) {
+  try {
+    // Update Appwrite account name
+    const updatedAccount = await account.updateName(newUsername);
+    if (!updatedAccount) throw Error;
+
+    // Get and update user document
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    // Update avatar with new username
+    const avatarUrl = avatars.getInitials(newUsername);
+
+    // Update user document
+    const updatedUser = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      currentUser.$id,
+      {
+        username: newUsername,
+        avatar: avatarUrl,
+      }
+    );
+
+    return updatedUser;
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
 // Create History
 export async function createHistory(transcribed_text: string,) {
   try {
@@ -223,7 +309,7 @@ export async function createSchedule(schedule: Omit<Schedule, '$id'>) {
 
     return newSchedule as unknown as Schedule;
   } catch (error) {
-    console.log('Schedule creation error:', schedule); // Add this for debugging
+    console.log('Schedule creation error:', schedule);
     throw new Error(String(error));
   }
 }
