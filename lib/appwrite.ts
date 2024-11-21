@@ -18,6 +18,7 @@ export const appwriteConfig = {
     userCollectionId: '672874c60003d32a2491',
     scheduleCollectionId: '672878b6000297694b47',
     historyCollectionId: '672eeced0003474523e6',
+    moodCollectionId: '672ce11300183b1fd08f',
 }
 
 
@@ -372,3 +373,84 @@ export async function deleteSchedule(documentId: string) {
   }
 }
 
+export async function addMood(username: string, date: string, mood: string, notes: string) {
+  try {
+    const existingMoods = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.moodCollectionId,
+      [
+        Query.equal("username", username),
+        Query.equal("date", date)
+      ]
+    );
+
+    if (existingMoods.total > 0) {
+      const moodId = existingMoods.documents[0].$id;
+      const updatedMood = await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.moodCollectionId,
+        moodId,
+        {
+          mood: mood,
+          notes: notes
+        }
+      );
+      return updatedMood;
+    } else {
+      const newMood = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.moodCollectionId,
+        ID.unique(),
+        {
+          username: username,
+          date: date,
+          mood: mood,
+          notes: notes
+        }
+      );
+      return newMood;
+    }
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+export async function getMoodsForWeek(username: string) {
+  const date = new Date();
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(date.setDate(diff));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  const moods = await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.moodCollectionId,
+    [
+      Query.equal("username", username),
+      Query.greaterThanEqual("date", monday.toISOString().split('T')[0]),
+      Query.lessThanEqual("date", sunday.toISOString().split('T')[0])
+    ]
+  );
+
+  // Create a map of dates to mood documents
+  const moodMap = new Map(moods.documents.map(mood => [new Date(mood.date).toISOString().split('T')[0], mood]));
+
+  // Initialize an array to hold the results
+  const result = [];
+
+  // Iterate through each day of the week
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(monday);
+    currentDate.setDate(monday.getDate() + i);
+    const dateString = currentDate.toISOString().split('T')[0];
+
+    if (moodMap.has(dateString)) {
+      result.push(moodMap.get(dateString));
+    } else {
+      result.push({ date: dateString, mood: null });
+    }
+  }
+
+  return result;
+}

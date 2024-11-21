@@ -1,17 +1,28 @@
-import { View, Text, TouchableOpacity, Alert, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, Image, Alert, Dimensions, StyleSheet, Platform } from "react-native";
 import React, { useState, useEffect } from "react";
+import { useRouter } from 'expo-router'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { icons } from '../../constants'
 import { Portal, Modal, TextInput, Provider } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { BarChart } from "react-native-chart-kit";
 import { addMood, getMoodsForWeek } from "../../lib/appwrite";
 import { useGlobalContext } from "../../context/GlobalProvider";
 
+const styles = StyleSheet.create({
+  androidSafeArea: {
+    flex: 1,
+    backgroundColor: "#161622",
+    paddingTop: Platform.OS === "android" ? 35 : 0,
+  },
+});
+
 const moodMap: { [key: string]: { description: string, value: number } } = {
-  "😭": { description: "Very Sad", value: 0 },
-  "😢": { description: "Sad", value: 1 },
-  "😐": { description: "Neutral", value: 2 },
-  "😊": { description: "Happy", value: 3 },
-  "😁": { description: "Very Happy", value: 4 },
+  "😭": { description: "Very Sad", value: 1 },
+  "😢": { description: "Sad", value: 2 },
+  "😐": { description: "Neutral", value: 3 },
+  "😊": { description: "Happy", value: 4 },
+  "😁": { description: "Very Happy", value: 5 },
 };
 
 const descriptionToValueMap: { [key: string]: number } = Object.keys(moodMap).reduce((acc, key) => {
@@ -26,6 +37,7 @@ const Mood = () => {
   const [notes, setNotes] = useState<string>("");
   const [moodData, setMoodData] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [moods, setMoods] = useState<any[]>([]); // Add moods to state
+  const router = useRouter()
 
   const fetchMoodData = async () => {
     if (!user) return;
@@ -33,7 +45,11 @@ const Mood = () => {
       const fetchedMoods = await getMoodsForWeek(user.username);
       const data = new Array(7).fill(0);
       fetchedMoods.forEach((mood: any, index) => {
-          data[index] = Object.keys(descriptionToValueMap).indexOf(mood.mood);
+        let moodValue = Object.keys(descriptionToValueMap).indexOf(mood.mood);
+        if (moodValue === -1) {
+          moodValue = 0;
+        }
+          data[index] = moodValue;
       });
       setMoods(fetchedMoods); // Update moods state
       setMoodData(data);
@@ -86,17 +102,34 @@ const Mood = () => {
 
   const formatYLabel = (value: string) => {
     const index = parseInt(value, 10);
-    return ["😭", "😢", "😐", "😊", "😁"][index];
+    return ["", "😭", "😢", "😐", "😊", "😁"][index];
   };
 
   return (
+    <SafeAreaView style={styles.androidSafeArea}>
     <Provider>
-      <View className="flex-1 p-5 bg-primary">
+      <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
         {/* Header */}
-        <Text className="text-3xl font-psemibold text-white mb-5">
+        <Text className="text-3xl font-psemibold text-secondary">
           Mood Tracking
         </Text>
 
+        <TouchableOpacity onPress={() => router.push('/settings')}>
+          <Image 
+            source={icons.settings}
+            className="w-7 h-7"
+          />
+        </TouchableOpacity>
+        </View>
+        <View>
+        <View
+          style={{
+            backgroundColor: "#1F1F2E",
+            borderRadius: 12,
+            flexDirection: "row",
+            justifyContent: "space-around",
+          }}
+        >
         {/* Mood Chart */}
         <BarChart
           data={{
@@ -112,6 +145,7 @@ const Mood = () => {
           yAxisLabel=""
           yAxisSuffix=""
           yAxisInterval={1}
+          segments={5}
           chartConfig={{
             backgroundColor: "#161622",
             backgroundGradientFrom: "#161622",
@@ -127,13 +161,12 @@ const Mood = () => {
               strokeWidth: "2",
               stroke: "#ffa726",
             },
-            propsForBackgroundLines: {
-              stroke: "#161622",
-            },
+            barPercentage: 0.7,
             formatYLabel: formatYLabel,
           }}
           style={{ marginVertical: 8, borderRadius: 16 }}
         />
+        </View>
 
         {/* Button Box */}
         <View
@@ -141,7 +174,6 @@ const Mood = () => {
             backgroundColor: "#1F1F2E",
             padding: 16,
             borderRadius: 12,
-            marginTop: 16,
             flexDirection: "row",
             justifyContent: "space-around",
           }}
@@ -181,25 +213,6 @@ const Mood = () => {
               </Text>
             </View>
           </TouchableOpacity>
-        </View>
-
-        {/* Debug */}
-        <View
-          style={{
-            marginTop: 16,
-            padding: 16,
-            backgroundColor: "#2E2E3A",
-            borderRadius: 8,
-          }}
-        >
-          <Text style={{ color: "white" }}>Debug Mood Data:</Text>
-          {moods.map((mood, index) => (
-            <View key={index} style={{ marginBottom: 8 }}>
-              <Text style={{ color: "white" }}>Date: {mood.date}</Text>
-              <Text style={{ color: "white" }}>Mood: {mood.mood}</Text>
-              <Text style={{ color: "white" }}>Notes: {mood.notes}</Text>
-            </View>
-          ))}
         </View>
 
         {/* Mood Logging Modal */}
@@ -242,6 +255,7 @@ const Mood = () => {
         </Portal>
       </View>
     </Provider>
+    </SafeAreaView>
   );
 };
 
