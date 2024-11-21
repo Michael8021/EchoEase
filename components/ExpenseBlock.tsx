@@ -37,10 +37,11 @@ const ExpenseBlock = ({
               style={{
                 flex: 1,
                 borderWidth: 2,
+                height:110,
                 borderColor: "#666",
                 borderStyle: "dashed",
                 borderRadius: 10,
-                marginRight: 20,
+                marginHorizontal:20,
                 padding: 20,
                 justifyContent: "center",
                 alignItems: "center",
@@ -151,7 +152,8 @@ export default ExpenseBlock;
 
 const styles = StyleSheet.create({
   expenseBlock: {
-    width: 95,
+    width: 100,
+    height:110,
     padding: 15,
     borderRadius: 15,
     marginRight: 20,

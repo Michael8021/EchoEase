@@ -12,7 +12,7 @@ import {
   TextInput,
 } from "react-native";
 import React, { useState, useEffect } from "react";
-import { SpendingItem } from "../type";
+import { SpendingItem,ExpenseItem } from "../type";
 import { icons } from "../constants";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker, {
@@ -28,8 +28,15 @@ type PickerItem = {
   value: string;
   color: string;
 };
+const convertToPickerItems = (expensedata: ExpenseItem[]): PickerItem[] => {
+  return expensedata.map((expense) => ({
+    label: expense.category, // Map category to label
+    value: expense.category, // Use category as the value
+    color: expense.color,    // Directly use the color
+  }));
+};
 
-const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[]}) => {
+const SpendingBlock = ({ spendingdata, expensedata}: { spendingdata: SpendingItem[],expensedata:ExpenseItem[]}) => {
   //modal(add spending)
   const [modalVisible, setModalVisible] = useState(false);
   const [newSpending, setNewSpending] = useState({
@@ -69,26 +76,7 @@ const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[]}) => {
   };
 
   //category
-  const [categories, setCategories] = useState<PickerItem[]>([]);
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const expenseTypes = await getExpenseTypes();
-        const formattedExpenses: PickerItem[] = expenseTypes.map(
-          (expense: any) => ({
-            label: expense.category,
-            value: expense.category,
-            color: expense.color,
-          })
-        );
-
-        setCategories(formattedExpenses);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-    fetchCategories();
-  }, []);
+  const categories: PickerItem[] = convertToPickerItems(expensedata);
 
   const selectedCategory = categories.find(
     (category) => category.value === newSpending.category

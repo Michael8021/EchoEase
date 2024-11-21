@@ -11,7 +11,13 @@ import {
   client,
   appwriteConfig,
 } from "../../lib/appwrite";
-import { ExpenseItem, SpendingItem, PickerItem } from "../../type";
+import { ExpenseItem, SpendingItem} from "../../type";
+
+type PickerItem = {
+  label: string;
+  value: string;
+  color: string;
+};
 
 const Finance = () => {
   //expense type
@@ -114,9 +120,6 @@ const Finance = () => {
       }));
 
       setPieData(computedPieData);
-
-      console.log("Category Data:", categoriesWithPercentage);
-      console.log("Pie Data:", computedPieData);
     }
   }, [spendingdata, expensedata]);
 
@@ -207,7 +210,7 @@ const Finance = () => {
                 centerLabelComponent={() => {
                   return (
                     <View className="justify-center items-center">
-                      <Text className="text-white text-2xl font-bold">{maxPercentage}%</Text>
+                      <Text className="text-white text-xl font-bold">{maxPercentage}%</Text>
                     </View>
                   );
                 }}
@@ -221,7 +224,7 @@ const Finance = () => {
             />
           </View>
           <View className="mx-5">
-            <SpendingBlock spendingdata={spendingdata} />
+            <SpendingBlock spendingdata={spendingdata} expensedata={expensedata} />
           </View>
         </ScrollView>
       </View>
