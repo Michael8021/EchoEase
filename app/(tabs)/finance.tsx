@@ -5,8 +5,9 @@ import { PieChart } from "react-native-gifted-charts";
 import { Colors } from "@/constants/Colors";
 import ExpenseBlock from "../../components/ExpenseBlock";
 import SpendingBlock from "../../components/SpendingBlock";
-import { getExpenseTypes, client, appwriteConfig } from "../../lib/appwrite";
-import { ExpenseItem } from "../../type";
+import { getExpenseTypes,getSpending, client, appwriteConfig } from "../../lib/appwrite";
+import { ExpenseItem,SpendingItem, PickerItem } from "../../type";
+
 
 const Finance = () => {
   const pieData = [
@@ -21,6 +22,7 @@ const Finance = () => {
     { value: 3, color: "#FFA5BA", gradientCenterColor: "#FF7F97" },
   ];
 
+  //expense type
   const [expensedata, setExpensedata] = useState<ExpenseItem[]>([]);
   const fetchExpenses = async () => {
     try {
@@ -36,10 +38,28 @@ const Finance = () => {
     }
   };
 
+  //spending
+  const [spendingdata, setSpendingdata] = useState<SpendingItem[]>([]);
+  const fetchSpending = async () => {
+    try {
+      const spendings = await getSpending();
+      const formattedSpendings = spendings.map((spending: any) => ({
+        name: spending.name,
+        amount: spending.amount,
+        date: spending.date,
+        category:spending.category,
+      }));
+      setSpendingdata(formattedSpendings);
+    } catch (error) {
+      console.error("Error fetching spending:", error);
+    }
+  };
+
   useEffect(() => {
     fetchExpenses();
+    fetchSpending();
 
-    const unsubscribe = client.subscribe(
+    const unsubscribe_expenses = client.subscribe(
       [
         `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.expense_typeId}.documents`,
       ],
@@ -63,67 +83,34 @@ const Finance = () => {
         }
       }
     );
+    const unsubscribe_spendings = client.subscribe(
+      [
+        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.spendingId}.documents`,
+      ],
+      (response) => {
+        const { events, payload } = response;
+        const spending = payload as SpendingItem;
+
+        if (events.some((event) => event.includes(".create"))) {
+          const newSpending = {
+            name: spending.name,
+            amount: spending.amount,
+            date: spending.date,
+            category:spending.category,
+          };
+          setSpendingdata((prevData) => [...prevData, newSpending]);
+        } else if (events.some((event) => event.includes(".delete"))) {
+          setSpendingdata((prevData) =>
+          prevData.filter((item) => item.name !== spending.name)
+          );
+        }
+      }
+    );
     return () => {
-      unsubscribe();
+      unsubscribe_expenses();
+      unsubscribe_spendings();
     };
   }, []);
-
-  const spendingdata = [
-    {
-      name: "Groceries",
-      amount: "150.00",
-      date: "2024-11-01",
-      category: "#2ac7e7",
-    },
-    {
-      name: "Transportation",
-      amount: "50.00",
-      date: "2024-11-02",
-      category: "#FFA5BA",
-    },
-    {
-      name: "Dining Out",
-      amount: "80.00",
-      date: "2024-11-03",
-      category: "#2ac7e7",
-    },
-    {
-      name: "Utilities",
-      amount: "120.00",
-      date: "2024-11-04",
-      category: "#5e16f8",
-    },
-    {
-      name: "Entertainment",
-      amount: "60.00",
-      date: "2024-11-05",
-      category: "#5e16f8",
-    },
-    {
-      name: "Healthcare",
-      amount: "200.00",
-      date: "2024-11-06",
-      category: "#4498f7",
-    },
-    {
-      name: "Shopping",
-      amount: "75.00",
-      date: "2024-11-07",
-      category: "#4498f7",
-    },
-    {
-      name: "Subscription",
-      amount: "15.00",
-      date: "2024-11-08",
-      category: "#FFA5BA",
-    },
-    {
-      name: "Education",
-      amount: "500.00",
-      date: "2024-11-09",
-      category: "#4498f7",
-    }
-  ];
 
   return (
     <SafeAreaView className="flex-1 bg-primary">

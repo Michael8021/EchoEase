@@ -153,7 +153,7 @@ export const getExpenseTypes = async () => {
   }
 };
 
-//save expense
+//save spending
 export const handleSaveSpending = async (newSpending:SpendingItem) => {
   try {
     await databases.createDocument(
@@ -167,10 +167,24 @@ export const handleSaveSpending = async (newSpending:SpendingItem) => {
         date:newSpending.date,
       },
     );
-    alert('Successfully save spending');
   } catch (error) {
     console.error('Error saving document:', error);
     alert('Failed to save spending. Please try again.');
+  }
+};
+
+//get spending
+export const getSpending = async () => {
+  try {
+    const spending = await databases.listDocuments(
+      appwriteConfig.databaseId, 
+      appwriteConfig.spendingId,
+    );
+    return spending.documents;
+  } catch (error) {
+    console.error('Error retrieving expense types:', error);
+    alert('Failed to retrieve expense types. Please try again.');
+    return [];
   }
 };
 

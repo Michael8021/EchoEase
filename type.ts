@@ -16,3 +16,9 @@ export interface ExpenseItem {
     date: string;
     category:string;
   }
+
+  export interface PickerItem {
+    label: string;
+    value: string;
+    color: string;
+  };

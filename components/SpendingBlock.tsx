@@ -19,7 +19,7 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import dayjs, { Dayjs } from "dayjs";
-import { getExpenseTypes, client, appwriteConfig } from "../lib/appwrite";
+import { getExpenseTypes } from "../lib/appwrite";
 import { handleSaveSpending } from "../lib/appwrite";
 import Dropdown from "react-native-input-select";
 
@@ -29,8 +29,8 @@ type PickerItem = {
   color: string;
 };
 
-const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[] }) => {
-  //add spending
+const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[]}) => {
+  //modal(add spending)
   const [modalVisible, setModalVisible] = useState(false);
   const [newSpending, setNewSpending] = useState({
     name: "",
@@ -38,15 +38,19 @@ const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[] }) => {
     date: dayjs().format("YYYY-MM-DD HH:mm:ss"),
     category: "",
   });
-  
+
   const handleAddSpending = () => {
-    console.log(newSpending)
     if (newSpending.name && newSpending.amount && newSpending.date) {
-        handleSaveSpending(newSpending);
-        setModalVisible(false);
-    } 
-    else{
-      alert('Please fill in all fields.');
+      handleSaveSpending(newSpending);
+      setModalVisible(false);
+      setNewSpending({
+        name: "",
+        amount: "",
+        date: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+        category: "",
+      });
+    } else {
+      alert("Please fill in all fields.");
     }
   };
 
@@ -59,39 +63,42 @@ const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[] }) => {
       const formattedDate = dayjs(selectedDate).format("YYYY-MM-DD HH:mm:ss");
       setNewSpending((prev) => ({
         ...prev,
-        date: formattedDate, 
+        date: formattedDate,
       }));
     }
   };
 
   //category
   const [categories, setCategories] = useState<PickerItem[]>([]);
-
   useEffect(() => {
-    if (modalVisible) {
-      const fetchCategories = async () => {
-        try {
-          const expenseTypes = await getExpenseTypes();
-          const formattedExpenses: PickerItem[] = expenseTypes.map(
-            (expense: any) => ({
-              label: expense.category,
-              value: expense.category,
-              color: expense.color,
-            })
-          );
+    const fetchCategories = async () => {
+      try {
+        const expenseTypes = await getExpenseTypes();
+        const formattedExpenses: PickerItem[] = expenseTypes.map(
+          (expense: any) => ({
+            label: expense.category,
+            value: expense.category,
+            color: expense.color,
+          })
+        );
 
-          setCategories(formattedExpenses);
-        } catch (error) {
-          console.error("Error fetching categories:", error);
-        }
-      };
-      fetchCategories();
-    }
-  }, [modalVisible]);
+        setCategories(formattedExpenses);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const selectedCategory = categories.find(
     (category) => category.value === newSpending.category
   );
+
+  // get color of spendingdata
+  const getCategoryColor = (category: string) => {
+    const selectedCategory = categories.find((cat) => cat.value === category);
+    return selectedCategory?.color;
+  };
 
   return (
     <View>
@@ -185,7 +192,13 @@ const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[] }) => {
                 color: "#ccc",
               }}
             />
-            <View style={{ flexDirection: "row", alignItems: "center",marginTop:-10 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginTop: -10,
+              }}
+            >
               <Text>Date:</Text>
               <DateTimePicker
                 mode="date"
@@ -197,7 +210,18 @@ const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[] }) => {
             <View
               style={{ flexDirection: "row", justifyContent: "space-between" }}
             >
-              <Button title="Cancel" onPress={() => setModalVisible(false)} />
+              <Button
+                title="Cancel"
+                onPress={() => {
+                  setModalVisible(false);
+                  setNewSpending({
+                    name: "",
+                    amount: "",
+                    date: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+                    category: "",
+                  });
+                }}
+              />
               <Button title="Add" onPress={handleAddSpending} />
             </View>
           </View>
@@ -235,7 +259,7 @@ const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[] }) => {
               style={{
                 width: 8,
                 height: 8,
-                backgroundColor: "#5e16f8",
+                backgroundColor: getCategoryColor(item.category),
                 marginRight: 8,
               }}
             />
