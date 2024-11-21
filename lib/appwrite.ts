@@ -16,10 +16,10 @@ export const appwriteConfig = {
     projectId: '6728739400249b29108d',
     databaseId: '672874b7001bef17e4d6',
     userCollectionId: '672874c60003d32a2491',
-    moodCollectionId: '672ce11300183b1fd08f',
     scheduleCollectionId: '672878b6000297694b47',
     historyCollectionId: '672eeced0003474523e6',
 }
+
 
 const client = new Client()
     .setEndpoint(appwriteConfig.endpoint)
@@ -118,70 +118,90 @@ export async function signOut() {
   }
 }
 
-export async function addMood(username: string, date: string, mood: string, notes: string) {
-  try {
-    const existingMoods = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.moodCollectionId,
-      [
-        Query.equal("username", username),
-        Query.equal("date", date)
-      ]
-    );
 
-    if (existingMoods.total > 0) {
-      const moodId = existingMoods.documents[0].$id;
-      const updatedMood = await databases.updateDocument(
-        appwriteConfig.databaseId,
-        appwriteConfig.moodCollectionId,
-        moodId,
-        {
-          mood: mood,
-          notes: notes
-        }
-      );
-      return updatedMood;
-    } else {
-      const newMood = await databases.createDocument(
-        appwriteConfig.databaseId,
-        appwriteConfig.moodCollectionId,
-        ID.unique(),
-        {
-          username: username,
-          date: date,
-          mood: mood,
-          notes: notes
-        }
-      );
-      return newMood;
-    }
+// Change Password
+export async function changePassword(oldPassword: string, newPassword: string) {
+  try {
+    const result = await account.updatePassword(newPassword, oldPassword);
+    if (!result) throw Error;
+    
+    return result;
   } catch (error) {
     throw new Error(String(error));
   }
 }
 
-export async function getMoodsForWeek(username: string) {
-  const date = new Date();
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(date.setDate(diff));
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
+// Delete User Account
+export async function deleteUserAccount(password: string) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("No user found");
 
-  const moods = await databases.listDocuments(
-    appwriteConfig.databaseId,
-    appwriteConfig.moodCollectionId,
-    [
-      Query.equal("username", username),
-      Query.greaterThanEqual("date", monday.toISOString().split('T')[0]),
-      Query.lessThanEqual("date", sunday.toISOString().split('T')[0])
-    ]
-  );
+    const accountId = currentUser.accountId;
+    const documentId = currentUser.$id;
 
-  // Sort moods by date
-  const sortedMoods = moods.documents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    await signOut();
 
-  return sortedMoods;
+    await databases.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      documentId
+    );
+
+    const response = await fetch(
+      'https://673dd58be61f61385d3d.appwrite.global/delete-user',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: accountId,
+        }),
+      }
+    );
+
+    if (response.status !== 204 && !response.ok) {
+      const text = await response.text();
+      throw new Error(text || 'Failed to delete user account');
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Delete account error:", error);
+    throw error;
+  }
+}
+
+// Update Username
+export async function updateUsername(newUsername: string) {
+  try {
+    // Update Appwrite account name
+    const updatedAccount = await account.updateName(newUsername);
+    if (!updatedAccount) throw Error;
+
+    // Get and update user document
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    // Update avatar with new username
+    const avatarUrl = avatars.getInitials(newUsername);
+
+    // Update user document
+    const updatedUser = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      currentUser.$id,
+      {
+        username: newUsername,
+        avatar: avatarUrl,
+      }
+    );
+
+    return updatedUser;
+  } catch (error) {
+    throw new Error(String(error));
+  }
 }
 
 // Create History
@@ -289,7 +309,7 @@ export async function createSchedule(schedule: Omit<Schedule, '$id'>) {
 
     return newSchedule as unknown as Schedule;
   } catch (error) {
-    console.log('Schedule creation error:', schedule); // Add this for debugging
+    console.log('Schedule creation error:', schedule);
     throw new Error(String(error));
   }
 }
