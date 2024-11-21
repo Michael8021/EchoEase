@@ -5,23 +5,15 @@ import { PieChart } from "react-native-gifted-charts";
 import { Colors } from "@/constants/Colors";
 import ExpenseBlock from "../../components/ExpenseBlock";
 import SpendingBlock from "../../components/SpendingBlock";
-import { getExpenseTypes,getSpending, client, appwriteConfig } from "../../lib/appwrite";
-import { ExpenseItem,SpendingItem, PickerItem } from "../../type";
-
+import {
+  getExpenseTypes,
+  getSpending,
+  client,
+  appwriteConfig,
+} from "../../lib/appwrite";
+import { ExpenseItem, SpendingItem, PickerItem } from "../../type";
 
 const Finance = () => {
-  const pieData = [
-    {
-      value: 47,
-      color: "#2ac7e7",
-      focused: true,
-      text: "47%",
-    },
-    { value: 40, color: "#5e16f8", text: "40%" },
-    { value: 10, color: "#4498f7", text: "10%" },
-    { value: 3, color: "#FFA5BA", gradientCenterColor: "#FF7F97" },
-  ];
-
   //expense type
   const [expensedata, setExpensedata] = useState<ExpenseItem[]>([]);
   const fetchExpenses = async () => {
@@ -40,6 +32,10 @@ const Finance = () => {
 
   //spending
   const [spendingdata, setSpendingdata] = useState<SpendingItem[]>([]);
+  const [categoryData, setCategoryData] = useState<any[]>([]);
+  const [totalAmount, setTotalAmount] = useState<number>(0.0);
+  const formattedAmount = totalAmount.toFixed(2);
+  const [whole, decimal] = formattedAmount.split(".");
   const fetchSpending = async () => {
     try {
       const spendings = await getSpending();
@@ -47,13 +43,82 @@ const Finance = () => {
         name: spending.name,
         amount: spending.amount,
         date: spending.date,
-        category:spending.category,
+        category: spending.category,
       }));
       setSpendingdata(formattedSpendings);
     } catch (error) {
       console.error("Error fetching spending:", error);
     }
   };
+
+  //piedata
+  const [pieData, setPieData] = useState<any[]>([]);
+  const [maxPercentage,setMaxPercentage]=useState<string>('0.00');
+  useEffect(() => {
+    if (spendingdata.length > 0 && expensedata.length > 0) {
+      // Calculate total amount
+      const total = spendingdata.reduce((accumulated, spending) => {
+        return accumulated + parseFloat(spending.amount);
+      }, 0);
+      setTotalAmount(total);
+
+      // Group spendings by category and calculate category totals
+      const categoryTotals: { [key: string]: number } = {};
+      spendingdata.forEach((spending) => {
+        if (categoryTotals[spending.category]) {
+          categoryTotals[spending.category] += parseFloat(spending.amount);
+        } else {
+          categoryTotals[spending.category] = parseFloat(spending.amount);
+        }
+      });
+
+      // Calculate percentage and match colors for each category
+      const categoriesWithPercentage = Object.keys(categoryTotals).map(
+        (category) => {
+          const categoryTotal = categoryTotals[category];
+          const percentage = (categoryTotal / total) * 100;
+
+          // Match color from expensedata
+          const matchedExpense = expensedata.find(
+            (expense) => expense.category === category
+          );
+          const color = matchedExpense ? matchedExpense.color : "#ccc"; // Default to gray if no match
+
+          return {
+            category,
+            totalAmount: categoryTotal,
+            percentage: percentage.toFixed(2),
+            color,
+          };
+        }
+      );
+      const maxCategory = categoriesWithPercentage.reduce((max, current) =>
+        parseFloat(current.percentage) > parseFloat(max.percentage)
+          ? current
+          : max
+      );
+      setMaxPercentage(maxCategory.percentage)
+      
+      const updatedCategories = categoriesWithPercentage.map((category) => ({
+        ...category,
+        focused: category.category === maxCategory.category,
+      }));
+
+      setCategoryData(updatedCategories);
+
+      // Prepare pieData
+      const computedPieData = categoriesWithPercentage.map((data) => ({
+        value: parseFloat(data.percentage),
+        color: data.color,
+        text: `${data.percentage}%`,
+      }));
+
+      setPieData(computedPieData);
+
+      console.log("Category Data:", categoriesWithPercentage);
+      console.log("Pie Data:", computedPieData);
+    }
+  }, [spendingdata, expensedata]);
 
   useEffect(() => {
     fetchExpenses();
@@ -96,12 +161,12 @@ const Finance = () => {
             name: spending.name,
             amount: spending.amount,
             date: spending.date,
-            category:spending.category,
+            category: spending.category,
           };
           setSpendingdata((prevData) => [...prevData, newSpending]);
         } else if (events.some((event) => event.includes(".delete"))) {
           setSpendingdata((prevData) =>
-          prevData.filter((item) => item.name !== spending.name)
+            prevData.filter((item) => item.name !== spending.name)
           );
         }
       }
@@ -125,7 +190,7 @@ const Finance = () => {
                 My <Text className="font-bold">Expenses</Text>
               </Text>
               <Text className="text-white my-3 text-4xl font-semibold">
-                $1475.<Text className="text-2xl font-light">00</Text>
+                ${whole}.<Text className="text-2xl font-light">{decimal}</Text>
               </Text>
             </View>
             <View>
@@ -142,7 +207,7 @@ const Finance = () => {
                 centerLabelComponent={() => {
                   return (
                     <View className="justify-center items-center">
-                      <Text className="text-white text-2xl font-bold">47%</Text>
+                      <Text className="text-white text-2xl font-bold">{maxPercentage}%</Text>
                     </View>
                   );
                 }}
@@ -150,7 +215,10 @@ const Finance = () => {
             </View>
           </View>
           <View className="my-5">
-            <ExpenseBlock expensedata={expensedata} />
+            <ExpenseBlock
+              expensedata={expensedata}
+              categoryData={categoryData}
+            />
           </View>
           <View className="mx-5">
             <SpendingBlock spendingdata={spendingdata} />

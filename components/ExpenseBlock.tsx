@@ -19,9 +19,11 @@ import { handleSaveExpenseType } from "../lib/appwrite";
 const colors = ["#5e16f8", "#2ac7e7", "#4498f7", "#FFA5BA"];
 
 const ExpenseBlock = ({
-  expensedata
+  expensedata,
+  categoryData
 }: {
   expensedata: ExpenseItem[];
+  categoryData: { category: string; percentage: string; totalAmount: number }[];
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [expenseCategory, setExpenseCategory] = useState("");
@@ -107,15 +109,21 @@ const ExpenseBlock = ({
       );
     }
     let amount = item.amount?.split(".");
+    const category = categoryData.find((cat) => cat.category === item.category);
+    const categoryPercentage = category ? category.percentage : '0.00';
+    const categoryTotalAmount = category ? category.totalAmount : 0;
+    const formattedAmount = categoryTotalAmount.toFixed(2);
+    const [whole, decimal] = formattedAmount.split(".");
+    
     return (
       <View style={[styles.expenseBlock, { backgroundColor: item.color }]}>
         <Text className="text-white">{item.category}</Text>
         <Text className="text-white" style={styles.expenseBlockTxt2}>
-          ${amount[0]}.
-          <Text style={styles.expenseBlockTxt2Span}>{amount[1]}</Text>
+          ${whole}.
+          <Text style={styles.expenseBlockTxt2Span}>{decimal}</Text>
         </Text>
         <View style={styles.expenseBlockTxt3View}>
-          <Text className="text-white">{'0'}%</Text>
+          <Text className="text-white">{categoryPercentage}%</Text>
         </View>
       </View>
     );
