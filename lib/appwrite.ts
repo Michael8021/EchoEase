@@ -1,31 +1,31 @@
 import {
-    Account,
-    Avatars,
-    Client,
-    Databases,
-    ID,
-    Query,
-    Storage,
-  } from "react-native-appwrite";
+  Account,
+  Avatars,
+  Client,
+  Databases,
+  ID,
+  Query,
+  Storage,
+} from "react-native-appwrite";
 
-import { Schedule } from "./types";
+import { Schedule, Mood } from "./types";
 
 export const appwriteConfig = {
-    endpoint: 'https://cloud.appwrite.io/v1',
-    platform: 'com.platform.echoease',
-    projectId: '6728739400249b29108d',
-    databaseId: '672874b7001bef17e4d6',
-    userCollectionId: '672874c60003d32a2491',
-    scheduleCollectionId: '672878b6000297694b47',
-    historyCollectionId: '672eeced0003474523e6',
-    moodCollectionId: '672ce11300183b1fd08f',
+  endpoint: 'https://cloud.appwrite.io/v1',
+  platform: 'com.platform.echoease',
+  projectId: '6728739400249b29108d',
+  databaseId: '672874b7001bef17e4d6',
+  userCollectionId: '672874c60003d32a2491',
+  scheduleCollectionId: '672878b6000297694b47',
+  historyCollectionId: '672eeced0003474523e6',
+  moodCollectionId: '672ce11300183b1fd08f',
 }
 
 
 const client = new Client()
-    .setEndpoint(appwriteConfig.endpoint)
-    .setProject(appwriteConfig.projectId)
-    .setPlatform(appwriteConfig.platform);
+  .setEndpoint(appwriteConfig.endpoint)
+  .setProject(appwriteConfig.projectId)
+  .setPlatform(appwriteConfig.platform);
 
 const account = new Account(client);
 const avatars = new Avatars(client);
@@ -125,7 +125,7 @@ export async function changePassword(oldPassword: string, newPassword: string) {
   try {
     const result = await account.updatePassword(newPassword, oldPassword);
     if (!result) throw Error;
-    
+
     return result;
   } catch (error) {
     throw new Error(String(error));
@@ -373,14 +373,21 @@ export async function deleteSchedule(documentId: string) {
   }
 }
 
-export async function addMood(username: string, date: string, mood: string, notes: string) {
+export async function createMood(mood: Mood) {
   try {
+    // Set the start and end of the day for the given date
+    const date = new Date();
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
     const existingMoods = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.moodCollectionId,
       [
-        Query.equal("username", username),
-        Query.equal("date", date)
+        Query.equal("userId", mood.userId),
+        Query.greaterThanEqual("dateTime", startOfDay.toISOString()),
+        Query.lessThanEqual("dateTime", endOfDay.toISOString())
       ]
     );
 
@@ -391,8 +398,8 @@ export async function addMood(username: string, date: string, mood: string, note
         appwriteConfig.moodCollectionId,
         moodId,
         {
-          mood: mood,
-          notes: notes
+          mood_type: mood.mood_type,
+          description: mood.description
         }
       );
       return updatedMood;
@@ -402,10 +409,11 @@ export async function addMood(username: string, date: string, mood: string, note
         appwriteConfig.moodCollectionId,
         ID.unique(),
         {
-          username: username,
-          date: date,
-          mood: mood,
-          notes: notes
+          userId: mood.userId,
+          dateTime: mood.dateTime,
+          mood_type: mood.mood_type,
+          description: mood.description,
+          historyId: mood.historyId
         }
       );
       return newMood;
@@ -415,7 +423,7 @@ export async function addMood(username: string, date: string, mood: string, note
   }
 }
 
-export async function getMoodsForWeek(username: string) {
+export async function getMoods(userId: string) {
   const date = new Date();
   const day = date.getDay();
   const diff = date.getDate() - day + (day === 0 ? -6 : 1);
@@ -423,18 +431,22 @@ export async function getMoodsForWeek(username: string) {
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
+  // Set monday to the start of the day (00:00:00)
+  monday.setHours(0, 0, 0, 0);
+  // Set sunday to the end of the day (23:59:59)
+  sunday.setHours(23, 59, 59, 999);
+
   const moods = await databases.listDocuments(
     appwriteConfig.databaseId,
     appwriteConfig.moodCollectionId,
     [
-      Query.equal("username", username),
-      Query.greaterThanEqual("date", monday.toISOString().split('T')[0]),
-      Query.lessThanEqual("date", sunday.toISOString().split('T')[0])
+      Query.equal("userId", userId),
+      Query.greaterThanEqual("dateTime", monday.toISOString()),
+      Query.lessThanEqual("dateTime", sunday.toISOString())
     ]
   );
-
   // Create a map of dates to mood documents
-  const moodMap = new Map(moods.documents.map(mood => [new Date(mood.date).toISOString().split('T')[0], mood]));
+  const moodMap = new Map(moods.documents.map(mood => [new Date(mood.dateTime).toISOString().split('T')[0], mood]));
 
   // Initialize an array to hold the results
   const result = [];
@@ -448,9 +460,8 @@ export async function getMoodsForWeek(username: string) {
     if (moodMap.has(dateString)) {
       result.push(moodMap.get(dateString));
     } else {
-      result.push({ date: dateString, mood: null });
+      result.push({ dateTime: dateString, mood: null });
     }
   }
-
   return result;
 }
