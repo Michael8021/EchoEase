@@ -11,9 +11,8 @@ export interface ExpenseItem {
   }
 
   export interface SpendingItem {
-    id: number;
     name: string;
     amount: string;
     date: string;
-    color:string;
+    category:string;
   }

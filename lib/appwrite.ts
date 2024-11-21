@@ -9,6 +9,7 @@ import {
     Permission, 
     Role
   } from "react-native-appwrite";
+  import { SpendingItem } from "../type";
 
 export const appwriteConfig = {
     endpoint: 'https://cloud.appwrite.io/v1',
@@ -17,6 +18,7 @@ export const appwriteConfig = {
     databaseId: '672874b7001bef17e4d6',
     userCollectionId: '672874c60003d32a2491',
     expense_typeId: '673833fe0036fd646922',
+    spendingId:'673df70f000e35b7d8c1',
 }
 
 
@@ -148,6 +150,27 @@ export const getExpenseTypes = async () => {
     console.error('Error retrieving expense types:', error);
     alert('Failed to retrieve expense types. Please try again.');
     return [];
+  }
+};
+
+//save expense
+export const handleSaveSpending = async (newSpending:SpendingItem) => {
+  try {
+    await databases.createDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.spendingId, 
+      ID.unique(), 
+      {
+        category: newSpending.category,
+        name:newSpending.name,
+        amount:newSpending.amount,
+        date:newSpending.date,
+      },
+    );
+    alert('Successfully save spending');
+  } catch (error) {
+    console.error('Error saving document:', error);
+    alert('Failed to save spending. Please try again.');
   }
 };
 

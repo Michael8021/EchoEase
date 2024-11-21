@@ -7,29 +7,207 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Modal,
+  Button,
+  TextInput,
 } from "react-native";
+import React, { useState, useEffect } from "react";
 import { SpendingItem } from "../type";
 import { icons } from "../constants";
 import { Feather } from "@expo/vector-icons";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import dayjs, { Dayjs } from "dayjs";
+import { getExpenseTypes, client, appwriteConfig } from "../lib/appwrite";
+import { handleSaveSpending } from "../lib/appwrite";
+import Dropdown from "react-native-input-select";
+
+type PickerItem = {
+  label: string;
+  value: string;
+  color: string;
+};
 
 const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[] }) => {
+  //add spending
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newSpending, setNewSpending] = useState({
+    name: "",
+    amount: "",
+    date: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+    category: "",
+  });
+  
+  const handleAddSpending = () => {
+    console.log(newSpending)
+    if (newSpending.name && newSpending.amount && newSpending.date) {
+        handleSaveSpending(newSpending);
+        setModalVisible(false);
+    } 
+    else{
+      alert('Please fill in all fields.');
+    }
+  };
+
+  //date
+  const handleDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) => {
+    if (selectedDate) {
+      const formattedDate = dayjs(selectedDate).format("YYYY-MM-DD HH:mm:ss");
+      setNewSpending((prev) => ({
+        ...prev,
+        date: formattedDate, 
+      }));
+    }
+  };
+
+  //category
+  const [categories, setCategories] = useState<PickerItem[]>([]);
+
+  useEffect(() => {
+    if (modalVisible) {
+      const fetchCategories = async () => {
+        try {
+          const expenseTypes = await getExpenseTypes();
+          const formattedExpenses: PickerItem[] = expenseTypes.map(
+            (expense: any) => ({
+              label: expense.category,
+              value: expense.category,
+              color: expense.color,
+            })
+          );
+
+          setCategories(formattedExpenses);
+        } catch (error) {
+          console.error("Error fetching categories:", error);
+        }
+      };
+      fetchCategories();
+    }
+  }, [modalVisible]);
+
+  const selectedCategory = categories.find(
+    (category) => category.value === newSpending.category
+  );
+
   return (
     <View>
       <View className="flex-row justify-between items-center bg-primary">
         <Text className="text-white text-1.5xl mb-3">
           Nov <Text className="font-bold">Spending</Text>
         </Text>
-        <TouchableOpacity onPress={() => {}}>
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
           <View style={{ backgroundColor: "#333333", borderRadius: 25 }}>
             <Feather name="plus" size={22} color={"#ccc"} />
           </View>
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {spendingdata.map((item) => (
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}
+        >
           <View
-            key={item.id}
+            style={{
+              width: "90%",
+              padding: 20,
+              backgroundColor: "white",
+              borderRadius: 10,
+            }}
+          >
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
+            >
+              Add Spending
+            </Text>
+            <TextInput
+              placeholder="Expense Name"
+              value={newSpending.name}
+              onChangeText={(text) =>
+                setNewSpending((prev) => ({ ...prev, name: text }))
+              }
+              style={styles.Input}
+            />
+            <TextInput
+              placeholder="Amount"
+              keyboardType="numeric"
+              value={newSpending.amount}
+              onChangeText={(text) => {
+                setNewSpending((prev) => ({
+                  ...prev,
+                  amount: text,
+                }));
+              }}
+              style={styles.Input}
+            />
+            <Dropdown
+              placeholder="Category"
+              options={categories}
+              selectedValue={newSpending.category}
+              onValueChange={(value) =>
+                setNewSpending((prev) => ({
+                  ...prev,
+                  category: value as string,
+                }))
+              }
+              primaryColor={selectedCategory?.color || "green"}
+              dropdownStyle={{
+                borderColor: "#ccc",
+                borderWidth: 1,
+                borderRadius: 8,
+                flex: 1,
+              }}
+              dropdownContainerStyle={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 5,
+                padding: 10,
+                width: "100%",
+              }}
+              dropdownIconStyle={{
+                top: 5,
+                right: 10,
+              }}
+              placeholderStyle={{
+                color: "#ccc",
+              }}
+            />
+            <View style={{ flexDirection: "row", alignItems: "center",marginTop:-10 }}>
+              <Text>Date:</Text>
+              <DateTimePicker
+                mode="date"
+                value={new Date(newSpending.date)}
+                onChange={handleDateChange}
+                display="default" // Optional: use 'spinner', 'calendar', etc.
+              />
+            </View>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Button title="Cancel" onPress={() => setModalVisible(false)} />
+              <Button title="Add" onPress={handleAddSpending} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {spendingdata.map((item, index) => (
+          <View
+            key={index}
             style={{
               flexDirection: "row",
               alignItems: "center",
@@ -55,10 +233,10 @@ const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[] }) => {
             </View>
             <View
               style={{
-                width: 8, 
-                height: 8, 
-                backgroundColor: item.color,  
-                marginRight: 8, 
+                width: 8,
+                height: 8,
+                backgroundColor: "#5e16f8",
+                marginRight: 8,
               }}
             />
             <Text className="text-gray-400 font-semibold">${item.amount}</Text>
@@ -70,4 +248,12 @@ const SpendingBlock = ({ spendingdata }: { spendingdata: SpendingItem[] }) => {
 };
 export default SpendingBlock;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  Input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  },
+});
