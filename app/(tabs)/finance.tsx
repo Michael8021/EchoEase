@@ -46,6 +46,7 @@ const Finance = () => {
     try {
       const spendings = await getSpending();
       const formattedSpendings = spendings.map((spending: any) => ({
+        id: spending.$id,
         name: spending.name,
         amount: spending.amount,
         date: spending.date,
@@ -161,6 +162,7 @@ const Finance = () => {
 
         if (events.some((event) => event.includes(".create"))) {
           const newSpending = {
+            id: spending.id,
             name: spending.name,
             amount: spending.amount,
             date: spending.date,

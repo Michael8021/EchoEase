@@ -35,6 +35,7 @@ const account = new Account(client);
 const avatars = new Avatars(client);
 const databases = new Databases(client);
 
+//----------------------------------------------account---------------------------------------------------------
 // Register user
 export async function createUser(email: string, password: string, username: string) {
   try {
@@ -123,77 +124,6 @@ export async function signOut() {
   }
 }
 
-//save expense type
-export const handleSaveExpenseType = async (expenseCategory:string,selectedColor:string) => {
-  try {
-    await databases.createDocument(
-      appwriteConfig.databaseId, 
-      appwriteConfig.expense_typeId, 
-      ID.unique(), 
-      {
-        category: expenseCategory,
-        amount:"0.0", 
-        color: selectedColor,
-      },
-    );
-  } catch (error) {
-    console.error('Error saving document:', error);
-    alert('Failed to save expense. Please try again.');
-  }
-};
-
-//get expense type
-export const getExpenseTypes = async () => {
-  try {
-    const ExpenseTypes = await databases.listDocuments(
-      appwriteConfig.databaseId, 
-      appwriteConfig.expense_typeId
-    );
-    return ExpenseTypes.documents;
-  } catch (error) {
-    console.error('Error retrieving expense types:', error);
-    alert('Failed to retrieve expense types. Please try again.');
-    return [];
-  }
-};
-
-//save spending
-export const handleSaveSpending = async (newSpending:SpendingItem) => {
-  try {
-    await databases.createDocument(
-      appwriteConfig.databaseId, 
-      appwriteConfig.spendingId, 
-      ID.unique(), 
-      {
-        category: newSpending.category,
-        name:newSpending.name,
-        amount:newSpending.amount,
-        date:newSpending.date,
-      },
-    );
-  } catch (error) {
-    console.error('Error saving document:', error);
-    alert('Failed to save spending. Please try again.');
-  }
-};
-
-//get spending
-export const getSpending = async () => {
-  try {
-    const spending = await databases.listDocuments(
-      appwriteConfig.databaseId, 
-      appwriteConfig.spendingId,
-    );
-    return spending.documents;
-  } catch (error) {
-    console.error('Error retrieving expense types:', error);
-    alert('Failed to retrieve expense types. Please try again.');
-    return [];
-  }
-};
-
-
-
 // Change Password
 export async function changePassword(oldPassword: string, newPassword: string) {
   try {
@@ -278,7 +208,97 @@ export async function updateUsername(newUsername: string) {
     throw new Error(String(error));
   }
 }
+//----------------------------------------------account---------------------------------------------------------
 
+//----------------------------------------------finance---------------------------------------------------------
+//save expense type
+export const saveExpenseType = async (expenseCategory:string,selectedColor:string) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    await databases.createDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.expense_typeId, 
+      ID.unique(), 
+      {
+        category: expenseCategory,
+        amount:"0.0", 
+        color: selectedColor,
+        userId: currentUser.$id,
+      },
+    );
+  } catch (error) {
+    console.error('Error saving document:', error);
+    alert('Failed to save expense. Please try again.');
+  }
+};
+
+//get expense type
+export const getExpenseTypes = async () => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    const ExpenseTypes = await databases.listDocuments(
+      appwriteConfig.databaseId, 
+      appwriteConfig.expense_typeId,
+      [Query.equal("userId", currentUser.$id)]
+    );
+    return ExpenseTypes.documents;
+  } catch (error) {
+    console.error('Error retrieving expense types:', error);
+    alert('Failed to retrieve expense types. Please try again.');
+    return [];
+  }
+};
+
+//save spending
+export const saveSpending = async (newSpending:SpendingItem) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    await databases.createDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.spendingId, 
+      ID.unique(), 
+      {
+        category: newSpending.category,
+        name:newSpending.name,
+        amount:newSpending.amount,
+        date:newSpending.date,
+        userId: currentUser.$id,
+      },
+    );
+  } catch (error) {
+    console.error('Error saving document:', error);
+    alert('Failed to save spending. Please try again.');
+  }
+};
+
+//get spending
+export const getSpending = async () => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    const spending = await databases.listDocuments(
+      appwriteConfig.databaseId, 
+      appwriteConfig.spendingId,
+      [Query.equal("userId", currentUser.$id)]
+    );
+
+    return spending.documents;
+  } catch (error) {
+    console.error('Error retrieving expense types:', error);
+    alert('Failed to retrieve expense types. Please try again.');
+    return [];
+  }
+};
+//----------------------------------------------finance---------------------------------------------------------
+
+//----------------------------------------------history---------------------------------------------------------
 // Create History
 export async function createHistory(transcribed_text: string,) {
   try {
@@ -357,7 +377,9 @@ export async function updateHistory(documentId: string, data: Partial<Schedule>)
     throw new Error(String(error));
   }
 }
+//----------------------------------------------history---------------------------------------------------------
 
+//----------------------------------------------schedule---------------------------------------------------------
 // Create Schedule
 export async function createSchedule(schedule: Omit<Schedule, '$id'>) {
   try {
@@ -446,4 +468,4 @@ export async function deleteSchedule(documentId: string) {
     throw new Error(String(error));
   }
 }
-
+//----------------------------------------------schedule---------------------------------------------------------

@@ -13,7 +13,7 @@ import {
 import React, { useState } from "react";
 import { ExpenseItem } from "../type";
 import { Feather } from "@expo/vector-icons";
-import { handleSaveExpenseType } from "../lib/appwrite";
+import { saveExpenseType } from "../lib/appwrite";
 
 
 const colors = ["#5e16f8", "#2ac7e7", "#4498f7", "#FFA5BA"];
@@ -96,7 +96,7 @@ const ExpenseBlock = ({
                   <Button
                     title="Save"
                     onPress={() => {
-                      handleSaveExpenseType(expenseCategory, selectedColor);
+                      saveExpenseType(expenseCategory, selectedColor);
                       setModalVisible(false);
                       setExpenseCategory("");
                       setSelectedColor("");
