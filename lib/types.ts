@@ -38,7 +38,7 @@ export interface Mood {
   dateTime: string;
   mood_type: string;
   description: string;
-  historyId: string;
+  historyId: string | null;
 }
 
 export interface Other {

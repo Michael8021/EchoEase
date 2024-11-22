@@ -17,17 +17,20 @@ const styles = StyleSheet.create({
 });
 
 const moodMap: { [key: string]: { description: string, value: number } } = {
-  "😭": { description: "Very Sad", value: 1 },
-  "😢": { description: "Sad", value: 2 },
-  "😐": { description: "Neutral", value: 3 },
-  "😊": { description: "Happy", value: 4 },
-  "😁": { description: "Very Happy", value: 5 },
+  "😭": { description: "Very Sad", value: 0 },
+  "😢": { description: "Sad", value: 1 },
+  "😐": { description: "Neutral", value: 2 },
+  "😊": { description: "Happy", value: 3 },
+  "😁": { description: "Very Happy", value: 4 },
 };
 
-const descriptionToValueMap: { [key: string]: number } = Object.keys(moodMap).reduce((acc, key) => {
-  acc[moodMap[key].description] = moodMap[key].value;
-  return acc;
-}, {} as { [key: string]: number });
+const moodMap2: { [key: string]: number } = {
+  "Very Sad": 0,
+  "Sad": 1,
+  "Neutral": 2,
+  "Happy": 3,
+  "Very Happy": 4,
+};
 
 async function getUserId() {
   const currentUser = await getCurrentUser();
@@ -45,49 +48,40 @@ async function getHistoryId() {
 
 
 const Mood = () => {
-  const [user, setUser] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [moodData, setMoodData] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
-  const [moods, setMoods] = useState<any[]>([]); // Add moods to state
   const [historyId, setHistoryId] = useState<string | null>(null);
   const router = useRouter()
 
   const fetchMoodData = async () => {
     const currentUser = await getUserId();
-    setUser(currentUser);
     setUserId(currentUser.$id);
     if (!currentUser) return;
     try {
       const fetchedMoods = await getMoods(currentUser.$id);
       const data = new Array(7).fill(0);
       fetchedMoods.forEach((mood: any, index) => {
-        let moodValue = Object.keys(descriptionToValueMap).indexOf(mood.mood_type);
-        if (moodValue === -1) {
+        let moodValue = moodMap2[mood.mood_type];
+        console.log("Mood Value: ", moodValue);
+        if (moodValue === undefined) 
           moodValue = 0;
         }
         data[index] = moodValue;
       });
-      setMoods(fetchedMoods); // Update moods state
       setMoodData(data);
     } catch (error) {
       console.error("Error fetching mood data:", error);
     }
-    const validHistoryId = await getHistoryId();
-    setHistoryId(validHistoryId);
   };
 
   useEffect(() => {
     fetchMoodData();
-  }, [user]);
+  }, []);
 
   const saveMoodToDatabase = async () => {
-    if (!user) {
-      Alert.alert("Error", "You must be logged in to save a mood");
-      return;
-    }
     if (selectedMood) {
       const dateTime = new Date().toISOString().split('.')[0];
       console.log(dateTime);
@@ -129,8 +123,9 @@ const Mood = () => {
 
   const formatYLabel = (value: string) => {
     const index = parseInt(value, 10);
-    return ["No data", "😭", "😢", "😐", "😊", "😁"][index];
+    return ["😭", "😢", "😐", "😊", "😁"][index];
   };
+  console.log(moodData);
 
   return (
     <SafeAreaView style={styles.androidSafeArea}>
@@ -172,7 +167,6 @@ const Mood = () => {
               yAxisLabel=""
               yAxisSuffix=""
               yAxisInterval={1}
-              segments={5}
               chartConfig={{
                 backgroundColor: "#161622",
                 backgroundGradientFrom: "#161622",

@@ -430,12 +430,10 @@ export async function getMoods(userId: string) {
   const monday = new Date(date.setDate(diff));
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
-
   // Set monday to the start of the day (00:00:00)
   monday.setHours(0, 0, 0, 0);
   // Set sunday to the end of the day (23:59:59)
   sunday.setHours(23, 59, 59, 999);
-
   const moods = await databases.listDocuments(
     appwriteConfig.databaseId,
     appwriteConfig.moodCollectionId,
@@ -455,13 +453,16 @@ export async function getMoods(userId: string) {
   for (let i = 0; i < 7; i++) {
     const currentDate = new Date(monday);
     currentDate.setDate(monday.getDate() + i);
-    const dateString = currentDate.toISOString().split('T')[0];
+    //console.log("Current Date: ", currentDate);
+    const dateString = currentDate.toLocaleDateString('en-CA').split('T')[0];
 
+    //console.log("Date String: ", dateString);
     if (moodMap.has(dateString)) {
       result.push(moodMap.get(dateString));
     } else {
       result.push({ dateTime: dateString, mood: null });
     }
   }
+  //console.log("Result: ", result);
   return result;
 }
