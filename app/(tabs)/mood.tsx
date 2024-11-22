@@ -68,7 +68,6 @@ const Mood = () => {
         console.log("Mood Value: ", moodValue);
         if (moodValue === undefined) 
           moodValue = 0;
-        }
         data[index] = moodValue;
       });
       setMoodData(data);
@@ -83,12 +82,12 @@ const Mood = () => {
 
   const saveMoodToDatabase = async () => {
     if (selectedMood) {
-      const dateTime = new Date().toISOString().split('.')[0];
-      console.log(dateTime);
+      const datetime = new Date().toISOString();
+      console.log(datetime);
       const mood_type = moodMap[selectedMood].description;
       const newMood = {
         userId: userId!,
-        dateTime: dateTime,
+        datetime: datetime,
         mood_type: mood_type,
         description: description,
         historyId: historyId

@@ -35,7 +35,7 @@ export interface Finance {
 
 export interface Mood {
   userId: string;
-  dateTime: string;
+  datetime: string;
   mood_type: string;
   description: string;
   historyId: string | null;

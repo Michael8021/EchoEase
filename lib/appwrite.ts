@@ -386,8 +386,8 @@ export async function createMood(mood: Mood) {
       appwriteConfig.moodCollectionId,
       [
         Query.equal("userId", mood.userId),
-        Query.greaterThanEqual("dateTime", startOfDay.toISOString()),
-        Query.lessThanEqual("dateTime", endOfDay.toISOString())
+        Query.greaterThanEqual("datetime", startOfDay.toISOString()),
+        Query.lessThanEqual("datetime", endOfDay.toISOString())
       ]
     );
 
@@ -410,7 +410,7 @@ export async function createMood(mood: Mood) {
         ID.unique(),
         {
           userId: mood.userId,
-          dateTime: mood.dateTime,
+          datetime: mood.datetime,
           mood_type: mood.mood_type,
           description: mood.description,
           historyId: mood.historyId
@@ -439,13 +439,14 @@ export async function getMoods(userId: string) {
     appwriteConfig.moodCollectionId,
     [
       Query.equal("userId", userId),
-      Query.greaterThanEqual("dateTime", monday.toISOString()),
-      Query.lessThanEqual("dateTime", sunday.toISOString())
+      Query.greaterThanEqual("datetime", monday.toISOString()),
+      Query.lessThanEqual("datetime", sunday.toISOString())
     ]
   );
   // Create a map of dates to mood documents
-  const moodMap = new Map(moods.documents.map(mood => [new Date(mood.dateTime).toISOString().split('T')[0], mood]));
+  const moodMap = new Map(moods.documents.map(mood => [new Date(mood.datetime).toLocaleDateString().split('T')[0], mood]));
 
+  console.log(moodMap);
   // Initialize an array to hold the results
   const result = [];
 
@@ -453,16 +454,16 @@ export async function getMoods(userId: string) {
   for (let i = 0; i < 7; i++) {
     const currentDate = new Date(monday);
     currentDate.setDate(monday.getDate() + i);
-    //console.log("Current Date: ", currentDate);
-    const dateString = currentDate.toLocaleDateString('en-CA').split('T')[0];
+    console.log("Current Date: ", currentDate);
+    const dateString = currentDate.toLocaleDateString().split('T')[0];
 
-    //console.log("Date String: ", dateString);
+    console.log("Date String: ", dateString);
     if (moodMap.has(dateString)) {
       result.push(moodMap.get(dateString));
     } else {
-      result.push({ dateTime: dateString, mood: null });
+      result.push({ datetime: dateString, mood: null });
     }
   }
-  //console.log("Result: ", result);
+  console.log("Result: ", result);
   return result;
 }
