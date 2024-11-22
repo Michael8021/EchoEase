@@ -1,0 +1,68 @@
+{
+    "schedule": [
+        {
+            "description": "User greets assistant and inquires about its wellbeing.",
+            "due_date": "",
+            "end_time": "",
+            "historyId": "67303984002fee2c27b5",
+            "notify_at": "",
+            "start_time": "2024-11-10T12:41:42",
+            "status": "pending",
+            "title": "User Greeting",
+            "type": "event"
+        },
+        {
+            "description": "User asks about the weather in Tokyo.",
+            "due_date": "",
+            "end_time": "",
+            "historyId": "67303984002fee2c27b5",
+            "notify_at": "",
+            "start_time": "2024-11-10T12:41:42",
+            "status": "pending",
+            "title": "User Question",
+            "type": "event"
+        }
+    ],
+    "finance": [
+        {
+            "transaction_type": "expense",
+            "amount": 1200,
+            "currency": "USD",
+            "category": "rent",
+            "date": "2024-11-10T00:00:00Z",
+            "description": "Monthly rent payment"
+        },
+        {
+            "transaction_type": "income",
+            "amount": 1200,
+            "currency": "USD",
+            "category": "salary",
+            "date": "2024-11-10T00:00:00Z",
+            "description": "Monthly salary payment"
+        }
+    ],
+    "mood": [
+        {
+            "mood_type": "happy",
+            "description": "User feels happy today.",
+            "datetime": "2024-11-10T12:41:42"
+        },
+        {
+            "mood_type": "sad",
+            "description": "User feels sad today.",
+            "datetime": "2024-11-10T12:41:42"
+        }
+    ],
+    "other": [
+        {
+            "title": "User asks about the weather in Tokyo.",
+            "description": "User asks about the weather in Tokyo.",
+            "datetime": "2024-11-10T12:41:42"
+        },
+        {
+            "title": "User asks about the weather in Tokyo.",
+            "description": "User asks about the weather in Tokyo.",
+            "datetime": "2024-11-10T12:41:42"
+        }
+    ]
+}

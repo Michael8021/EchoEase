@@ -7,7 +7,6 @@
    ```bash
    npm install
    ```
-2. Install additional required dependencies
 
    ```bash
    npx expo install react-native-appwrite react-native-url-polyfill
