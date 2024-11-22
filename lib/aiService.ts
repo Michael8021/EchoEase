@@ -111,6 +111,7 @@ export const categorizeAndExtractData = async (
   second: '2-digit',
   hour12: false // Use 24-hour format
 }).format(new Date())}.
+- The timezone of the user is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.
 - Analyze the input text.
 - Categorize each relevant part into one or more of the above categories.
 - Extract the required fields for each categorized entry.
