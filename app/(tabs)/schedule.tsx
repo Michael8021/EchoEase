@@ -50,46 +50,50 @@ const Schedule = () => {
   // const [items, setItems] = useState<ScheduleItems>(initialItems);
   const [items, setItems] = useState<ScheduleItems>({});
 
-
   useEffect(() => {
-    const fetchSchedules = async () => {
-      setLoading(true);
-      try {
-        const schedules = await getSchedules();
+    fetchSchedules(); // Initial fetch
 
-        // const formattedItems = { ...initialItems }; // Start with initial items
-        const formattedItems: ScheduleItems = {};
+    // Set up polling every 10 seconds
+    const intervalId = setInterval(fetchSchedules, 10000); // Adjust the interval as needed
 
-        schedules.forEach(schedule => {
-          const date = schedule.start_time.split('T')[0]; // Extract date
-          const formattedTime = formatTime(schedule.start_time); // Format time
-          const formattedEndTime = formatTime(schedule.end_time);
-
-          if (!formattedItems[date]) {
-            formattedItems[date] = []; // Initialize the array if it doesn't exist
-          }
-          formattedItems[date].push({
-            name: schedule.title,
-            start_time: formattedTime,
-            end_time : formattedEndTime,
-            description: schedule.description,
-            type: schedule.type,
-            status: schedule.status,
-            notify_at: schedule.notify_at
-          });
-        });
-
-        setItems(formattedItems);
-
-      } catch (error) {
-        console.error('Failed to fetch schedules:', error);
-      } finally {
-        setLoading(false);
-      }
+    // Cleanup on unmount
+    return () => {
+      clearInterval(intervalId);
     };
-
-    fetchSchedules();
   }, []);
+
+  const fetchSchedules = async () => {
+    setLoading(true);
+    try {
+      const schedules = await getSchedules();
+      const formattedItems: ScheduleItems = {};
+
+      schedules.forEach(schedule => {
+        const date = schedule.start_time.split('T')[0]; // Extract date
+        const formattedTime = formatTime(schedule.start_time); // Format time
+        const formattedEndTime = formatTime(schedule.end_time);
+
+        if (!formattedItems[date]) {
+          formattedItems[date] = []; // Initialize the array if it doesn't exist
+        }
+        formattedItems[date].push({
+          name: schedule.title,
+          start_time: formattedTime,
+          end_time: formattedEndTime,
+          description: schedule.description,
+          type: schedule.type,
+          status: schedule.status,
+          notify_at: schedule.notify_at,
+        });
+      });
+
+      setItems(formattedItems);
+    } catch (error) {
+      console.error('Failed to fetch schedules:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderEmptyData = () => {
     return (
