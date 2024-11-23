@@ -446,7 +446,6 @@ export async function getMoods(userId: string) {
   // Create a map of dates to mood documents
   const moodMap = new Map(moods.documents.map(mood => [new Date(mood.datetime).toLocaleDateString().split('T')[0], mood]));
 
-  console.log(moodMap);
   // Initialize an array to hold the results
   const result = [];
 
@@ -454,16 +453,12 @@ export async function getMoods(userId: string) {
   for (let i = 0; i < 7; i++) {
     const currentDate = new Date(monday);
     currentDate.setDate(monday.getDate() + i);
-    console.log("Current Date: ", currentDate);
     const dateString = currentDate.toLocaleDateString().split('T')[0];
-
-    console.log("Date String: ", dateString);
     if (moodMap.has(dateString)) {
       result.push(moodMap.get(dateString));
     } else {
-      result.push({ datetime: dateString, mood: null });
+      result.push({ datetime: dateString, mood_type: null, description: null });
     }
   }
-  console.log("Result: ", result);
   return result;
 }
