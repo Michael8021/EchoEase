@@ -206,7 +206,7 @@ const Finance = () => {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View className="mx-5 flex flex-row justify-between items-center">
             <View>
-              <Text className="text-white text-1.5xl">
+              <Text className="text-yellow-400 text-1.5xl">
                 My <Text className="font-bold">Expenses</Text>
               </Text>
               <Text className="text-white my-3 text-4xl font-semibold">

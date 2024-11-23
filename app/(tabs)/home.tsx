@@ -17,14 +17,26 @@ const mockSchedule = [
   { time: "05:00 PM", task: "Grocery Shopping" },
 ];
 
-const Home: React.FC = () => {
+const getFormattedDate = (): string => {
+  const date = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  return date.toLocaleDateString(undefined, options); // Use system locale
+};
+
+const Home = () => {
   const router = useRouter();
+  const todayDate = getFormattedDate();
 
   return (
     <SafeAreaView className="flex-1 bg-black">
       {/* Header */}
       <View className="flex-row justify-between items-center px-4 py-6 bg-black">
-        <Text className="text-3xl font-semibold text-yellow-500">EchoEase</Text>
+        <Text className="text-3xl font-semibold text-secondary">EchoEase</Text>
         <TouchableOpacity onPress={() => router.push("/settings")}>
           <Image source={icons.settings} className="w-7 h-7" />
         </TouchableOpacity>
@@ -32,6 +44,13 @@ const Home: React.FC = () => {
 
       {/* Content */}
       <View className="flex-1 px-4">
+        {/* Display today's date */}
+        <View className="bg-gray-800 rounded-lg p-3 mb-4 shadow-lg">
+          <Text className="text-base text-yellow-400 font-semibold text-center">
+            {todayDate}
+          </Text>
+        </View>
+
         {/* Today's Schedule */}
         <View className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
           <Text className="text-lg font-bold text-yellow-400 mb-3">
@@ -39,7 +58,7 @@ const Home: React.FC = () => {
           </Text>
           <FlatList
             data={mockSchedule}
-            // keyExtractor={(item, index) => `${index}`} // No need for any type casting here
+            keyExtractor={(item: any, index: any) => `${index}`}
             renderItem={({ item }: { item: ScheduleItem }) => (
               <View className="flex-row justify-between mb-2">
                 <Text className="text-sm text-white">{item.time}</Text>
