@@ -5,7 +5,7 @@ import { SplashScreen } from "expo-router";
 import GlobalProvider from "../context/GlobalProvider";
 
 import "../global.css";
-import "../lib/errorHandler";
+import '../lib/errorHandler';
 
 SplashScreen.preventAutoHideAsync();
 
