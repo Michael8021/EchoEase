@@ -55,6 +55,7 @@ const SpendingBlock = ({
 
   const handleAddSpending = () => {
     if (newSpending.name && newSpending.amount && newSpending.date) {
+      console.log(newSpending);
       addSpending(newSpending);
       setModalVisible(false);
       setNewSpending({

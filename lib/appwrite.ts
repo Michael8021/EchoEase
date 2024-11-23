@@ -9,7 +9,7 @@ import {
     Permission, 
     Role
   } from "react-native-appwrite";
-  import { SpendingItem } from "../type";
+  import { SpendingItem,ExpenseItem } from "../type";
 
 import { Schedule } from "./types";
 
@@ -250,6 +250,25 @@ export const getExpenseTypes = async () => {
     console.error('Error retrieving expense types:', error);
     alert('Failed to retrieve expense types. Please try again.');
     return [];
+  }
+};
+
+//delete expense type
+export const deleteExpenseTypes = async (expenseTypeId: string) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not found");
+
+    if (!expenseTypeId) throw new Error("ExpenseType ID is required");
+
+    await databases.deleteDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.expense_typeId,
+      expenseTypeId
+    );
+  } catch (error) {
+    console.error('Error deleting expense type:', error);
+    alert('Failed to delete expense type. Please try again.');
   }
 };
 

@@ -1,4 +1,5 @@
 export interface ExpenseItem {
+    id:string;
     category: string;
     amount:string;
     color:string;

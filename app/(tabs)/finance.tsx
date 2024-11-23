@@ -26,6 +26,7 @@ const Finance = () => {
     try {
       const expenses = await getExpenseTypes();
       const formattedExpenses = expenses.map((expense: any) => ({
+        id: expense.$id,
         category: expense.category,
         amount: expense.amount,
         color: expense.color,
@@ -134,10 +135,11 @@ const Finance = () => {
       ],
       (response) => {
         const { events, payload } = response;
-        const expense = payload as ExpenseItem;
+        const expense = payload as any;
 
         if (events.some((event) => event.includes(".create"))) {
           const newExpense = {
+            id: expense.$id, 
             category: expense.category,
             amount: expense.amount,
             color: expense.color,

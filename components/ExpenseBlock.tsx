@@ -9,18 +9,17 @@ import {
   TextInput,
   TouchableOpacity,
   Button,
+  Alert,
 } from "react-native";
 import React, { useState } from "react";
 import { ExpenseItem } from "../type";
 import { Feather } from "@expo/vector-icons";
-import { addExpenseType } from "../lib/appwrite";
-
-
-const colors = ["#5e16f8", "#2ac7e7", "#4498f7", "#FFA5BA"];
+import { addExpenseType, deleteExpenseTypes } from "../lib/appwrite";
+import { expenseTypeColors } from "../constants/Colors";
 
 const ExpenseBlock = ({
   expensedata,
-  categoryData
+  categoryData,
 }: {
   expensedata: ExpenseItem[];
   categoryData: { category: string; percentage: string; totalAmount: number }[];
@@ -28,6 +27,33 @@ const ExpenseBlock = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [expenseCategory, setExpenseCategory] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+
+  const handleDelete = async (expenseTypeId: string) => {
+    // Alert.alert(
+    //   "Delete Expense",
+    //   "Are you sure you want to delete this expense?",
+    //   [
+    //     {
+    //       text: "Cancel",
+    //       style: "cancel",
+    //     },
+    //     {
+    //       text: "Delete",
+    //       onPress: async () => {
+    //         try {
+    //           await deleteExpenseTypes(expenseTypeId);
+    //           setData((prevData) => prevData.filter((item) => item.id !== expenseTypeId));
+    //         } catch (error) {
+    //           console.error("Failed to delete expense type:", error);
+    //           alert("Failed to delete expense type. Please try again.");
+    //         }
+    //       },
+    //       style: "destructive",
+    //     },
+    //   ]
+    // );
+  };
+
   const renderItem: ListRenderItem<ExpenseItem> = ({ item, index }) => {
     if (index == 0) {
       return (
@@ -37,11 +63,11 @@ const ExpenseBlock = ({
               style={{
                 flex: 1,
                 borderWidth: 2,
-                height:110,
+                height: 110,
                 borderColor: "#666",
                 borderStyle: "dashed",
                 borderRadius: 10,
-                marginHorizontal:20,
+                marginHorizontal: 20,
                 padding: 20,
                 justifyContent: "center",
                 alignItems: "center",
@@ -56,20 +82,23 @@ const ExpenseBlock = ({
             visible={modalVisible}
             onRequestClose={() => setModalVisible(false)}
           >
-            <View style={styles.modalBackground}>
-              <View style={styles.modalContainer}>
-                <Text style={styles.modalTitle}>Add Expense Type</Text>
+            <View className="flex-1 justify-center items-center bg-[rgba(0,0,0,0.5)]">
+              <View className="w-[90%] p-5 bg-primary rounded-lg border-white">
+                <Text className="text-[18px] font-bold mb-2.5 text-secondary">
+                  Add Expense Type
+                </Text>
 
                 <TextInput
                   placeholder="Expense category"
                   style={styles.input}
                   value={expenseCategory}
                   onChangeText={setExpenseCategory}
+                  placeholderTextColor="#888"
                 />
 
-                <Text style={styles.colorPickerLabel}>Select Color:</Text>
-                <View style={styles.colorOptionsContainer}>
-                  {colors.map((color, index) => (
+                <Text className="text-white mb-3 ">Select Color:</Text>
+                <View className="flex-row justify-around mb-5">
+                  {expenseTypeColors.map((color, index) => (
                     <TouchableOpacity
                       key={index}
                       onPress={() => setSelectedColor(color)}
@@ -84,24 +113,29 @@ const ExpenseBlock = ({
                   ))}
                 </View>
 
-                <View style={styles.buttonContainer}>
-                  <Button
-                    title="Cancel"
+                <View className="flex-row justify-between w-full">
+                  <TouchableOpacity
                     onPress={() => {
                       setModalVisible(false);
                       setExpenseCategory("");
                       setSelectedColor("");
                     }}
-                  />
-                  <Button
-                    title="Save"
+                    className="bg-primary px-4 py-2 rounded-md"
+                  >
+                    <Text className="text-white text-center">Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
                     onPress={() => {
                       addExpenseType(expenseCategory, selectedColor);
                       setModalVisible(false);
                       setExpenseCategory("");
                       setSelectedColor("");
                     }}
-                  />
+                    className="bg-secondary px-4 py-2 rounded-md"
+                  >
+                    <Text className="text-black text-center">Save</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -109,24 +143,25 @@ const ExpenseBlock = ({
         </>
       );
     }
-    let amount = item.amount?.split(".");
     const category = categoryData.find((cat) => cat.category === item.category);
-    const categoryPercentage = category ? category.percentage : '0.00';
+    const categoryPercentage = category ? category.percentage : "0.00";
     const categoryTotalAmount = category ? category.totalAmount : 0;
     const formattedAmount = categoryTotalAmount.toFixed(2);
     const [whole, decimal] = formattedAmount.split(".");
-    
+
     return (
-      <View style={[styles.expenseBlock, { backgroundColor: item.color }]}>
-        <Text className="text-white">{item.category}</Text>
-        <Text className="text-white" style={styles.expenseBlockTxt2}>
-          ${whole}.
-          <Text style={styles.expenseBlockTxt2Span}>{decimal}</Text>
-        </Text>
-        <View style={styles.expenseBlockTxt3View}>
-          <Text className="text-white">{categoryPercentage}%</Text>
+      <TouchableOpacity
+        onLongPress={() => { handleDelete(item.id)}}>
+        <View style={[styles.expenseBlock, { backgroundColor: item.color }]}>
+          <Text className="text-white">{item.category}</Text>
+          <Text className="text-white" style={styles.expenseBlockTxt2}>
+            ${whole}.<Text style={styles.expenseBlockTxt2Span}>{decimal}</Text>
+          </Text>
+          <View style={styles.expenseBlockTxt3View}>
+            <Text className="text-white">{categoryPercentage}%</Text>
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
   const staticitem = [
@@ -153,7 +188,7 @@ export default ExpenseBlock;
 const styles = StyleSheet.create({
   expenseBlock: {
     width: 100,
-    height:110,
+    height: 110,
     padding: 15,
     borderRadius: 15,
     marginRight: 20,
@@ -175,40 +210,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 10,
   },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  button: {
-    flex: 1,
-    borderWidth: 2,
-    borderColor: "#666",
-    borderStyle: "dashed",
-    borderRadius: 10,
-    marginRight: 20,
-    padding: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalBackground: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContainer: {
-    width: "80%",
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 20,
-    alignItems: "center",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
   input: {
     width: "100%",
     height: 40,
@@ -217,26 +218,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     marginBottom: 15,
+    color: "#ffffff",
   },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  colorPickerLabel: {
-    fontSize: 16,
-    marginVertical: 10,
-  },
-  colorOptionsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 20,
-  },
+
   colorOption: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    borderColor: "#000",
-    marginHorizontal: 5,
+    borderColor: "#FFFFFF",
+    marginHorizontal: 3,
   },
 });
