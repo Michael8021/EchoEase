@@ -143,7 +143,8 @@ const Finance = () => {
             color: expense.color,
           };
           setExpensedata((prevData) => [...prevData, newExpense]);
-        } else if (events.some((event) => event.includes(".delete"))) {
+        } 
+        if (events.some((event) => event.includes(".delete"))) {
           setExpensedata((prevData) =>
             prevData.filter(
               (existingExpense) => existingExpense.category !== expense.category
@@ -158,24 +159,36 @@ const Finance = () => {
       ],
       (response) => {
         const { events, payload } = response;
-        const spending = payload as SpendingItem;
-
+        const spending = payload as any;
+    
         if (events.some((event) => event.includes(".create"))) {
           const newSpending = {
-            id: spending.id,
+            id: spending.$id, 
             name: spending.name,
             amount: spending.amount,
             date: spending.date,
             category: spending.category,
           };
           setSpendingdata((prevData) => [...prevData, newSpending]);
-        } else if (events.some((event) => event.includes(".delete"))) {
+        }
+    
+        if (events.some((event) => event.includes(".delete"))) {
           setSpendingdata((prevData) =>
-            prevData.filter((item) => item.name !== spending.name)
+            prevData.filter((item) => item.id !== spending.$id)
+          );
+        }
+        if (events.some((event) => event.includes(".update"))) {
+          setSpendingdata((prevData) =>
+            prevData.map((item) =>
+              item.id === spending.$id
+                ? { ...item, ...spending } 
+                : item
+            )
           );
         }
       }
     );
+    
     return () => {
       unsubscribe_expenses();
       unsubscribe_spendings();

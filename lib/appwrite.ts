@@ -211,8 +211,8 @@ export async function updateUsername(newUsername: string) {
 //----------------------------------------------account---------------------------------------------------------
 
 //----------------------------------------------finance---------------------------------------------------------
-//save expense type
-export const saveExpenseType = async (expenseCategory:string,selectedColor:string) => {
+//add expense type
+export const addExpenseType = async (expenseCategory:string,selectedColor:string) => {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) throw Error;
@@ -253,8 +253,8 @@ export const getExpenseTypes = async () => {
   }
 };
 
-//save spending
-export const saveSpending = async (newSpending:SpendingItem) => {
+//add spending
+export const addSpending = async (newSpending:SpendingItem) => {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) throw Error;
@@ -296,6 +296,54 @@ export const getSpending = async () => {
     return [];
   }
 };
+
+//update spending
+export const updateSpending = async (spending: SpendingItem) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not found");
+
+    if (!spending.id) throw new Error("Spending ID is required");
+
+    await databases.updateDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.spendingId, 
+      spending.id, 
+      {
+        category: spending.category,
+        name: spending.name,
+        amount: spending.amount,
+        date: spending.date,
+        userId: currentUser.$id,
+      }
+    );
+  } catch (error) {
+    console.error('Error updating spending:', error);
+    alert('Failed to update spending. Please try again.');
+  }
+};
+
+// delete spending
+export const deleteSpending = async (spending: SpendingItem) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not found");
+
+    if (!spending.id) throw new Error("Spending ID is required");
+
+    await databases.deleteDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.spendingId, 
+      spending.id
+    );
+  } catch (error) {
+    console.error('Error deleting spending:', error);
+    alert('Failed to delete spending. Please try again.');
+  }
+};
+
+
+
 //----------------------------------------------finance---------------------------------------------------------
 
 //----------------------------------------------history---------------------------------------------------------
