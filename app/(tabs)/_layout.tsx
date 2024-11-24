@@ -132,7 +132,6 @@ const TabLayout = () => {
           }}
         />
       </Tabs>
-
       <Loader isLoading={loading} />
       <FloatingButton />
       <StatusBar backgroundColor="#161622" style="light" />

@@ -1,36 +1,41 @@
 import {
-  Account,
-  Avatars,
-  Client,
-  Databases,
-  ID,
-  Query,
-  Storage,
-} from "react-native-appwrite";
-
+    Account,
+    Avatars,
+    Client,
+    Databases,
+    ID,
+    Query,
+    Storage,
+    Permission, 
+    Role
+  } from "react-native-appwrite";
+import { SpendingItem,ExpenseItem } from "../type";
 import { Schedule, Mood } from "./types";
 
 export const appwriteConfig = {
-  endpoint: 'https://cloud.appwrite.io/v1',
-  platform: 'com.platform.echoease',
-  projectId: '6728739400249b29108d',
-  databaseId: '672874b7001bef17e4d6',
-  userCollectionId: '672874c60003d32a2491',
-  scheduleCollectionId: '672878b6000297694b47',
-  historyCollectionId: '672eeced0003474523e6',
-  moodCollectionId: '672ce11300183b1fd08f',
+    endpoint: 'https://cloud.appwrite.io/v1',
+    platform: 'com.platform.echoease',
+    projectId: '6728739400249b29108d',
+    databaseId: '672874b7001bef17e4d6',
+    userCollectionId: '672874c60003d32a2491',
+    expense_typeId: '673833fe0036fd646922',
+    spendingId:'673df70f000e35b7d8c1',
+    scheduleCollectionId: '672878b6000297694b47',
+    historyCollectionId: '672eeced0003474523e6',
+    moodCollectionId: '672ce11300183b1fd08f',
 }
 
 
-const client = new Client()
-  .setEndpoint(appwriteConfig.endpoint)
-  .setProject(appwriteConfig.projectId)
-  .setPlatform(appwriteConfig.platform);
+export const client = new Client()
+    .setEndpoint(appwriteConfig.endpoint)
+    .setProject(appwriteConfig.projectId)
+    .setPlatform(appwriteConfig.platform);
 
 const account = new Account(client);
 const avatars = new Avatars(client);
 const databases = new Databases(client);
 
+//----------------------------------------------account---------------------------------------------------------
 // Register user
 export async function createUser(email: string, password: string, username: string) {
   try {
@@ -56,7 +61,7 @@ export async function createUser(email: string, password: string, username: stri
         email: email,
         username: username,
         avatar: avatarUrl,
-      }
+      },
     );
 
     return newUser;
@@ -118,7 +123,6 @@ export async function signOut() {
     throw new Error(String(error));
   }
 }
-
 
 // Change Password
 export async function changePassword(oldPassword: string, newPassword: string) {
@@ -283,7 +287,9 @@ export async function updateHistory(documentId: string, data: Partial<Schedule>)
     throw new Error(String(error));
   }
 }
+//----------------------------------------------history---------------------------------------------------------
 
+//----------------------------------------------schedule---------------------------------------------------------
 // Create Schedule
 export async function createSchedule(schedule: Omit<Schedule, '$id'>) {
   try {
