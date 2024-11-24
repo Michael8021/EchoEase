@@ -405,7 +405,8 @@ export async function createMood(mood: Mood) {
         moodId,
         {
           mood_type: mood.mood_type,
-          description: mood.description
+          description: mood.description,
+          historyId: mood.historyId
         }
       );
       return updatedMood;

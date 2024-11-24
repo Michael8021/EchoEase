@@ -10,12 +10,15 @@ import { Schedule, History } from '../lib/types';
 import { useHistories } from '../context/HistoriesContext';
 import { CategorizedData } from '../lib/types';
 import { testScheduleOperations } from '../lib/test/scheduleTest';
+import { useMoodContext } from '../context/MoodContext';
+
 const FloatingButton = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [promptText, setPromptText] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const { user } = useGlobalContext();
     const { addHistory } = useHistories();
+    const { refreshMoods } = useMoodContext();
 
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [permissionResponse, requestPermission] = Audio.usePermissions();
@@ -121,6 +124,7 @@ const FloatingButton = () => {
             });
             contentData.mood.forEach(async (item) => {
                 await createMood(item);
+                refreshMoods();
             });
             
             return;

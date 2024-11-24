@@ -58,7 +58,7 @@ export const categorizeAndExtractData = async (
       messages: [
         {
           role: 'system',
-          content: `You are an AI assistant that categorizes and extracts information from user input. Categorize the input into the following types: schedule, expense types, spending, mood, or other. For each category, extract relevant details as specified below.
+          content: `You are an AI assistant that categorizes and extracts information from user input. Categorize the input into the following types: schedule, finance, mood, or other. For each category, extract relevant details as specified below.
 
 **Categories and Required Fields**:
 
@@ -83,18 +83,20 @@ export const categorizeAndExtractData = async (
         - start_time: leave blank
         - end_time: leave blank
 
-2. **Expense types**:
-    - color: string (e.g., "white")
+2. **Finance**:
+    - transaction_type: "expense" or "income"
+    - amount: number
+    - currency: string (e.g., "USD")
     - category: string (e.g., "rent", "salary")
     - date: ISO 8601 string
-    - category:string (e.g., should appear in the expense types, otherwise create an expense types first)
+    - description: string
 
 3. **Mood**:
     - mood_type: string (e.g., "Very Sad", "Sad", "Neutral", "Happy", "Very Happy")
     - description: string
     - datetime: ISO 8601 string
 
-5. **Other**:
+4. **Other**:
     - title: string
     - description: string
     - datetime: ISO 8601 string
@@ -109,7 +111,6 @@ export const categorizeAndExtractData = async (
   second: '2-digit',
   hour12: false // Use 24-hour format
 }).format(new Date())}.
-- The timezone of the user is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.
 - Analyze the input text.
 - Categorize each relevant part into one or more of the above categories.
 - Extract the required fields for each categorized entry.
@@ -168,36 +169,25 @@ Return a JSON object with the following structure:
                   additionalProperties: false,
                 },
               },
-              expense_types: {
+              finance: {
                 type: 'array',
                 items: {
                   type: 'object',
                   properties: {
-                    color: { type: 'string' },
-                    category: { type: 'string' }, 
-                  },
-                  required: ['color', 'category'],
-                  additionalProperties: false,
-                },
-              },
-              spending: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    name: { type: 'string' },
+                    transaction_type: { type: 'string', enum: ['expense', 'income'] },
                     amount: { type: 'number' },
-                    date: { type: 'string', format: 'date-time' }, 
-                    category: { 
-                      type: 'string', 
-                      description: 'Must match an existing expense type category. If not found, create the category first.' 
-                    },
+                    currency: { type: 'string' },
+                    category: { type: 'string' },
+                    date: { type: 'string' },
+                    description: { type: 'string' },
                   },
                   required: [
-                    'name',
+                    'transaction_type',
                     'amount',
-                    'date',
+                    'currency',
                     'category',
+                    'date',
+                    'description',
                   ],
                   additionalProperties: false,
                 },

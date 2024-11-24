@@ -7,6 +7,7 @@ import { Portal, Modal, TextInput, Provider } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { BarChart } from "react-native-gifted-charts";
 import { createMood, getMoods, getCurrentUser, getHistory } from "../../lib/appwrite";
+import { useMoodContext } from '../../context/MoodContext';
 
 const styles = StyleSheet.create({
   androidSafeArea: {
@@ -59,6 +60,7 @@ const Mood = () => {
   const [moodData, setMoodData] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [historyId, setHistoryId] = useState<string | null>(null);
   const router = useRouter()
+  const { refreshMoods } = useMoodContext(); // Get setFetchMoodData from context
 
   const fetchMoodData = async () => {
     const currentUser = await getUserId();
@@ -92,7 +94,7 @@ const Mood = () => {
 
   useEffect(() => {
     fetchMoodData();
-  }, []);
+  }, [refreshMoods]);
 
   const saveMoodToDatabase = async () => {
     if (selectedMood) {
