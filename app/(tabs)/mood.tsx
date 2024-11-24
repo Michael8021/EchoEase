@@ -53,6 +53,7 @@ const Mood = () => {
   const [selectedMood, setSelectedMood] = useState<string>("");
   const [chartModalVisible, setChartModalVisible] = useState(false);
   const [descriptionData, setDescriptionData] = useState([]);
+  const [selectedDay, setSelectedDay] = useState<string>("");
   const [selectedDescription, setSelectedDescription] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [moodData, setMoodData] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
@@ -153,25 +154,31 @@ const Mood = () => {
               borderRadius: 12,
               flexDirection: "row",
               justifyContent: "space-around",
+              paddingLeft: 28,
             }}
           >
             {/* Mood Chart */}
             <BarChart
-              showYAxisIndices
-              hideRules
-              backgroundColor={'#232533'}
+              adjustToWidth
+              parentWidth={Dimensions.get('window').width}
+              initialSpacing={10}
+              yAxisThickness={0}
+              xAxisThickness={0}
+              backgroundColor={'#1F1F2E'}
               frontColor={'#FF9C01'}
               showGradient
               gradientColor={'#FFEEFE'}
               yAxisLabelTexts={["😶", "😭", "😢", "😐", "😊", "😁", ""]}
-              maxValue={6}
+              barBorderRadius={4}
+              noOfSections={6}
               stepValue={1}
               stepHeight={50}
               data={moodData}
-              autoShiftLabels
+              hideRules
               isAnimated
               onPress={(item: any, index: any) => {
                 const description = descriptionData.find((entry: any) => entry.label === item.label)?.description || "No description"
+                setSelectedDay(item.label);
                 setSelectedDescription(description);
                 setChartModalVisible(true);
               }}
@@ -274,7 +281,7 @@ const Mood = () => {
                 borderRadius: 10,
               }}
             >
-              <Text className="text-lg font-psemibold mb-5">Mood Description</Text>
+              <Text className="text-lg font-psemibold mb-5">Mood Description on { selectedDay }</Text>
                 <View
                   style={{
                     backgroundColor: "#f0f0f0",

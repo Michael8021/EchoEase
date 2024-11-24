@@ -92,7 +92,7 @@ export const categorizeAndExtractData = async (
     - description: string
 
 3. **Mood**:
-    - mood_type: string (e.g., "happy", "sad")
+    - mood_type: string (e.g., "Very Sad", "Sad", "Neutral", "Happy", "Very Happy")
     - description: string
     - datetime: ISO 8601 string
 
@@ -197,11 +197,11 @@ Return a JSON object with the following structure:
                 items: {
                   type: 'object',
                   properties: {
+                    datetime: { type: 'string' },
                     mood_type: { type: 'string' },
                     description: { type: 'string' },
-                    datetime: { type: 'string' },
                   },
-                  required: ['mood_type', 'description', 'datetime'],
+                  required: ['datetime', 'mood_type', 'description'],
                   additionalProperties: false,
                 },
               },

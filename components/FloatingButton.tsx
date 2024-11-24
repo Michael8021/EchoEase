@@ -5,7 +5,7 @@ import { useGlobalContext } from '../context/GlobalProvider';
 import { categorizeAndExtractData, transcribeAudio } from '../lib/aiService';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
-import { createHistory, createSchedule } from '../lib/appwrite';
+import { createHistory, createSchedule, createMood } from '../lib/appwrite';
 import { Schedule, History } from '../lib/types';
 import { useHistories } from '../context/HistoriesContext';
 import { CategorizedData } from '../lib/types';
@@ -118,6 +118,9 @@ const FloatingButton = () => {
             console.log('Content Data:', contentData);
             contentData.schedule.forEach(async (item) => {
                 await createSchedule(item);
+            });
+            contentData.mood.forEach(async (item) => {
+                await createMood(item);
             });
             
             return;
