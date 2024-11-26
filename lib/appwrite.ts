@@ -229,7 +229,7 @@ export async function updateAvatar(uri: string) {
       [Query.equal("accountId", currentAccount.$id)]
     );
 
-    if (!currentUser.documents[0]) throw Error;
+    if (!currentUser.documents[0]) throw new Error("User not found");
 
     // Delete old avatar if it exists
     const currentAvatar = currentUser.documents[0].avatar;
