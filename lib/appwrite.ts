@@ -18,6 +18,7 @@ export const appwriteConfig = {
     userCollectionId: '672874c60003d32a2491',
     scheduleCollectionId: '672878b6000297694b47',
     historyCollectionId: '672eeced0003474523e6',
+    bucketId: '6745e535000b2448cd22'
 }
 
 
@@ -29,6 +30,9 @@ const client = new Client()
 const account = new Account(client);
 const avatars = new Avatars(client);
 const databases = new Databases(client);
+const storage = new Storage(client);
+
+// ======================== User Management ========================
 
 // Register user
 export async function createUser(email: string, password: string, username: string) {
@@ -204,6 +208,86 @@ export async function updateUsername(newUsername: string) {
   }
 }
 
+// Update Avatar
+export async function updateAvatar(uri: string) {
+  try {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    
+    const file = {
+      name: 'profile.jpg',
+      type: 'image/jpeg',
+      size: blob.size,
+      uri: uri
+    };
+
+    // Get current user to find existing avatar
+    const currentAccount = await account.get();
+    const currentUser = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      [Query.equal("accountId", currentAccount.$id)]
+    );
+
+    if (!currentUser.documents[0]) throw Error;
+
+    // Delete old avatar if it exists
+    const currentAvatar = currentUser.documents[0].avatar;
+    if (currentAvatar && currentAvatar.includes(appwriteConfig.bucketId)) {
+      try {
+        // Extract file ID from the URL using regex
+        const fileIdMatch = currentAvatar.match(/files\/([^/]+)\/view/);
+        const fileId = fileIdMatch ? fileIdMatch[1] : null;
+        
+        if (fileId) {
+          try {
+            await storage.deleteFile(appwriteConfig.bucketId, fileId);
+          } catch (deleteError: any) {
+            // Only log the error if it's not a "file not found" error
+            if (deleteError?.code !== 404) {
+              console.log("Error deleting old avatar:", deleteError);
+            }
+          }
+        }
+      } catch (error) {
+        // If there's an error parsing the URL, just log it and continue
+        console.log("Error parsing avatar URL:", error);
+      }
+    }
+
+    // Upload new avatar
+    const fileId = ID.unique();
+    const uploadedFile = await storage.createFile(
+      appwriteConfig.bucketId,
+      fileId,
+      file
+    );
+
+    if (!uploadedFile) throw Error;
+
+    const fileUrl = storage.getFileView(
+      appwriteConfig.bucketId,
+      uploadedFile.$id
+    );
+
+    const updatedUser = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      currentUser.documents[0].$id,
+      {
+        avatar: fileUrl.href
+      }
+    );
+
+    return updatedUser;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}
+
+// ======================== History Management ========================
+
 // Create History
 export async function createHistory(transcribed_text: string,) {
   try {
@@ -264,6 +348,8 @@ export async function deleteHistory(documentId: string) {
     throw new Error(String(error));
   }
 }
+
+// ======================== Schedule Management ========================
 
 // Update History
 export async function updateHistory(documentId: string, data: Partial<Schedule>) {

@@ -1,19 +1,59 @@
-import { View, Text, TouchableOpacity, Image, Alert, TextInput, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Alert, TextInput, Modal, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { icons } from '../constants';
 import { useGlobalContext } from '../context/GlobalProvider';
-import { signOut, deleteUserAccount, changePassword, updateUsername } from '../lib/appwrite';
+import { signOut, deleteUserAccount, changePassword, updateUsername, updateAvatar } from '../lib/appwrite';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 const Settings = () => {
   const router = useRouter();
-  const { setUser, setIsLogged } = useGlobalContext();
+  const { setUser, setIsLogged, user } = useGlobalContext();
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showChangeUsername, setShowChangeUsername] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newUsername, setNewUsername] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (!permissionResult.granted) {
+        Alert.alert("Permission Required", "Please allow access to your photo library to change profile picture.");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setUploading(true);
+        try {
+          const updatedUser = await updateAvatar(result.assets[0].uri);
+          if (updatedUser) {
+            setUser(updatedUser);
+          }
+        } catch (error) {
+          console.error(error);
+          Alert.alert("Error", "Failed to update profile picture");
+        } finally {
+          setUploading(false);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to launch image picker");
+      setUploading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -85,43 +125,61 @@ const Settings = () => {
       </View>
       
       <View className="flex-1 px-4 py-6">
-        <View className="space-y-6">
+        {/* Profile Section */}
+        <View className="items-center mb-8">
+          <TouchableOpacity 
+            onPress={handleImageUpload}
+            disabled={uploading}
+            className="relative"
+          >
+            <Image
+              source={{ 
+                uri: user?.avatar || `https://ui-avatars.com/api/?name=${user?.username || 'User'}&background=FF9C01&color=fff&size=200`
+              }}
+              className="w-32 h-32 rounded-full mb-4"
+            />
+            <View className="absolute bottom-5 right-0 bg-secondary p-2 rounded-full">
+              {uploading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Ionicons name="camera" size={20} color="#FFFFFF" />
+              )}
+            </View>
+          </TouchableOpacity>
+          <View className="items-center">
+            <Text className="text-2xl font-psemibold text-white mb-2">{user?.username || 'User'}</Text>
+            <View className="flex-row items-center">
+              <Ionicons name="mail-outline" size={20} color="#9CA3AF" />
+              <Text className="text-gray-100 ml-2">{user?.email}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View className="space-y-4">
           {/* Change Username Button */} 
           <TouchableOpacity
             onPress={() => setShowChangeUsername(true)}
-            className="flex flex-row items-center p-4 bg-black-100 rounded-lg mb-4"
+            className="flex flex-row items-center p-4 bg-black-100 rounded-lg"
           >
-            <Image
-              source={icons.user}
-              className="w-6 h-6 mr-3"
-              resizeMode="contain"
-            />
+            <Ionicons name="person-outline" size={24} color="#FFFFFF" className="mr-3" />
             <Text className="font-pmedium text-lg text-white">Change Username</Text>
           </TouchableOpacity>
 
           {/* Change Password Button */}
           <TouchableOpacity
             onPress={() => setShowChangePassword(true)}
-            className="flex flex-row items-center p-4 bg-black-100 rounded-lg mb-4"
+            className="flex flex-row items-center p-4 bg-black-100 rounded-lg"
           >
-            <Image
-              source={icons.lock}
-              className="w-6 h-6 mr-3"
-              resizeMode="contain"
-            />
+            <Ionicons name="lock-closed-outline" size={24} color="#FFFFFF" className="mr-3" />
             <Text className="font-pmedium text-lg text-white">Change Password</Text>
           </TouchableOpacity>
 
           {/* Sign Out Button */}
           <TouchableOpacity
             onPress={handleSignOut}
-            className="flex flex-row items-center p-4 bg-black-100 rounded-lg mb-4"
+            className="flex flex-row items-center p-4 bg-black-100 rounded-lg"
           >
-            <Image
-              source={icons.logout}
-              className="w-6 h-6 mr-3"
-              resizeMode="contain"
-            />
+            <Ionicons name="log-out-outline" size={24} color="#FFFFFF" className="mr-3" />
             <Text className="font-pmedium text-lg text-white">Sign Out</Text>
           </TouchableOpacity>
 
@@ -130,11 +188,7 @@ const Settings = () => {
             onPress={handleDeleteAccount}
             className="flex flex-row items-center p-4 bg-red-500 rounded-lg"
           >
-            <Image
-              source={icons.deleteIcon}
-              className="w-6 h-6 mr-3"
-              resizeMode="contain"
-            />
+            <Ionicons name="trash-outline" size={24} color="#FFFFFF" className="mr-3" />
             <Text className="font-pmedium text-lg text-white">Delete Account</Text>
           </TouchableOpacity>
         </View>
@@ -145,34 +199,32 @@ const Settings = () => {
           transparent={true}
           animationType="fade"
         >
-          <View className="flex-1 bg-black/50 justify-center items-center">
-            <View className="bg-black-100 p-6 rounded-2xl w-[90%] max-w-[400px]">
-              <Text className="text-xl font-psemibold mb-4 text-white">Change Username</Text>
+          <View className="flex-1 bg-black/50 justify-center items-center px-4">
+            <View className="bg-black-100 p-6 rounded-2xl w-full">
+              <Text className="text-2xl font-psemibold mb-6 text-white text-center">Change Username</Text>
               <TextInput
                 placeholder="New Username"
                 placeholderTextColor="#9CA3AF"
                 value={newUsername}
                 onChangeText={setNewUsername}
-                className="p-3 border border-gray-100 rounded-lg mb-4 text-white"
+                className="p-4 border border-gray-100 rounded-lg mb-6 text-white text-lg text-center font-pmedium"
               />
-              <View className="flex-row space-x-3">
+              <View className="flex-row space-x-4">
                 <TouchableOpacity
                   onPress={() => {
                     setShowChangeUsername(false);
                     setNewUsername('');
                   }}
-                  className="flex-1 p-3 bg-black-200 rounded-lg"
+                  className="flex-1 p-4 bg-black-200 rounded-lg"
                 >
-                  <Text className="text-center font-pmedium text-white">Cancel</Text>
+                  <Text className="text-center font-pmedium text-white text-lg">Cancel</Text>
                 </TouchableOpacity>
-                
-                <View style={{ width: 10 }} />
 
                 <TouchableOpacity
                   onPress={handleUpdateUsername}
-                  className="flex-1 p-3 bg-secondary rounded-lg"
+                  className="flex-1 p-4 bg-secondary rounded-lg"
                 >
-                  <Text className="text-center text-white font-pmedium">Update</Text>
+                  <Text className="text-center text-white font-pmedium text-lg">Update</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -185,16 +237,16 @@ const Settings = () => {
           transparent={true}
           animationType="fade"
         >
-          <View className="flex-1 bg-black/50 justify-center items-center">
-            <View className="bg-black-100 p-6 rounded-2xl w-[90%] max-w-[400px]">
-              <Text className="text-xl font-psemibold mb-4 text-white">Change Password</Text>
+          <View className="flex-1 bg-black/50 justify-center items-center px-4">
+            <View className="bg-black-100 p-6 rounded-2xl w-full">
+              <Text className="text-2xl font-psemibold mb-6 text-white text-center">Change Password</Text>
               <TextInput
                 placeholder="Current Password"
                 placeholderTextColor="#9CA3AF"
                 value={oldPassword}
                 onChangeText={setOldPassword}
                 secureTextEntry
-                className="p-3 border border-gray-100 rounded-lg mb-3 text-white"
+                className="p-4 border border-gray-100 rounded-lg mb-4 text-white text-lg text-center font-pmedium"
               />
               <TextInput
                 placeholder="New Password"
@@ -202,27 +254,25 @@ const Settings = () => {
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry
-                className="p-3 border border-gray-100 rounded-lg mb-4 text-white"
+                className="p-4 border border-gray-100 rounded-lg mb-6 text-white text-lg text-center font-pmedium"
               />
-              <View className="flex-row space-x-3">
+              <View className="flex-row space-x-4">
                 <TouchableOpacity
                   onPress={() => {
                     setShowChangePassword(false);
                     setOldPassword('');
                     setNewPassword('');
                   }}
-                  className="flex-1 p-3 bg-black-200 rounded-lg"
+                  className="flex-1 p-4 bg-black-200 rounded-lg"
                 >
-                  <Text className="text-center font-pmedium text-white">Cancel</Text>
+                  <Text className="text-center font-pmedium text-white text-lg">Cancel</Text>
                 </TouchableOpacity>
 
-                <View style={{ width: 10 }} />
-                
                 <TouchableOpacity
                   onPress={handleChangePassword}
-                  className="flex-1 p-3 bg-secondary rounded-lg"
+                  className="flex-1 p-4 bg-secondary rounded-lg"
                 >
-                  <Text className="text-center text-white font-pmedium">Update</Text>
+                  <Text className="text-center text-white font-pmedium text-lg">Update</Text>
                 </TouchableOpacity>
               </View>
             </View>
