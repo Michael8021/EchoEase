@@ -211,7 +211,7 @@ export async function updateUsername(newUsername: string) {
 // Update Avatar
 export async function updateAvatar(uri: string) {
   try {
-    const response = await fetch(uri);
+    let response; try { response = await fetch(uri); } catch (error) { console.log('Error fetching avatar:', error); return null; }
     const blob = await response.blob();
     
     const file = {
