@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, Alert, Dimensions, StyleSheet, Platform } from "react-native";
+import { View, Text, TouchableOpacity, Image, Alert, Dimensions, StyleSheet, Platform, ActivityIndicator } from "react-native";
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
   androidSafeArea: {
     flex: 1,
     backgroundColor: "#161622",
-    paddingTop: Platform.OS === "android" ? 35 : 0,
+    paddingTop: 0,
   },
 });
 
@@ -49,20 +49,22 @@ async function getHistoryId() {
 
 
 const Mood = () => {
+  const [loading, setLoading] = useState(true); // Add loading state
   const [userId, setUserId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string>("");
   const [chartModalVisible, setChartModalVisible] = useState(false);
-  const [descriptionData, setDescriptionData] = useState([]);
+  const [descriptionData, setDescriptionData] = useState<{ label: string; description: string }[]>([]);
   const [selectedDay, setSelectedDay] = useState<string>("");
   const [selectedDescription, setSelectedDescription] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [moodData, setMoodData] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+  const [moodData, setMoodData] = useState<{ value: number; label: string; labelTextStyle: { color: string; }; topLabelComponent: () => JSX.Element; }[]>([]);
   const [historyId, setHistoryId] = useState<string | null>(null);
   const router = useRouter()
   const { refreshMoods } = useMoodContext(); // Get setFetchMoodData from context
 
   const fetchMoodData = async () => {
+    setLoading(true); // Set loading to true before fetching data
     const currentUser = await getUserId();
     setUserId(currentUser.$id);
     if (!currentUser) return;
@@ -89,12 +91,22 @@ const Mood = () => {
       setDescriptionData(data2);
     } catch (error) {
       console.error("Error fetching mood data:", error);
+    } finally {
+      setLoading(false); // Set loading to false after data is fetched
     }
   };
 
   useEffect(() => {
     fetchMoodData();
   }, [refreshMoods]);
+
+  if (loading) {
+    return (
+      <View style={styles.androidSafeArea}>
+        <ActivityIndicator size="large" color="#FF9C01" />
+      </View>
+    );
+  }
 
   const saveMoodToDatabase = async () => {
     if (selectedMood) {
@@ -132,7 +144,7 @@ const Mood = () => {
       <Text className="text-2xl">{emoji}</Text>
     </TouchableOpacity>
   );
-
+  
   return (
     <SafeAreaView style={styles.androidSafeArea}>
       <Provider>
@@ -168,8 +180,8 @@ const Mood = () => {
               xAxisThickness={0}
               backgroundColor={'#1F1F2E'}
               frontColor={'#FF9C01'}
-              showGradient
-              gradientColor={'#FFEEFE'}
+              /*showGradient
+              gradientColor={'#FFEEFE'}*/
               yAxisLabelTexts={["😶", "😭", "😢", "😐", "😊", "😁", ""]}
               barBorderRadius={4}
               noOfSections={6}
