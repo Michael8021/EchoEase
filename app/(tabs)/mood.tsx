@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, Alert, Dimensions, StyleSheet, Platform, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, Image, Alert, Dimensions, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from "react-native";
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -6,9 +6,9 @@ import { icons } from '../../constants'
 import { Portal, Modal, TextInput, Provider } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { BarChart } from "react-native-gifted-charts";
-import { createMood, getMoods, getCurrentUser, getHistory } from "../../lib/appwrite";
+import { createMood, getMoods, getCurrentUser, createMoodInsight, getMoodInsight } from "../../lib/appwrite";
 import { useMoodContext } from '../../context/MoodContext';
-
+import { genMoodInsight } from '../../lib/aiService';
 const styles = StyleSheet.create({
   androidSafeArea: {
     flex: 1,
@@ -39,44 +39,49 @@ async function getUserId() {
   return currentUser;
 };
 
-async function getHistoryId() {
-  const histories = await getHistory();
-  if (!histories || histories.length === 0) {
-    return null;
-  }
-  return histories;
-};
-
-
 const Mood = () => {
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedMood, setSelectedMood] = useState<string>("");
   const [chartModalVisible, setChartModalVisible] = useState(false);
+  const [logModalVisible, setLogModalVisible] = useState(false);
+  const [insightModalVisible, setInsightModalVisible] = useState(false);
+  const [selectedMood, setSelectedMood] = useState<string>("");
   const [descriptionData, setDescriptionData] = useState<{ label: string; description: string }[]>([]);
   const [selectedDay, setSelectedDay] = useState<string>("");
   const [selectedDescription, setSelectedDescription] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [moodData, setMoodData] = useState<{ value: number; label: string; labelTextStyle: { color: string; }; topLabelComponent: () => JSX.Element; }[]>([]);
-  const [historyId, setHistoryId] = useState<string | null>(null);
+  const [moodTypes, setMoodType] = useState<string[]>(Array(7).fill("No Data"));
+  const [todayMood, setTodayMood] = useState("");
+  const [moodInsight, setmoodInsight] = useState<string>("");
   const router = useRouter()
-  const { refreshMoods } = useMoodContext(); // Get setFetchMoodData from context
+  const { refreshMoods } = useMoodContext();
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchMoodData = async () => {
-    setLoading(true); // Set loading to true before fetching data
+    setLoading(true);
     const currentUser = await getUserId();
     setUserId(currentUser.$id);
     if (!currentUser) return;
     try {
       const fetchedMoods = await getMoods(currentUser.$id);
       const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const days = new Date().getDay();
+      const moodTypes = Array(days).fill("No Data");
       const data = labels.map((label, index) => {
         let moodValue = 0;
         let moodEmoji = "";
+        let moodType = "No Data";
         if (moodMap2[fetchedMoods[index]!.mood_type]) {
           moodValue = moodMap2[fetchedMoods[index]!.mood_type].value || 0;
           moodEmoji = moodMap2[fetchedMoods[index]!.mood_type].emoji || "";
+          moodType = fetchedMoods[index]!.mood_type;
+        }
+        if (index < days) {
+          moodTypes[index] = moodType;
+        }
+        if (fetchedMoods[index]!.datetime.slice(0, 10) == new Date().toISOString().slice(0, 10)) {
+          setTodayMood(moodEmoji + " " + fetchedMoods[index]!.mood_type);
         }
         return {
           value: moodValue, label, labelTextStyle: { color: '#FF9C01' }, topLabelComponent: () => (
@@ -85,14 +90,67 @@ const Mood = () => {
         };
       });
       const data2 = labels.map((label, index) => {
-        return {label, description: fetchedMoods[index]!.description}
+        return { label, description: fetchedMoods[index]!.description }
       });
       setMoodData(data);
+      setMoodType(moodTypes);
       setDescriptionData(data2);
     } catch (error) {
       console.error("Error fetching mood data:", error);
     } finally {
-      setLoading(false); // Set loading to false after data is fetched
+      setLoading(false);
+    }
+  };
+
+  const handleViewInsights = async () => {
+    try {
+      setInsightModalVisible(true)
+      const fetchMoodInsight = await getMoodInsight(userId!);
+      console.log("Insights", fetchMoodInsight);
+      if (fetchMoodInsight.documents.length > 0) {
+        setmoodInsight(fetchMoodInsight.documents[0].mood_insight);
+        return;
+      }
+      const descriptions = descriptionData.map(desc => desc.description);
+      const moodInsightResult = await genMoodInsight(moodTypes, descriptions);
+      setmoodInsight(moodInsightResult);
+
+      const datetime = new Date().toISOString();
+      const newMoodInsight = {
+        userId: userId!,
+        datetime: datetime,
+        mood_insight: moodInsightResult
+      }
+
+      await createMoodInsight(newMoodInsight);
+
+      console.log("Insights", newMoodInsight);
+    } catch (error) {
+      console.error("Error fetching mood insights:", error);
+      Alert.alert("Error", "Failed to fetch mood insights");
+    }
+  };
+
+  const regenerateInsight = async () => {
+    try {
+      console.log("Regenerating insights");
+      const descriptions = descriptionData.map(desc => desc.description);
+      const moodInsightResult = await genMoodInsight(moodTypes, descriptions);
+      setmoodInsight(moodInsightResult);
+
+      const datetime = new Date().toISOString();
+      const newMoodInsight = {
+        userId: userId!,
+        datetime: datetime,
+        mood_insight: moodInsightResult
+      }
+
+      await createMoodInsight(newMoodInsight);
+
+      console.log("Insights", newMoodInsight);
+    } catch (error) {
+      console.error("Error fetching mood insights:", error);
+      Alert.alert("Error", "Failed to fetch mood insights");
     }
   };
 
@@ -117,7 +175,7 @@ const Mood = () => {
         datetime: datetime,
         mood_type: mood_type,
         description: description,
-        historyId: historyId
+        historyId: null
       }
       try {
         await createMood(newMood);
@@ -126,9 +184,10 @@ const Mood = () => {
       } catch (error) {
         Alert.alert("Error", "Failed to save mood");
       }
-      setModalVisible(false);
+      setLogModalVisible(false);
       setSelectedMood("");
       setDescription("");
+      regenerateInsight();
     } else {
       Alert.alert("Error", "Please select a mood");
     }
@@ -144,158 +203,133 @@ const Mood = () => {
       <Text className="text-2xl">{emoji}</Text>
     </TouchableOpacity>
   );
-  
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchMoodData().then(() => setRefreshing(false));
+  };
+
   return (
-    <SafeAreaView style={styles.androidSafeArea}>
-      <Provider>
-        <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
-          {/* Header */}
-          <Text className="text-3xl font-psemibold text-secondary">
-            Mood Tracking
-          </Text>
+    <ScrollView
+      contentContainerStyle={styles.androidSafeArea}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <SafeAreaView style={styles.androidSafeArea}>
+        <Provider>
+          <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
+            {/* Header */}
+            <Text className="text-3xl font-psemibold text-secondary">
+              Mood Tracking
+            </Text>
 
-          <TouchableOpacity onPress={() => router.push('/settings')}>
-            <Image
-              source={icons.settings}
-              className="w-7 h-7"
-            />
-          </TouchableOpacity>
-        </View>
-        <View>
-          <View
-            style={{
-              backgroundColor: "#1F1F2E",
-              borderRadius: 12,
-              flexDirection: "row",
-              justifyContent: "space-around",
-              paddingLeft: 28,
-            }}
-          >
-            {/* Mood Chart */}
-            <BarChart
-              adjustToWidth
-              parentWidth={Dimensions.get('window').width}
-              initialSpacing={10}
-              yAxisThickness={0}
-              xAxisThickness={0}
-              backgroundColor={'#1F1F2E'}
-              frontColor={'#FF9C01'}
-              /*showGradient
-              gradientColor={'#FFEEFE'}*/
-              yAxisLabelTexts={["😶", "😭", "😢", "😐", "😊", "😁", ""]}
-              barBorderRadius={4}
-              noOfSections={6}
-              stepValue={1}
-              stepHeight={50}
-              data={moodData}
-              hideRules
-              isAnimated
-              onPress={(item: any, index: any) => {
-                const description = descriptionData.find((entry: any) => entry.label === item.label)?.description || "No description"
-                setSelectedDay(item.label);
-                setSelectedDescription(description);
-                setChartModalVisible(true);
-              }}
-            />
-          </View>
-
-          {/* Button Box */}
-          <View
-            style={{
-              backgroundColor: "#1F1F2E",
-              padding: 16,
-              borderRadius: 12,
-              flexDirection: "row",
-              justifyContent: "space-around",
-            }}
-          >
-            {/* Log Mood Button */}
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#4A90E2", // Light blue
-                paddingVertical: 10,
-                paddingHorizontal: 20,
-                borderRadius: 8,
-              }}
-              onPress={() => setModalVisible(true)}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <MaterialIcons name="edit" size={18} color="white" />
-                <Text style={{ color: "white", marginLeft: 8, fontSize: 16 }}>
-                  Log Mood
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* View Insights Button */}
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#B27CD0", // Light purple
-                paddingVertical: 10,
-                paddingHorizontal: 20,
-                borderRadius: 8,
-              }}
-              onPress={() => Alert.alert("Insights", "View insights pressed")}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <MaterialIcons name="insights" size={18} color="white" />
-                <Text style={{ color: "white", marginLeft: 8, fontSize: 16 }}>
-                  View Insights
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* Mood Logging Modal */}
-          <Portal>
-            <Modal
-              visible={modalVisible}
-              onDismiss={() => setModalVisible(false)}
-              contentContainerStyle={{
-                backgroundColor: "white",
-                padding: 20,
-                marginHorizontal: 20,
-                borderRadius: 10,
-              }}
-            >
-              <Text className="text-lg font-psemibold mb-5">Record Mood</Text>
-
-              {/* Emoji Selection Row */}
-              <View className="flex-row justify-around my-5">
-                {["😭", "😢", "😐", "😊", "😁"].map((emoji) =>
-                  renderMoodButton(emoji)
-                )}
-              </View>
-
-              {/* Optional description Input */}
-              <TextInput
-                label="Add a description (optional)"
-                value={description}
-                onChangeText={(text: string) => setDescription(text)}
-                className="mb-5"
-                maxLength={255}
-                multiline={true}
+            <TouchableOpacity onPress={() => router.push('/settings')}>
+              <Image
+                source={icons.settings}
+                className="w-7 h-7"
               />
-
-              {/* Save Button */}
-              <TouchableOpacity
-                className="bg-black p-2 rounded-lg items-center"
-                onPress={saveMoodToDatabase}
-              >
-                <Text className="text-white text-lg">Save Mood</Text>
-              </TouchableOpacity>
-            </Modal>
-            <Modal
-              visible={chartModalVisible}
-              onDismiss={() => setChartModalVisible(false)}
-              contentContainerStyle={{
-                backgroundColor: "white",
-                padding: 20,
-                marginHorizontal: 20,
-                borderRadius: 10,
+            </TouchableOpacity>
+          </View>
+          <View>
+            <View
+              style={{
+                backgroundColor: "#1F1F2E",
+                padding: 16,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                borderBottomWidth: 1,
+                borderBottomColor: "#FF9C01",
               }}
             >
-              <Text className="text-lg font-psemibold mb-5">Mood Description on { selectedDay }</Text>
+              <Text className="text-1xl font-psemibold text-secondary">Today's Mood:</Text>
+              <Text className="text-1xl font-psemibold text-secondary">{todayMood}</Text>
+            </View>
+            <View
+              style={{
+                backgroundColor: "#1F1F2E",
+                flexDirection: "row",
+                justifyContent: "space-around",
+                paddingLeft: 28,
+              }}
+            >
+              <BarChart
+                adjustToWidth
+                parentWidth={Dimensions.get('window').width}
+                initialSpacing={10}
+                yAxisThickness={0}
+                xAxisThickness={0}
+                backgroundColor={'#1F1F2E'}
+                frontColor={'#FF9C01'}
+                yAxisLabelTexts={["😶", "😭", "😢", "😐", "😊", "😁", ""]}
+                barBorderRadius={4}
+                noOfSections={6}
+                stepValue={1}
+                stepHeight={50}
+                data={moodData}
+                hideRules
+                isAnimated
+                onPress={(item: any, index: any) => {
+                  const description = descriptionData.find((entry: any) => entry.label === item.label)?.description || "No description"
+                  setSelectedDay(item.label);
+                  setSelectedDescription(description);
+                  setChartModalVisible(true);
+                }}
+              />
+            </View>
+            <View
+              style={{
+                backgroundColor: "#1F1F2E",
+                padding: 16,
+                flexDirection: "row",
+                justifyContent: "space-around",
+              }}
+            >
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#4A90E2",
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                }}
+                onPress={() => setLogModalVisible(true)}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <MaterialIcons name="edit" size={18} color="white" />
+                  <Text style={{ color: "white", marginLeft: 8, fontSize: 16 }}>
+                    Log Mood
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#B27CD0",
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                }}
+                onPress={handleViewInsights}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <MaterialIcons name="insights" size={18} color="white" />
+                  <Text style={{ color: "white", marginLeft: 8, fontSize: 16 }}>
+                    View Insights
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+            <Portal>
+              <Modal
+                visible={chartModalVisible}
+                onDismiss={() => setChartModalVisible(false)}
+                contentContainerStyle={{
+                  backgroundColor: "white",
+                  padding: 20,
+                  marginHorizontal: 20,
+                  borderRadius: 10,
+                }}
+              >
+                <Text className="text-lg font-psemibold mb-5">Mood Description on {selectedDay}</Text>
                 <View
                   style={{
                     backgroundColor: "#f0f0f0",
@@ -311,20 +345,98 @@ const Mood = () => {
                       textAlign: "center",
                     }}
                   >
-                    { selectedDescription }
+                    {selectedDescription}
                   </Text>
                 </View>
-              <TouchableOpacity
-                className="bg-black p-2 rounded-lg items-center"
-                onPress={() => setChartModalVisible(false)}
+                <TouchableOpacity
+                  className="bg-black p-2 rounded-lg items-center"
+                  onPress={() => setChartModalVisible(false)}
+                >
+                  <Text className="text-white text-lg">Close</Text>
+                </TouchableOpacity>
+              </Modal>
+              <Modal
+                visible={logModalVisible}
+                onDismiss={() => setLogModalVisible(false)}
+                contentContainerStyle={{
+                  backgroundColor: "white",
+                  padding: 20,
+                  marginHorizontal: 20,
+                  borderRadius: 10,
+                }}
               >
-                <Text className="text-white text-lg">Close</Text>
-              </TouchableOpacity>
-            </Modal>
-          </Portal>
-        </View>
-      </Provider>
-    </SafeAreaView>
+                <Text className="text-lg font-psemibold mb-5">Record Mood</Text>
+                <View className="flex-row justify-around my-5">
+                  {["😭", "😢", "😐", "😊", "😁"].map((emoji) =>
+                    renderMoodButton(emoji)
+                  )}
+                </View>
+                <TextInput
+                  label="Add a description (optional)"
+                  value={description}
+                  onChangeText={(text: string) => setDescription(text)}
+                  className="mb-5"
+                  maxLength={255}
+                  multiline={true}
+                />
+                <TouchableOpacity
+                  className="bg-black p-2 rounded-lg items-center"
+                  onPress={saveMoodToDatabase}
+                >
+                  <Text className="text-white text-lg">Save Mood</Text>
+                </TouchableOpacity>
+              </Modal>
+              <Modal
+                visible={insightModalVisible}
+                onDismiss={() => setInsightModalVisible(false)}
+                contentContainerStyle={{
+                  backgroundColor: "white",
+                  padding: 20,
+                  marginHorizontal: 20,
+                  borderRadius: 10,
+                }}
+              >
+                <View
+                  style={{
+                    padding: 16,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}>
+                  <Text className="text-lg font-psemibold mb-5">Mood Insight</Text>
+                  <TouchableOpacity onPress={() => regenerateInsight()}>
+                    <MaterialIcons name="refresh" size={22} />
+                  </TouchableOpacity>
+                </View>
+                <View
+                  style={{
+                    backgroundColor: "#f0f0f0",
+                    padding: 15,
+                    borderRadius: 10,
+                    marginBottom: 20,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      color: "#333",
+                      textAlign: "center",
+                    }}
+                  >
+                    {moodInsight}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  className="bg-black p-2 rounded-lg items-center"
+                  onPress={() => setInsightModalVisible(false)}
+                >
+                  <Text className="text-white text-lg">Close</Text>
+                </TouchableOpacity>
+              </Modal>
+            </Portal>
+          </View>
+        </Provider>
+      </SafeAreaView >
+    </ScrollView >
   );
 };
 

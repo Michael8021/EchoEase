@@ -10,7 +10,7 @@ import {
     Role
   } from "react-native-appwrite";
 import { SpendingItem,ExpenseItem } from "../type";
-import { Schedule, Mood } from "./types";
+import { Schedule, Mood, MoodInsight } from "./types";
 
 export const appwriteConfig = {
     endpoint: 'https://cloud.appwrite.io/v1',
@@ -23,6 +23,7 @@ export const appwriteConfig = {
     scheduleCollectionId: '672878b6000297694b47',
     historyCollectionId: '672eeced0003474523e6',
     moodCollectionId: '672ce11300183b1fd08f',
+    mood_insightCollectionId: '6745a21d0014178b09e2'
 }
 
 
@@ -387,7 +388,7 @@ export async function createMood(mood: Mood) {
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
-    const existingMoods = await databases.listDocuments(
+    const existing = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.moodCollectionId,
       [
@@ -397,8 +398,8 @@ export async function createMood(mood: Mood) {
       ]
     );
 
-    if (existingMoods.total > 0) {
-      const moodId = existingMoods.documents[0].$id;
+    if (existing.total > 0) {
+      const moodId = existing.documents[0].$id;
       const updatedMood = await databases.updateDocument(
         appwriteConfig.databaseId,
         appwriteConfig.moodCollectionId,
@@ -468,4 +469,72 @@ export async function getMoods(userId: string) {
     }
   }
   return result;
+}
+
+export async function createMoodInsight(moodInsight: MoodInsight) {
+  try {
+    // Set the start and end of the day for the given date
+    const date = new Date();
+    const startOfWeek = new Date(date);
+    startOfWeek.setDate(date.getDate() - date.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const existing = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.mood_insightCollectionId,
+      [
+        Query.equal("userId", moodInsight.userId),
+        Query.greaterThanEqual("datetime", startOfWeek.toISOString()),
+        Query.lessThanEqual("datetime", today.toISOString())
+      ]
+    );
+
+    if (existing.total > 0) {
+      const moodInsightId = existing.documents[0].$id;
+      const updatedMoodInsight = await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.mood_insightCollectionId,
+        moodInsightId,
+        {
+          mood_insight: moodInsight.mood_insight,
+        }
+      );
+      return updatedMoodInsight;
+    } else {
+      const newMoodInsight = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.mood_insightCollectionId,
+        ID.unique(),
+        {
+          userId: moodInsight.userId,
+          datetime: moodInsight.datetime,
+          mood_insight: moodInsight.mood_insight,
+        }
+      );
+      return newMoodInsight;
+    }
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+export async function getMoodInsight(userId: string) {
+  // Set the start and end of the day for the given date
+  const date = new Date();
+  const startOfWeek = new Date(date);
+  startOfWeek.setDate(date.getDate() - date.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  const moodInsight = await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.mood_insightCollectionId,
+    [
+      Query.equal("userId", userId),
+      Query.greaterThanEqual("datetime", startOfWeek.toISOString()),
+      Query.lessThanEqual("datetime", today.toISOString())
+    ]
+  );
+  return moodInsight;
 }

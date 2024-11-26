@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import * as Localization from 'expo-localization';
-import {  CategorizedData } from './types';
+import { CategorizedData, MoodInsight } from './types';
 import { getCurrentUser } from './appwrite';
 
 
@@ -103,14 +103,14 @@ export const categorizeAndExtractData = async (
 
 **Instructions**:
 - You should be aware of the current time is ${new Intl.DateTimeFormat('en-US', {
-  day: '2-digit',
-  month: 'long', // Full month name
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: false // Use 24-hour format
-}).format(new Date())}.
+            day: '2-digit',
+            month: 'long', // Full month name
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false // Use 24-hour format
+          }).format(new Date())}.
 - Analyze the input text.
 - Categorize each relevant part into one or more of the above categories.
 - Extract the required fields for each categorized entry.
@@ -281,6 +281,59 @@ Return a JSON object with the following structure:
     return categorizedData;
   } catch (error) {
     console.error('Categorization and Extraction Error:', error);
+    throw error;
+  }
+};
+
+export const genMoodInsight = async (
+  moodData: string[],
+  descriptions: string[]
+): Promise<string> => {
+  try {
+    // Define the chat request
+    const chatRequest = {
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an AI assistant that analyzes mood data for insights. Analyze the following mood data for the week: ${JSON.stringify(moodData)}. Provide a brief summary of mood patterns and trends. 
+          
+Note: 'No data' means mood not logged for future days. The number of mood entries indicates today’s day (e.g., 3 entries mean today is Wednesday), so avoid mentioning missing moods after today, as they pertain to the future. Please keep your insights concise.
+          
+**Final Output**:
+Return a string with the mood pattern analysis and insights.`,
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({ moodData, descriptions }),
+        },
+      ],
+    };
+
+    // Send the request to OpenAI API
+    const response = await fetch(`${process.env.EXPO_PUBLIC_OPENAI_API_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.EXPO_PUBLIC_OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(chatRequest),
+    });
+
+    // Handle API errors
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`Failed to analyze mood data: ${response.status}`);
+    }
+
+    // Parse the response
+    const data = await response.json();
+    const moodInsight: string = data.choices[0].message.content;
+
+    return moodInsight;
+  } catch (error) {
+    console.error('Mood Analysis Error:', error);
     throw error;
   }
 };

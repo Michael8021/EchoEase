@@ -41,6 +41,12 @@ export interface Mood {
   historyId: string | null;
 }
 
+export interface MoodInsight {
+  userId: string;
+  datetime: string;
+  mood_insight: string;
+}
+
 export interface Other {
   title: string;
   description: string;
