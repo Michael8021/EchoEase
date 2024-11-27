@@ -1,0 +1,91 @@
+{
+  "common": {
+    "settings": "設定",
+    "home": "首頁",
+    "finance": "財務",
+    "profile": "個人資料",
+    "history": "歷史紀錄",
+    "schedule": "行程表",
+    "mood": "心情",
+    "delete": "刪除",
+    "cancel": "取消",
+    "save": "儲存",
+    "edit": "編輯"
+  },
+  "auth": {
+    "signIn": "登入",
+    "signUp": "註冊",
+    "email": "電子郵件",
+    "password": "密碼",
+    "forgotPassword": "忘記密碼？",
+    "noAccount": "還沒有帳號？",
+    "haveAccount": "已經有帳號了？",
+    "loginTitle": "登入 EchoEase",
+    "signupTitle": "註冊 EchoEase",
+    "continueWithEmail": "使用電子郵件繼續",
+    "fillAllFields": "請填寫所有欄位"
+  },
+  "home": {
+    "title": "EchoEase",
+    "content": "首頁內容",
+    "slogan": "讓生活更簡單",
+    "with": "與",
+    "appDescription": "透過 EchoEase，輕鬆整合您的任務、情緒和財務。"
+  },
+  "settings": {
+    "title": "設定",
+    "accountSettings": "帳號設定",
+    "changeUsername": "更改使用者名稱",
+    "changePassword": "更改密碼",
+    "appSettings": "應用程式設定",
+    "notifications": "通知",
+    "language": "語言",
+    "accountActions": "帳號操作",
+    "signOut": "登出",
+    "deleteAccount": "刪除帳號",
+    "updateDisplayName": "更新顯示名稱",
+    "updateSecurityCredentials": "更新安全憑證",
+    "manageNotifications": "管理通知設定",
+    "changeAppLanguage": "更改應用程式語言",
+    "logOutAccount": "登出您的帳號",
+    "permanentlyDeleteAccount": "永久刪除您的帳號",
+    "newUsername": "新使用者名稱",
+    "enterNewUsername": "輸入新使用者名稱",
+    "currentPassword": "目前密碼",
+    "enterCurrentPassword": "輸入目前密碼",
+    "newPassword": "新密碼",
+    "enterNewPassword": "輸入新密碼",
+    "updatePassword": "更新密碼",
+    "soon": "即將推出",
+    "permissionRequired": "需要權限",
+    "photoLibraryAccess": "請允許存取相簿以更改個人頭像。",
+    "deleteConfirmTitle": "刪除帳號",
+    "deleteConfirmMessage": "您確定要刪除帳號嗎？此操作無法復原。",
+    "cancel": "取消",
+    "delete": "刪除"
+  },
+  "schedule": {
+    "noEvents": "今天沒有行程",
+    "example": "範例項目 1"
+  },
+  "history": {
+    "noHistory": "找不到歷史紀錄",
+    "deleteError": "刪除歷史紀錄時發生錯誤",
+    "fetchError": "擷取歷史紀錄時發生錯誤",
+    "updateError": "更新歷史紀錄失敗",
+    "deleteConfirm": "您確定要刪除此歷史紀錄嗎？"
+  },
+  "alerts": {
+    "success": "成功",
+    "error": "錯誤",
+    "comingSoon": "即將推出",
+    "featureAvailable": "此功能將在下次更新時推出！",
+    "usernameSuccess": "使用者名稱更新成功",
+    "usernameFailed": "更新使用者名稱失敗",
+    "passwordSuccess": "密碼更改成功",
+    "passwordFailed": "密碼更改失敗",
+    "deleteFailed": "刪除帳號失敗。請再試一次。",
+    "profilePictureFailed": "更新個人頭像失敗",
+    "imagePickerFailed": "啟動圖片選擇器失敗"
+  }
+}
