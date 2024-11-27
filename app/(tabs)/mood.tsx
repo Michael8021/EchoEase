@@ -40,6 +40,7 @@ async function getUserId() {
 };
 
 const Mood = () => {
+  const [initialLoad, setInitialLoad] = useState(true);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [chartModalVisible, setChartModalVisible] = useState(false);
@@ -159,8 +160,13 @@ const Mood = () => {
   };
 
   useEffect(() => {
-      fetchMoodData();
+    fetchMoodData();
+    if (!initialLoad) {
       setAutoregenerate(true);
+    }
+    else {
+      setInitialLoad(false);
+    }
   }, [refreshMoods]);
 
   if (loading) {
