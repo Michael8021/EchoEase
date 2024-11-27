@@ -57,6 +57,8 @@ const Mood = () => {
   const router = useRouter()
   const { refreshMoods } = useMoodContext();
   const [refreshing, setRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [autoregenerate, setAutoregenerate] = useState(false);
 
   const fetchMoodData = async () => {
     setLoading(true);
@@ -133,6 +135,7 @@ const Mood = () => {
 
   const regenerateInsight = async () => {
     try {
+      setIsLoading(true);
       console.log("Regenerating insights");
       const descriptions = descriptionData.map(desc => desc.description);
       const moodInsightResult = await genMoodInsight(moodTypes, descriptions);
@@ -148,6 +151,7 @@ const Mood = () => {
       await createMoodInsight(newMoodInsight);
 
       console.log("Insights", newMoodInsight);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching mood insights:", error);
       Alert.alert("Error", "Failed to fetch mood insights");
@@ -155,7 +159,8 @@ const Mood = () => {
   };
 
   useEffect(() => {
-    fetchMoodData();
+      fetchMoodData();
+      setAutoregenerate(true);
   }, [refreshMoods]);
 
   if (loading) {
@@ -164,6 +169,11 @@ const Mood = () => {
         <ActivityIndicator size="large" color="#FF9C01" />
       </View>
     );
+  }
+
+  if (autoregenerate) {
+    regenerateInsight();
+    setAutoregenerate(false);
   }
 
   const saveMoodToDatabase = async () => {
@@ -422,7 +432,7 @@ const Mood = () => {
                       textAlign: "center",
                     }}
                   >
-                    {moodInsight}
+                    {isLoading ? "Loading..." : moodInsight}
                   </Text>
                 </View>
                 <TouchableOpacity
