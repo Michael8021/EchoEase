@@ -10,6 +10,8 @@ import { Schedule, History } from '../lib/types';
 import { useHistories } from '../context/HistoriesContext';
 import { CategorizedData } from '../lib/types';
 import { testScheduleOperations } from '../lib/test/scheduleTest';
+// import Schedule from '@/app/(tabs)/schedule';
+
 const FloatingButton = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [promptText, setPromptText] = useState('');
@@ -120,6 +122,8 @@ const FloatingButton = () => {
                 await createSchedule(item);
             });
             
+            // forceUpdateSchedules();
+
             return;
         } catch (error) {
             console.error('Error handling text to widget:', error);

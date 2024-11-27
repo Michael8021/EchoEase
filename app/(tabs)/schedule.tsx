@@ -69,24 +69,43 @@ const Schedule = () => {
       const formattedItems: ScheduleItems = {};
 
       schedules.forEach(schedule => {
-        const date = schedule.start_time.split('T')[0]; // Extract date
-        const formattedTime = formatTime(schedule.start_time); // Format time
-        const formattedEndTime = formatTime(schedule.end_time);
+        // Handle null start_time and end_time
+        const startTime = schedule.start_time;
+        const endTime =schedule.end_time;
+        const dueDate = schedule.due_date;
+        const notifyAt = schedule.notify_at;
+        const type = schedule.type;
 
-        if (!formattedItems[date]) {
-          formattedItems[date] = []; // Initialize the array if it doesn't exist
+        let date = null;
+        if (type === 'event' && startTime) {
+          date = startTime.split('T')[0]; // Use start_time for events
+        } else if (type === 'reminder' && dueDate) {
+            date = dueDate.split('T')[0]; // Use end_time for reminders
+        }  
+        const formattedTime = startTime ? formatTime(startTime) : null; // Format time
+        const formattedEndTime = endTime ? formatTime(endTime) : null; // Format
+
+        console.log(schedule.due_date);
+
+        if (date) {
+          if (!formattedItems[date]) {
+            formattedItems[date] = []; // Initialize the array if it doesn't exist
+          }
+          formattedItems[date].push({
+            name: schedule.title,
+            start_time: formattedTime,
+            end_time: formattedEndTime,
+            description: schedule.description,
+            type: schedule.type,
+            status: schedule.status,
+            notify_at: notifyAt ? formatTime(notifyAt) : null,
+          });
         }
-        formattedItems[date].push({
-          name: schedule.title,
-          start_time: formattedTime,
-          end_time: formattedEndTime,
-          description: schedule.description,
-          type: schedule.type,
-          status: schedule.status,
-          notify_at: schedule.notify_at,
-        });
+
+
       });
 
+      
       setItems(formattedItems);
     } catch (error) {
       console.error('Failed to fetch schedules:', error);
@@ -94,6 +113,11 @@ const Schedule = () => {
       setLoading(false);
     }
   };
+
+  // update Schedules when float button pressed
+  // const forceUpdateSchedules = () => {
+  //   fetchSchedules(); 
+  // };
 
   const renderEmptyData = () => {
     return (
@@ -198,6 +222,8 @@ const formatTime = (dateString: string | null): string => {
   const date = new Date(dateString);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
+
+
 
 // const styles = StyleSheet.create({
 //   container: {
