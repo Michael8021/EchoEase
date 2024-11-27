@@ -85,8 +85,6 @@ const Schedule = () => {
         const formattedTime = startTime ? formatTime(startTime) : null; // Format time
         const formattedEndTime = endTime ? formatTime(endTime) : null; // Format
 
-        console.log(schedule.due_date);
-
         if (date) {
           if (!formattedItems[date]) {
             formattedItems[date] = []; // Initialize the array if it doesn't exist
