@@ -405,6 +405,7 @@ export async function createMood(mood: Mood) {
         appwriteConfig.moodCollectionId,
         moodId,
         {
+          datetime: mood.datetime,
           mood_type: mood.mood_type,
           description: mood.description,
           historyId: mood.historyId
@@ -431,11 +432,10 @@ export async function createMood(mood: Mood) {
   }
 }
 
-export async function getMoods(userId: string) {
-  const date = new Date();
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(date.setDate(diff));
+export async function getMoods(userId: string, weekStart: Date) {
+  const day = weekStart.getDay();
+  const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(weekStart.setDate(diff));
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
   // Set monday to the start of the day (00:00:00)
@@ -471,12 +471,11 @@ export async function getMoods(userId: string) {
   return result;
 }
 
-export async function createMoodInsight(moodInsight: MoodInsight) {
+export async function createMoodInsight(moodInsight: MoodInsight, weekStart: Date) {
   try {
     // Set the start and end of the day for the given date
-    const date = new Date();
-    const startOfWeek = new Date(date);
-    startOfWeek.setDate(date.getDate() - date.getDay());
+    const startOfWeek = new Date(weekStart);
+    startOfWeek.setDate(weekStart.getDate() - weekStart.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(23, 59, 59, 999);
@@ -497,6 +496,7 @@ export async function createMoodInsight(moodInsight: MoodInsight) {
         appwriteConfig.mood_insightCollectionId,
         moodInsightId,
         {
+          datetime: moodInsight.datetime,
           mood_insight: moodInsight.mood_insight,
         }
       );
@@ -519,11 +519,9 @@ export async function createMoodInsight(moodInsight: MoodInsight) {
   }
 }
 
-export async function getMoodInsight(userId: string) {
-  // Set the start and end of the day for the given date
-  const date = new Date();
-  const startOfWeek = new Date(date);
-  startOfWeek.setDate(date.getDate() - date.getDay());
+export async function getMoodInsight(userId: string, weekStart: Date) {
+  const startOfWeek = new Date(weekStart);
+  startOfWeek.setDate(weekStart.getDate() - weekStart.getDay());
   startOfWeek.setHours(0, 0, 0, 0);
   const today = new Date();
   today.setHours(23, 59, 59, 999);

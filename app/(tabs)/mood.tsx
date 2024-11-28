@@ -9,11 +9,23 @@ import { BarChart } from "react-native-gifted-charts";
 import { createMood, getMoods, getCurrentUser, createMoodInsight, getMoodInsight } from "../../lib/appwrite";
 import { useMoodContext } from '../../context/MoodContext';
 import { genMoodInsight } from '../../lib/aiService';
+import DateTimePicker from '@react-native-community/datetimepicker';
 const styles = StyleSheet.create({
   androidSafeArea: {
     flex: 1,
     backgroundColor: "#161622",
     paddingTop: 0,
+  },
+  weekSwitcher: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#1F1F2E',
+  },
+  weekText: {
+    color: '#FF9C01',
+    fontSize: 16,
   },
 });
 
@@ -60,17 +72,19 @@ const Mood = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [autoregenerate, setAutoregenerate] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const fetchMoodData = async () => {
+  const fetchMoodData = async (weekStart: Date) => {
     setLoading(true);
     const currentUser = await getUserId();
     setUserId(currentUser.$id);
     if (!currentUser) return;
     try {
-      const fetchedMoods = await getMoods(currentUser.$id);
+      const fetchedMoods = await getMoods(currentUser.$id, weekStart);
       const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
       const days = new Date().getDay();
-      const moodTypes = Array(days).fill("No Data");
+      const moodTypes = Array(currentWeek < new Date() ? 7 : days).fill("No Data");
       const data = labels.map((label, index) => {
         let moodValue = 0;
         let moodEmoji = "";
@@ -80,9 +94,11 @@ const Mood = () => {
           moodEmoji = moodMap2[fetchedMoods[index]!.mood_type].emoji || "";
           moodType = fetchedMoods[index]!.mood_type;
         }
-        if (index < days) {
+        if (index < (currentWeek < new Date() ? 7 : days)) {
           moodTypes[index] = moodType;
         }
+        console.log("Test1", fetchedMoods[index]!.datetime.slice(0, 10));
+        console.log("Test2", new Date().toISOString().slice(0, 10));
         if (fetchedMoods[index]!.datetime.slice(0, 10) == new Date().toISOString().slice(0, 10)) {
           setTodayMood(moodEmoji + " " + fetchedMoods[index]!.mood_type);
         }
@@ -105,10 +121,12 @@ const Mood = () => {
     }
   };
 
-  const handleViewInsights = async () => {
+  const handleViewInsights = async (weekStart: Date) => {
     try {
       setInsightModalVisible(true)
-      const fetchMoodInsight = await getMoodInsight(userId!);
+      console.log("Mood Types", moodTypes);
+      console.log("Week Start", weekStart);
+      const fetchMoodInsight = await getMoodInsight(userId!, weekStart);
       console.log("Insights", fetchMoodInsight);
       if (fetchMoodInsight.documents.length > 0) {
         setmoodInsight(fetchMoodInsight.documents[0].mood_insight);
@@ -125,7 +143,7 @@ const Mood = () => {
         mood_insight: moodInsightResult
       }
 
-      await createMoodInsight(newMoodInsight);
+      await createMoodInsight(newMoodInsight, weekStart);
 
       console.log("Insights", newMoodInsight);
     } catch (error) {
@@ -134,7 +152,7 @@ const Mood = () => {
     }
   };
 
-  const regenerateInsight = async () => {
+  const regenerateInsight = async (weekStart: Date) => {
     try {
       setIsLoading(true);
       console.log("Regenerating insights");
@@ -142,14 +160,13 @@ const Mood = () => {
       const moodInsightResult = await genMoodInsight(moodTypes, descriptions);
       setmoodInsight(moodInsightResult);
 
-      const datetime = new Date().toISOString();
       const newMoodInsight = {
         userId: userId!,
-        datetime: datetime,
+        datetime: weekStart.toISOString(),
         mood_insight: moodInsightResult
       }
 
-      await createMoodInsight(newMoodInsight);
+      await createMoodInsight(newMoodInsight, weekStart);
 
       console.log("Insights", newMoodInsight);
       setIsLoading(false);
@@ -159,8 +176,29 @@ const Mood = () => {
     }
   };
 
+  const handlePreviousWeek = () => {
+    const newWeek = new Date(currentWeek);
+    newWeek.setDate(newWeek.getDate() - 7);
+    setCurrentWeek(newWeek);
+    fetchMoodData(newWeek);
+  };
+
+  const handleNextWeek = () => {
+    const newWeek = new Date(currentWeek);
+    newWeek.setDate(newWeek.getDate() + 7);
+    setCurrentWeek(newWeek);
+    fetchMoodData(newWeek);
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    const currentDate = selectedDate || currentWeek;
+    setShowDatePicker(false);
+    setCurrentWeek(currentDate);
+    fetchMoodData(currentDate);
+  };
+
   useEffect(() => {
-    fetchMoodData();
+    fetchMoodData(currentWeek);
     if (!initialLoad) {
       setAutoregenerate(true);
     }
@@ -169,16 +207,8 @@ const Mood = () => {
     }
   }, [refreshMoods]);
 
-  if (loading) {
-    return (
-      <View style={styles.androidSafeArea}>
-        <ActivityIndicator size="large" color="#FF9C01" />
-      </View>
-    );
-  }
-
   if (autoregenerate) {
-    regenerateInsight();
+    regenerateInsight(currentWeek);
     setAutoregenerate(false);
   }
 
@@ -196,14 +226,14 @@ const Mood = () => {
       try {
         await createMood(newMood);
         Alert.alert("Success", "Mood saved successfully");
-        fetchMoodData();
+        fetchMoodData(currentWeek);
       } catch (error) {
         Alert.alert("Error", "Failed to save mood");
       }
       setLogModalVisible(false);
       setSelectedMood("");
       setDescription("");
-      regenerateInsight();
+      regenerateInsight(currentWeek);
     } else {
       Alert.alert("Error", "Please select a mood");
     }
@@ -222,7 +252,7 @@ const Mood = () => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchMoodData().then(() => setRefreshing(false));
+    fetchMoodData(currentWeek).then(() => setRefreshing(false));
   };
 
   return (
@@ -282,7 +312,14 @@ const Mood = () => {
                 noOfSections={6}
                 stepValue={1}
                 stepHeight={50}
-                data={moodData}
+                data={loading ? [{value: 0, label: "Mon", labelTextStyle: { color: '#FF9C01' }},
+                  {value: 0, label: "Tue", labelTextStyle: { color: '#FF9C01' }},
+                  {value: 0, label: "Wed", labelTextStyle: { color: '#FF9C01' }},
+                  {value: 0, label: "Thu", labelTextStyle: { color: '#FF9C01' }},
+                  {value: 0, label: "Fri", labelTextStyle: { color: '#FF9C01' }},
+                  {value: 0, label: "Sat", labelTextStyle: { color: '#FF9C01' }},
+                  {value: 0, label: "Sun", labelTextStyle: { color: '#FF9C01' }},
+                ] : moodData}
                 hideRules
                 isAnimated
                 onPress={(item: any, index: any) => {
@@ -293,6 +330,27 @@ const Mood = () => {
                 }}
               />
             </View>
+            <View style={styles.weekSwitcher}>
+            <TouchableOpacity onPress={handlePreviousWeek}>
+              <MaterialIcons name="arrow-back" size={24} color="#FF9C01" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+              <Text style={styles.weekText}>
+                {currentWeek.toLocaleDateString()} - {new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleNextWeek}>
+              <MaterialIcons name="arrow-forward" size={24} color="#FF9C01" />
+            </TouchableOpacity>
+          </View>
+          {showDatePicker && (
+            <DateTimePicker
+              value={currentWeek}
+              mode="date"
+              display="default"
+              onChange={handleDateChange}
+            />
+          )}
             <View
               style={{
                 backgroundColor: "#1F1F2E",
@@ -324,7 +382,7 @@ const Mood = () => {
                   paddingHorizontal: 20,
                   borderRadius: 8,
                 }}
-                onPress={handleViewInsights}
+                onPress={() => handleViewInsights(currentWeek)}
               >
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <MaterialIcons name="insights" size={18} color="white" />
@@ -419,7 +477,7 @@ const Mood = () => {
                     justifyContent: "space-between",
                   }}>
                   <Text className="text-lg font-psemibold mb-5">Mood Insight</Text>
-                  <TouchableOpacity onPress={() => regenerateInsight()}>
+                  <TouchableOpacity onPress={() => regenerateInsight(currentWeek)}>
                     <MaterialIcons name="refresh" size={22} />
                   </TouchableOpacity>
                 </View>
