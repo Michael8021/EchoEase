@@ -4,6 +4,7 @@ import {Calendar, CalendarList, Agenda} from 'react-native-calendars';
 import React, { useEffect, useState } from 'react'
 import { getSchedules } from '@/lib/appwrite';
 import tailwind from 'tailwindcss';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 // thing that will fetch from database
 // ------------------------------------------
