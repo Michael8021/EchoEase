@@ -263,16 +263,10 @@ const Mood = () => {
         <Provider>
           <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
             {/* Header */}
-            <Text className="text-3xl font-psemibold text-secondary">
-              Mood Tracking
+            <Text className="text-4xl font-pbold text-secondary">
+              Mood Map
             </Text>
 
-            <TouchableOpacity onPress={() => router.push('/settings')}>
-              <Image
-                source={icons.settings}
-                className="w-7 h-7"
-              />
-            </TouchableOpacity>
           </View>
           <View>
             <View

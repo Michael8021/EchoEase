@@ -131,7 +131,7 @@ const Schedule = () => {
   return (
     <SafeAreaView className="flex-1 bg-primary" >
       <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
-        <Text className="text-3xl font-psemibold text-secondary">Schedule</Text>
+        <Text className="text-4xl font-pbold text-secondary">Schedule</Text>
       </View>
 
       <View className='flex-1'>

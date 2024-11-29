@@ -138,6 +138,7 @@ const Home = () => {
         (acc: { [category: string]: number }, item: any) => {
           const amount = parseFloat(item.amount);
           const category = item.category;
+          // console.log('Processing item:', { category, amount, raw: item });
 
           if (!isNaN(amount)) {
             if (acc[category]) {
@@ -151,6 +152,8 @@ const Home = () => {
         {}
       );
 
+      // console.log('Final categorySpending:', spendingByCategory);
+      // console.log('Number of categories:', Object.keys(spendingByCategory).length);
       setCategorySpending(spendingByCategory);
     } catch (error) {
       console.error("Error fetching spending data:", error);
@@ -266,71 +269,102 @@ const Home = () => {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View className="flex-row justify-between items-center px-4 py-6 bg-black">
-          <Text className="text-3xl font-semibold text-secondary">
+    <SafeAreaView className="flex-1 bg-primary"
+    edges={['top', 'left', 'right']}
+    >
+      {/* Fixed Header */}
+      <View className="bg-primary px-6 pt-2 pb-4">
+        <View className="flex-row justify-between items-center">
+          <Text className="text-4xl font-pbold text-secondary">
             EchoEase
           </Text>
-          <TouchableOpacity onPress={() => router.push("/settings")}>
-            <Image source={icons.settings} className="w-7 h-7" />
+          <TouchableOpacity 
+            onPress={() => router.push("/settings")}
+            className="bg-black-100/50 p-2 rounded-full border border-gray-100/10"
+          >
+            <Image source={icons.settings} className="w-6 h-6 opacity-85" />
           </TouchableOpacity>
         </View>
+      </View>
 
-        {/* Content */}
-        <View className="flex-1 px-4">
+      {/* Scrollable Content */}
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        className="flex-1"
+        contentContainerStyle={{
+          paddingBottom: 20
+        }}
+      >
+        <View className="flex-1 px-6">
           {/* Display today's date */}
-          <View className="bg-gray-800 rounded-lg p-3 mb-4 shadow-lg">
-            <Text className="text-base text-yellow-400 font-semibold text-center">
+          <View className="mb-8">
+            <Text className="text-2xl font-pmedium text-secondary-light text-center mb-1">
               {formatDate}
+            </Text>
+            <Text className="text-sm font-plight text-gray-200 text-center">
+              Your daily overview
             </Text>
           </View>
 
           {/* Today's Schedule */}
-          <View className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
-            <Text className="text-lg font-bold text-yellow-400 mb-3">
-              Today's Schedule
-            </Text>
+          <View 
+            style={{
+              backgroundColor: 'rgba(45, 36, 59, 0.15)',
+              borderColor: 'rgba(157, 138, 176, 0.2)',
+            }}
+            className="rounded-2xl p-5 mb-6 shadow-lg border"
+          >
+            <View className="flex-row items-center mb-4">
+              <View className="w-1 h-6 bg-component-schedule-accent rounded-full mr-3" />
+              <Text className="text-xl font-psemibold text-component-schedule-text">
+                Today's Schedule
+              </Text>
+            </View>
 
-            {/* Check if scheduleData is null or empty */}
             {scheduleData && scheduleData.length > 0 ? (
               scheduleData.map((item: ScheduleItem, index: number) => (
-                <View key={index} className="flex-row justify-between mb-2">
-                  <Text className="text-gray-400 text-sm">
+                <View key={index} className="flex-row justify-between items-center mb-3 last:mb-0 bg-black-400/30 rounded-xl p-3 border border-component-schedule-accent/10">
+                  <Text className="text-component-schedule-text text-sm font-pmedium">
                     {formatScheduleTime(item.time)}
                   </Text>
-                  <Text className="text-sm text-gray-300">{item.task}</Text>
+                  <Text className="text-sm text-component-schedule-text/85 font-pregular flex-1 text-right ml-4">{item.task}</Text>
                 </View>
               ))
             ) : (
-              <View className="flex-1 justify-center items-center">
-                <Text className="text-gray-400">No schedule for today.</Text>
+              <View className="flex-1 justify-center items-center py-4 bg-black-400/30 rounded-xl">
+                <Text className="text-component-schedule-text/70 font-plight">No schedule for today.</Text>
               </View>
             )}
           </View>
 
           {/* Today's Mood */}
-          <View className="bg-gray-700 rounded-lg p-4 mb-4 shadow-lg">
-            <Text className="text-lg font-bold text-yellow-400 mb-2">
-              Today's Mood
-            </Text>
+          <View 
+            style={{
+              backgroundColor: 'rgba(36, 59, 45, 0.15)',
+              borderColor: 'rgba(138, 176, 157, 0.2)',
+            }}
+            className="rounded-2xl p-5 mb-6 shadow-lg border"
+          >
+            <View className="flex-row items-center mb-4">
+              <View className="w-1 h-6 bg-component-mood-accent rounded-full mr-3" />
+              <Text className="text-xl font-psemibold text-component-mood-text">
+                Today's Mood
+              </Text>
+            </View>
+
             {mooddata.length > 0 ? (
               mooddata.map((mood, index) => {
-                const moodDetails = moodMap[mood.mood_type]; // Fetch mood details from moodMap
+                const moodDetails = moodMap[mood.mood_type];
                 return (
                   <View
                     key={index}
-                    className="flex-row items-center justify-between"
+                    className="flex-row items-center justify-between bg-black-400/30 rounded-xl p-3 mb-3 last:mb-0 border border-component-mood-accent/10"
                   >
-                    {/* Mood type and emoji on the left */}
-                    <Text className="text-white text-base">
+                    <Text className="text-component-mood-text text-base font-pmedium">
                       {moodDetails?.emoji || "❓"} {mood.mood_type}
                     </Text>
-
-                    {/* Description at the end, aligned to the right */}
-                    <View className="ml-2 flex-1 items-end">
-                      <Text className="text-gray-300 text-sm">
+                    <View className="ml-4 flex-1 items-end">
+                      <Text className="text-component-mood-text/85 text-sm font-plight">
                         {mood.description}
                       </Text>
                     </View>
@@ -338,8 +372,8 @@ const Home = () => {
                 );
               })
             ) : (
-              <View className="flex-1 justify-center items-center">
-                <Text className="text-gray-400">
+              <View className="flex-1 justify-center items-center py-4 bg-black-400/30 rounded-xl">
+                <Text className="text-component-mood-text/70 font-plight">
                   No mood data available for today.
                 </Text>
               </View>
@@ -347,43 +381,77 @@ const Home = () => {
           </View>
 
           {/* Monthly Financial Data */}
-          <View className="bg-gray-800 rounded-lg p-4 shadow-lg">
-            <Text className="text-lg font-bold text-yellow-400 mb-3">
-              This Month's Financial Data
-            </Text>
-            <Text className="text-sm text-white mb-5">
-              Total Spent:{" "}
-              <Text className="text-yellow-500">${totalSpent.toFixed(2)}</Text>
-            </Text>
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <BarChart
-                showFractionalValues
-                showYAxisIndices
-                noOfSections={4}
-                data={barData}
-                isAnimated
-                xAxisLabelTextStyle={{
-                  color: "#ffffff",
-                  fontSize: 12,
-                  fontWeight: "bold",
-                }}
-                yAxisTextStyle={{
-                  color: "#FFEE58",
-                  fontSize: 12,
-                  fontWeight: "bold",
-                }}
-              />
+          <View 
+            style={{
+              backgroundColor: 'rgba(36, 59, 59, 0.15)',
+              borderColor: 'rgba(138, 157, 176, 0.2)',
+            }}
+            className="rounded-2xl p-5 shadow-lg border"
+          >
+            <View className="flex-row items-center mb-6">
+              <View className="w-1 h-6 bg-component-finance-accent rounded-full mr-3" />
+              <Text className="text-xl font-psemibold text-component-finance-text">
+                This Month's Financial Data
+              </Text>
+            </View>
+            
+            {/* Financial Overview Cards */}
+            <View className="flex-row justify-between mb-6">
+              <View className="flex-1 bg-black-400/30 rounded-xl p-4 mr-2 border border-component-finance-accent/10">
+                <Text className="text-sm text-component-finance-text/85 font-pmedium mb-1">
+                  Total Spent
+                </Text>
+                <Text className="text-2xl font-pbold text-component-finance-text">
+                  ${totalSpent.toFixed(2)}
+                </Text>
+              </View>
+              <View className="flex-1 bg-black-400/30 rounded-xl p-4 ml-2 border border-component-finance-accent/10">
+                <Text className="text-sm text-component-finance-text/85 font-pmedium mb-1">
+                  Categories
+                </Text>
+                <Text className="text-2xl font-pbold text-component-finance-text">
+                  {Object.keys(categorySpending).length}
+                </Text>
+              </View>
+            </View>
+
+            {/* Category Breakdown */}
+            <View className="bg-black-400/30 rounded-xl p-4 border border-component-finance-accent/10">
+              <Text className="text-sm text-component-finance-text/85 font-pmedium mb-4">
+                Spending by Category
+              </Text>
+              <View className="flex-1 justify-center items-center">
+                <BarChart
+                  showFractionalValues
+                  showYAxisIndices
+                  noOfSections={4}
+                  data={barData}
+                  isAnimated
+                  width={280}
+                  barBorderRadius={4}
+                  spacing={40}
+                  xAxisLabelTextStyle={{
+                    color: "#A5CCCC",
+                    fontSize: 11,
+                    fontFamily: "Poppins-Medium",
+                    rotation: 45
+                  }}
+                  yAxisTextStyle={{
+                    color: "#A5CCCC",
+                    fontSize: 11,
+                    fontFamily: "Poppins-Medium"
+                  }}
+                  dashWidth={0}
+                  yAxisIndicesColor="rgba(165, 204, 204, 0.1)"
+                  yAxisThickness={0}
+                  xAxisThickness={0}
+                />
+              </View>
             </View>
           </View>
 
-          <View className="flex-row justify-center mt-4">
-            <Text className="text-sm text-gray-300">
+          <View className="flex-row justify-center mt-6 mb-8">
+            <Text className="text-sm text-gray-200 font-plight">
               Track your spending and stay within your budget.
             </Text>
           </View>
