@@ -6,6 +6,7 @@ import {
   Image,
   FlatList,
   ScrollView,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,9 +19,12 @@ import {
   getEventsByDate,
   client,
   appwriteConfig,
+  createMood,
+  getCurrentUser,
 } from "../../lib/appwrite";
 import { ExpenseItem } from "../../type";
 import { BarChart } from "react-native-gifted-charts";
+import { useMoodContext } from '../../context/MoodContext';
 
 interface ScheduleItem {
   time: string;
@@ -70,6 +74,8 @@ const Home = () => {
   const router = useRouter();
   const currentdate = new Date();
   const formatDate = getFormattedDate(currentdate);
+  const [userId, setUserId] = useState<string | null>(null);
+  const { refreshMoods } = useMoodContext();
 
   //schedule
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
@@ -186,27 +192,47 @@ const Home = () => {
     };
   });
 
+  const saveMoodToDatabase = async (moodType: string) => {
+    if (!userId) {
+      Alert.alert("Error", "Please log in first");
+      return;
+    }
+    
+    const datetime = new Date().toISOString();
+    const newMood = {
+      userId: userId,
+      datetime: datetime,
+      mood_type: moodType,
+      description: "Quick mood set from home screen",
+      historyId: null
+    };
+    
+    try {
+      await createMood(newMood);
+      fetchMoods(currentdate);
+      refreshMoods(); // Trigger refresh in mood.tsx
+    } catch (error) {
+      Alert.alert("Error", "Failed to save mood");
+    }
+  };
+
   useEffect(() => {
+    const init = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          setUserId(currentUser.$id);
+        }
+      } catch (error) {
+        console.error("Error getting current user:", error);
+      }
+    };
+    init();
+    
     fetchMoods(currentdate);
     fetchSpending(currentdate);
     fetchSchedules(currentdate);
     fetchExpensesType();
-
-    // Subscribe to real-time updates for mood data
-    const unsubscribeSchedules = client.subscribe(
-      [
-        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.scheduleCollectionId}.documents`,
-      ],
-      (response) => {
-        const { events, payload } = response;
-        if (events.some((event) => event.includes(".create"))) {
-          fetchSchedules(currentdate);
-        }
-        if (events.some((event) => event.includes(".delete"))) {
-          fetchSchedules(currentdate);
-        }
-      }
-    );
 
     // Subscribe to real-time updates for mood data
     const unsubscribeMoods = client.subscribe(
@@ -259,12 +285,28 @@ const Home = () => {
       }
     );
 
+    // Subscribe to real-time updates for schedule data
+    const unsubscribeSchedules = client.subscribe(
+      [
+        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.scheduleCollectionId}.documents`,
+      ],
+      (response) => {
+        const { events, payload } = response;
+        if (events.some((event) => event.includes(".create"))) {
+          fetchSchedules(currentdate);
+        }
+        if (events.some((event) => event.includes(".delete"))) {
+          fetchSchedules(currentdate);
+        }
+      }
+    );
+
     // Cleanup subscriptions on unmount
     return () => {
-      unsubscribeSchedules();
       unsubscribeMoods();
       unsubscribeSpending();
       unsubscribeExpenses();
+      unsubscribeSchedules();
     };
   }, []);
 
@@ -372,10 +414,26 @@ const Home = () => {
                 );
               })
             ) : (
-              <View className="flex-1 justify-center items-center py-4 bg-black-400/30 rounded-xl">
-                <Text className="text-component-mood-text/70 font-plight">
-                  No mood data available for today.
-                </Text>
+              <View className="flex-1">
+                <View className="justify-center items-center py-4 bg-black-400/30 rounded-xl mb-4">
+                  <Text className="text-component-mood-text/70 font-plight mb-2">
+                    How are you feeling today?
+                  </Text>
+                </View>
+                <View className="flex-row justify-around bg-black-400/30 rounded-xl p-4">
+                  {Object.entries(moodMap).map(([moodType, details]) => (
+                    <TouchableOpacity
+                      key={moodType}
+                      onPress={() => saveMoodToDatabase(moodType)}
+                      className="items-center"
+                    >
+                      <Text className="text-2xl mb-1">{details.emoji}</Text>
+                      <Text className="text-component-mood-text/70 text-xs font-plight">
+                        {moodType}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             )}
           </View>
