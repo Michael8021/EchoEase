@@ -1,13 +1,22 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Image, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { icons } from "../../constants";
+import { getMoodByDate, client, appwriteConfig } from "../../lib/appwrite";
 
 interface ScheduleItem {
   time: string;
   task: string;
 }
+
+const moodMap: { [key: string]: { value: number; emoji: string } } = {
+  "Very Sad": { value: 1, emoji: "😭" },
+  Sad: { value: 2, emoji: "😢" },
+  Neutral: { value: 3, emoji: "😐" },
+  Happy: { value: 4, emoji: "😊" },
+  "Very Happy": { value: 5, emoji: "😁" },
+};
 
 // Mock data
 const mockSchedule = [
@@ -17,8 +26,7 @@ const mockSchedule = [
   { time: "05:00 PM", task: "Grocery Shopping" },
 ];
 
-const getFormattedDate = (): string => {
-  const date = new Date();
+const getFormattedDate = (date: Date): string => {
   const options: Intl.DateTimeFormatOptions = {
     weekday: "long",
     year: "numeric",
@@ -27,10 +35,37 @@ const getFormattedDate = (): string => {
   };
   return date.toLocaleDateString(undefined, options); // Use system locale
 };
+const formatTime = (datetime: string) => {
+  const date = new Date(datetime);
+  return `${date.getHours().toString().padStart(2, "0")}:${date
+    .getMinutes()
+    .toString()
+    .padStart(2, "0")}`;
+};
 
 const Home = () => {
   const router = useRouter();
-  const todayDate = getFormattedDate();
+  const currentdate = new Date();
+  const formatDate = getFormattedDate(currentdate);
+
+  const [mooddata, setMooddata] = useState<any[]>([]);
+  const fetchMMoods = async (currentDate: Date) => {
+    try {
+      const moods = await getMoodByDate(currentDate);
+      const formattedMoods = moods.map((mood: any) => ({
+        mood_type: mood.mood_type,
+        description: mood.description,
+        datetime: mood.datetime,
+      }));
+      setMooddata(formattedMoods);
+    } catch (error) {
+      console.error("Error fetching mooddata:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMMoods(currentdate);
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-black">
@@ -47,7 +82,7 @@ const Home = () => {
         {/* Display today's date */}
         <View className="bg-gray-800 rounded-lg p-3 mb-4 shadow-lg">
           <Text className="text-base text-yellow-400 font-semibold text-center">
-            {todayDate}
+            {formatDate}
           </Text>
         </View>
 
@@ -73,7 +108,40 @@ const Home = () => {
           <Text className="text-lg font-bold text-yellow-400 mb-2">
             Today's Mood
           </Text>
-          <Text className="text-white text-base">🙂 Feeling Productive</Text>
+          {mooddata.length > 0 ? (
+            mooddata.map((mood, index) => {
+              const moodDetails = moodMap[mood.mood_type]; // Fetch mood details from moodMap
+              return (
+                <View
+                  key={index}
+                  className="flex-row items-center justify-between border-b border-gray-500 pb-2 mb-2"
+                >
+                  {/* Time on the left */}
+                  <Text className="text-gray-400 text-sm">
+                    {formatTime(mood.datetime)}
+                  </Text>
+
+                  {/* Mood type and emoji on the left */}
+                  <View className="flex-row items-center ml-2">
+                    <Text className="text-white text-base">
+                      {moodDetails?.emoji || "❓"} {mood.mood_type}
+                    </Text>
+                  </View>
+
+                  {/* Description at the end, aligned to the right */}
+                  <View className="ml-2 flex-1 items-end">
+                    <Text className="text-gray-300 text-sm">
+                      {mood.description}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })
+          ) : (
+            <Text className="text-gray-400">
+              No mood data available for today.
+            </Text>
+          )}
         </View>
 
         {/* Monthly Financial Data */}

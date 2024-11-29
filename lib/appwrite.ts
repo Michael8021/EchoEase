@@ -23,6 +23,7 @@ export const appwriteConfig = {
     spendingId:'673df70f000e35b7d8c1',
     scheduleCollectionId: '672878b6000297694b47',
     historyCollectionId: '672eeced0003474523e6',
+    moodCollectionId:'672ce11300183b1fd08f',
 }
 
 
@@ -536,3 +537,58 @@ export async function deleteSchedule(documentId: string) {
   }
 }
 //----------------------------------------------schedule---------------------------------------------------------
+//----------------------------------------------mood---------------------------------------------------------
+export async function getMoodByDate(date: Date) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not authenticated");
+
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const moodData = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.moodCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.greaterThanEqual("datetime", startOfDay.toISOString()),
+        Query.lessThanEqual("datetime", endOfDay.toISOString()),
+      ]
+    );
+
+    return moodData.documents; 
+  } catch (error) {
+    console.error("Error retrieving mood data:", error);
+    alert("Failed to retrieve the mood of today. Please try again.");
+    return []; 
+  }
+}
+
+export const getSpendingByMonth = async (currentDate: Date) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString(); 
+    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59).toISOString(); 
+
+    // Query the spending documents from the Appwrite database
+    const spending = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.spendingId,
+      [
+        Query.equal("userId", currentUser.$id), 
+        Query.greaterThanEqual("date", startOfMonth), 
+        Query.lessThanEqual("date", endOfMonth)       
+      ]
+    );
+
+    return spending.documents;
+  } catch (error) {
+    console.error('Error retrieving expense types:', error);
+    alert('Failed to retrieve expense types. Please try again.');
+    return [];
+  }
+};
