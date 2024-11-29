@@ -10,7 +10,9 @@ import { Schedule, History } from '../lib/types';
 import { useHistories } from '../context/HistoriesContext';
 import { CategorizedData } from '../lib/types';
 import { testScheduleOperations } from '../lib/test/scheduleTest';
+
 import { useMoodContext } from '../context/MoodContext';
+
 
 const FloatingButton = () => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -119,14 +121,18 @@ const FloatingButton = () => {
             
             const contentData: CategorizedData = await categorizeAndExtractData(text, history.$id);
             console.log('Content Data:', contentData);
-            contentData.schedule.forEach(async (item) => {
-                await createSchedule(item);
-            });
-            contentData.mood.forEach(async (item) => {
-                await createMood(item);
-                refreshMoods();
-            });
-            
+
+            if (contentData.schedule) {
+                Promise.all(contentData.schedule.map(item => createSchedule(item)))
+                    .then(() => {
+                        if (typeof global.fetchSchedules === 'function') {
+                            global.fetchSchedules();
+                        }
+                    })
+                    .catch(error => console.error('Error creating schedules:', error));
+            }
+
+
             return;
         } catch (error) {
             console.error('Error handling text to widget:', error);
