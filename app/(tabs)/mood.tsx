@@ -97,9 +97,7 @@ const Mood = () => {
         if (index < (currentWeek < new Date() ? 7 : days)) {
           moodTypes[index] = moodType;
         }
-        console.log("Test1", fetchedMoods[index]!.datetime.slice(0, 10));
-        console.log("Test2", new Date().toISOString().slice(0, 10));
-        if (fetchedMoods[index]!.datetime.slice(0, 10) == new Date().toISOString().slice(0, 10)) {
+        if (new Date(fetchedMoods[index]!.datetime).toLocaleDateString().slice(0, 10) == new Date().toLocaleDateString().slice(0, 10)) {
           setTodayMood(moodEmoji + " " + fetchedMoods[index]!.mood_type);
         }
         return {
@@ -124,10 +122,7 @@ const Mood = () => {
   const handleViewInsights = async (weekStart: Date) => {
     try {
       setInsightModalVisible(true)
-      console.log("Mood Types", moodTypes);
-      console.log("Week Start", weekStart);
       const fetchMoodInsight = await getMoodInsight(userId!, weekStart);
-      console.log("Insights", fetchMoodInsight);
       if (fetchMoodInsight.documents.length > 0) {
         setmoodInsight(fetchMoodInsight.documents[0].mood_insight);
         return;
@@ -144,8 +139,6 @@ const Mood = () => {
       }
 
       await createMoodInsight(newMoodInsight, weekStart);
-
-      console.log("Insights", newMoodInsight);
     } catch (error) {
       console.error("Error fetching mood insights:", error);
       Alert.alert("Error", "Failed to fetch mood insights");
@@ -155,7 +148,6 @@ const Mood = () => {
   const regenerateInsight = async (weekStart: Date) => {
     try {
       setIsLoading(true);
-      console.log("Regenerating insights");
       const descriptions = descriptionData.map(desc => desc.description);
       const moodInsightResult = await genMoodInsight(moodTypes, descriptions);
       setmoodInsight(moodInsightResult);
@@ -168,7 +160,6 @@ const Mood = () => {
 
       await createMoodInsight(newMoodInsight, weekStart);
 
-      console.log("Insights", newMoodInsight);
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching mood insights:", error);
