@@ -91,7 +91,12 @@ const Home = () => {
       }));
 
       const formattedSchedules = [...formattedReminders, ...formattedEvents];
-      setScheduleData(formattedSchedules);
+      const sortedSchedules = formattedSchedules.sort((a, b) => {
+        const timeA = new Date(a.time).getTime();
+        const timeB = new Date(b.time).getTime();
+        return timeA - timeB;
+      });
+      setScheduleData(sortedSchedules);
     } catch (error) {
       console.error("Error fetching schedule data:", error);
     }
