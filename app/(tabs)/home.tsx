@@ -14,7 +14,8 @@ import {
   getMoodByDate,
   getSpendingByMonth,
   getExpenseTypes,
-  getSchedulesByDate,
+  getRemindersByDate,
+  getEventsByDate,
   client,
   appwriteConfig,
 } from "../../lib/appwrite";
@@ -51,15 +52,19 @@ const getFormattedDate = (date: Date): string => {
   };
   return date.toLocaleDateString(undefined, options);
 };
-const formatTime = (datetime: string): string => {
-  const date = new Date(datetime);
-  const options: Intl.DateTimeFormatOptions = {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  };
-  return new Intl.DateTimeFormat("en-US", options).format(date);
-};
+function formatScheduleTime(dateString: string): string {
+  const date = new Date(dateString);
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+
+  const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+  return `${hours}:${formattedMinutes} ${ampm}`;
+}
 
 const Home = () => {
   const router = useRouter();
@@ -68,14 +73,24 @@ const Home = () => {
 
   //schedule
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
-
   const fetchSchedules = async (current: Date) => {
     try {
-      const schedules = await getSchedulesByDate(current);
-      const formattedSchedules = schedules.map((schedule: any) => ({
-        time: schedule.start_time,
+      const reminders = await getRemindersByDate(current);
+      const events = await getEventsByDate(current);
+      const formattedReminders = reminders.map((schedule: any) => ({
+        type: "reminder",
+        time: schedule.due_date,
         task: schedule.title,
       }));
+
+      // Format events
+      const formattedEvents = events.map((event: any) => ({
+        type: "event",
+        time: event.start_time,
+        task: event.title,
+      }));
+
+      const formattedSchedules = [...formattedReminders, ...formattedEvents];
       setScheduleData(formattedSchedules);
     } catch (error) {
       console.error("Error fetching schedule data:", error);
@@ -90,7 +105,6 @@ const Home = () => {
       const formattedMoods = moods.map((mood: any) => ({
         mood_type: mood.mood_type,
         description: mood.description,
-        datetime: mood.datetime,
       }));
       setMooddata(formattedMoods);
     } catch (error) {
@@ -156,11 +170,11 @@ const Home = () => {
   };
 
   const barData = expensedata.map((expense) => {
-    const amount = categorySpending[expense.category] || 0; 
+    const amount = categorySpending[expense.category] || 0;
     return {
       value: amount,
       label: expense.category,
-      frontColor: expense.color || "#4ABFF4", 
+      frontColor: expense.color || "#4ABFF4",
     };
   });
 
@@ -171,33 +185,36 @@ const Home = () => {
     fetchExpensesType();
 
     // Subscribe to real-time updates for mood data
+    const unsubscribeSchedules = client.subscribe(
+      [
+        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.scheduleCollectionId}.documents`,
+      ],
+      (response) => {
+        const { events, payload } = response;
+        if (events.some((event) => event.includes(".create"))) {
+          fetchSchedules(currentdate);
+        }
+        if (events.some((event) => event.includes(".delete"))) {
+          fetchSchedules(currentdate);
+        }
+      }
+    );
+
+    // Subscribe to real-time updates for mood data
     const unsubscribeMoods = client.subscribe(
       [
         `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.moodCollectionId}.documents`,
       ],
       (response) => {
         const { events, payload } = response;
-        const mood = payload as any;
-
         if (events.some((event) => event.includes(".create"))) {
-          const newMood = {
-            mood_type: mood.mood_type,
-            description: mood.description,
-            datetime: mood.datetime,
-          };
-          setMooddata((prevData) => [...prevData, newMood]);
+          fetchMoods(currentdate);
         }
-
         if (events.some((event) => event.includes(".delete"))) {
-          setMooddata((prevData) =>
-            prevData.filter(
-              (existingMood) => existingMood.datetime !== mood.datetime
-            )
-          );
+          fetchMoods(currentdate);
         }
       }
     );
-
     // Subscribe to real-time updates for spending data
     const unsubscribeSpending = client.subscribe(
       [
@@ -205,90 +222,14 @@ const Home = () => {
       ],
       (response) => {
         const { events, payload } = response;
-        const spending = payload as any;
-
         if (events.some((event) => event.includes(".create"))) {
-          const newSpendingAmount = parseFloat(spending.amount);
-          const newSpendingCategory = spending.category;
-
-          // If the amount is valid, update total and category spending
-          if (!isNaN(newSpendingAmount)) {
-            // Update totalSpent
-            setTotalSpent((prevTotal) => prevTotal + newSpendingAmount);
-
-            // Update categorySpending
-            setCategorySpending((prevCategorySpending) => {
-              const updatedCategorySpending = { ...prevCategorySpending };
-              updatedCategorySpending[newSpendingCategory] =
-                (updatedCategorySpending[newSpendingCategory] || 0) +
-                newSpendingAmount;
-              return updatedCategorySpending;
-            });
-          }
+          fetchSpending(currentdate);
         }
-
         if (events.some((event) => event.includes(".delete"))) {
-          const deletedSpendingAmount = parseFloat(spending.amount);
-          const deletedSpendingCategory = spending.category;
-
-          // If the amount is valid, update total and category spending
-          if (!isNaN(deletedSpendingAmount)) {
-            // Update totalSpent
-            setTotalSpent((prevTotal) => prevTotal - deletedSpendingAmount);
-
-            // Update categorySpending
-            setCategorySpending((prevCategorySpending) => {
-              const updatedCategorySpending = { ...prevCategorySpending };
-              updatedCategorySpending[deletedSpendingCategory] =
-                (updatedCategorySpending[deletedSpendingCategory] || 0) -
-                deletedSpendingAmount;
-
-              // Remove the category if its spending amount becomes 0
-              if (updatedCategorySpending[deletedSpendingCategory] <= 0) {
-                delete updatedCategorySpending[deletedSpendingCategory];
-              }
-
-              return updatedCategorySpending;
-            });
-          }
+          fetchSpending(currentdate);
         }
-
         if (events.some((event) => event.includes(".update"))) {
-          const updatedSpendingAmount = parseFloat(spending.amount);
-          const updatedSpendingCategory = spending.category;
-          const oldSpendingAmount = parseFloat(spending.oldAmount); // Assuming oldAmount is available
-
-          // If the amount is valid and the spending category exists, update total and category spending
-          if (!isNaN(updatedSpendingAmount)) {
-            setTotalSpent((prevTotal) => {
-              // Calculate the updated total by subtracting old amount and adding the new one
-              const newTotal =
-                prevTotal - oldSpendingAmount + updatedSpendingAmount;
-              return newTotal;
-            });
-
-            // Update categorySpending
-            setCategorySpending((prevCategorySpending) => {
-              const updatedCategorySpending = { ...prevCategorySpending };
-
-              // Subtract the old amount for the category
-              updatedCategorySpending[updatedSpendingCategory] =
-                (updatedCategorySpending[updatedSpendingCategory] || 0) -
-                oldSpendingAmount;
-
-              // Add the new amount for the category
-              updatedCategorySpending[updatedSpendingCategory] =
-                (updatedCategorySpending[updatedSpendingCategory] || 0) +
-                updatedSpendingAmount;
-
-              // If the spending for the category becomes zero, remove it
-              if (updatedCategorySpending[updatedSpendingCategory] <= 0) {
-                delete updatedCategorySpending[updatedSpendingCategory];
-              }
-
-              return updatedCategorySpending;
-            });
-          }
+          fetchSpending(currentdate);
         }
       }
     );
@@ -300,39 +241,24 @@ const Home = () => {
       ],
       (response) => {
         const { events, payload } = response;
-        const expense = payload as any;
 
         if (events.some((event) => event.includes(".create"))) {
-          const newExpense = {
-            id: expense.$id,
-            category: expense.category,
-            amount: expense.amount,
-            color: expense.color,
-          };
-          setExpensedata((prevData) => [...prevData, newExpense]);
+          fetchExpensesType();
         }
-
         if (events.some((event) => event.includes(".delete"))) {
-          setExpensedata((prevData) =>
-            prevData.filter(
-              (existingExpense) => existingExpense.category !== expense.category
-            )
-          );
+          fetchExpensesType();
         }
       }
     );
 
     // Cleanup subscriptions on unmount
     return () => {
+      unsubscribeSchedules();
       unsubscribeMoods();
       unsubscribeSpending();
       unsubscribeExpenses();
     };
   }, []);
-
-  useEffect(() => {
-    console.log(scheduleData);
-  }, [scheduleData]);
 
   return (
     <SafeAreaView className="flex-1 bg-black">
@@ -363,10 +289,12 @@ const Home = () => {
             </Text>
 
             {/* Check if scheduleData is null or empty */}
-            {mockSchedule && mockSchedule.length > 0 ? (
-              mockSchedule.map((item: ScheduleItem, index: number) => (
+            {scheduleData && scheduleData.length > 0 ? (
+              scheduleData.map((item: ScheduleItem, index: number) => (
                 <View key={index} className="flex-row justify-between mb-2">
-                  <Text className="text-gray-400 text-sm">{item.time}</Text>
+                  <Text className="text-gray-400 text-sm">
+                    {formatScheduleTime(item.time)}
+                  </Text>
                   <Text className="text-sm text-gray-300">{item.task}</Text>
                 </View>
               ))
@@ -388,19 +316,12 @@ const Home = () => {
                 return (
                   <View
                     key={index}
-                    className="flex-row items-center justify-between border-b border-gray-500 pb-2 mb-2"
+                    className="flex-row items-center justify-between"
                   >
-                    {/* Time on the left */}
-                    <Text className="text-gray-400 text-sm">
-                      {formatTime(mood.datetime)}
-                    </Text>
-
                     {/* Mood type and emoji on the left */}
-                    <View className="flex-row items-center ml-2">
-                      <Text className="text-white text-base">
-                        {moodDetails?.emoji || "❓"} {mood.mood_type}
-                      </Text>
-                    </View>
+                    <Text className="text-white text-base">
+                      {moodDetails?.emoji || "❓"} {mood.mood_type}
+                    </Text>
 
                     {/* Description at the end, aligned to the right */}
                     <View className="ml-2 flex-1 items-end">

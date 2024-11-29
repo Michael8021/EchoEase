@@ -584,7 +584,6 @@ export const getSpendingByMonth = async (currentDate: Date) => {
         Query.lessThanEqual("date", endOfMonth)       
       ]
     );
-
     return spending.documents;
   } catch (error) {
     console.error('Error retrieving expense types:', error);
@@ -593,34 +592,62 @@ export const getSpendingByMonth = async (currentDate: Date) => {
   }
 };
 
-export async function getSchedulesByDate(date: Date) {
+export async function getRemindersByDate(date: Date) {
   try {
     const currentUser = await getCurrentUser();
-    if (!currentUser) throw new Error("No user logged in");
+    if (!currentUser) throw new Error("User not authenticated");
 
-    const startOfDay = new Date(date.setHours(0, 0, 0, 0)); 
-    const endOfDay = new Date(date.setHours(23, 59, 59, 999)); 
-    const formattedStartOfDay = startOfDay.toISOString();
-    const formattedEndOfDay = endOfDay.toISOString();
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
-    console.log("Fetching schedules for the day: ", formattedStartOfDay, formattedEndOfDay);
-
-    const schedules = await databases.listDocuments(
+    const reminders = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.scheduleCollectionId,
       [
         Query.equal("userId", currentUser.$id),
-        // Query.greaterThan("start_time", formattedStartOfDay),
-        // Query.lessThan("start_time", formattedEndOfDay)
+        Query.equal("type", "reminder"),
+        Query.greaterThanEqual("due_date", startOfDay.toISOString()),
+        Query.lessThanEqual("due_date", endOfDay.toISOString()),
+
       ]
     );
 
-    console.log("Schedules found: ", schedules);
-
-    return schedules.documents;
+    return reminders.documents;
   } catch (error) {
-    console.error(`Error fetching schedules: ${error}`);
-    alert('Failed to retrieve schedules. Please try again.');
+    console.error(`Error fetching reminders: ${error}`);
+    alert('Failed to retrieve reminders. Please try again.');
     return [];
   }
 }
+
+export async function getEventsByDate(date: Date) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not authenticated");
+
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const events= await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.scheduleCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.equal("type", "event"),
+        Query.greaterThanEqual("start_time", startOfDay.toISOString()),
+        Query.lessThanEqual("start_time", endOfDay.toISOString()),
+
+      ]
+    );
+    return events.documents;
+  } catch (error) {
+    console.error(`Error fetching events: ${error}`);
+    alert('Failed to retrieve events. Please try again.');
+    return [];
+  }
+}
+

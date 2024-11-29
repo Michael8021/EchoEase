@@ -151,7 +151,7 @@ const ExpenseBlock = ({
 
     return (
       <TouchableOpacity
-        onLongPress={() => { handleDelete(item.id)}}>
+        onLongPress={() => { handleDelete(item.category)}}>
         <View style={[styles.expenseBlock, { backgroundColor: item.color }]}>
           <Text className="text-white">{item.category}</Text>
           <Text className="text-white" style={styles.expenseBlockTxt2}>
