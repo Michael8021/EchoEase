@@ -3,7 +3,15 @@ import { View, Text, TouchableOpacity, Image, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { icons } from "../../constants";
-import { getMoodByDate, client, appwriteConfig } from "../../lib/appwrite";
+import {
+  getMoodByDate,
+  getSpendingByMonth,
+  getExpenseTypes,
+  client,
+  appwriteConfig,
+} from "../../lib/appwrite";
+import { ExpenseItem, SpendingItem } from "../../type";
+import { BarChart } from "react-native-gifted-charts";
 
 interface ScheduleItem {
   time: string;
@@ -48,10 +56,11 @@ const Home = () => {
   const currentdate = new Date();
   const formatDate = getFormattedDate(currentdate);
 
+  //mood
   const [mooddata, setMooddata] = useState<any[]>([]);
-  const fetchMMoods = async (currentDate: Date) => {
+  const fetchMoods = async (current: Date) => {
     try {
-      const moods = await getMoodByDate(currentDate);
+      const moods = await getMoodByDate(current);
       const formattedMoods = moods.map((mood: any) => ({
         mood_type: mood.mood_type,
         description: mood.description,
@@ -63,9 +72,83 @@ const Home = () => {
     }
   };
 
+  //spending
+  const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [categorySpending, setCategorySpending] = useState<{
+    [category: string]: number;
+  }>({});
+  const fetchSpending = async (current: Date) => {
+    try {
+      const spending = await getSpendingByMonth(currentdate);
+      const totalAmount = spending.reduce((total: number, item: any) => {
+        const amount = parseFloat(item.amount);
+        if (!isNaN(amount)) {
+          return total + amount;
+        }
+        return total;
+      }, 0);
+
+      setTotalSpent(totalAmount);
+      const spendingByCategory = spending.reduce(
+        (acc: { [category: string]: number }, item: any) => {
+          const amount = parseFloat(item.amount);
+          const category = item.category;
+
+          if (!isNaN(amount)) {
+            if (acc[category]) {
+              acc[category] += amount;
+            } else {
+              acc[category] = amount;
+            }
+          }
+          return acc;
+        },
+        {}
+      );
+
+      setCategorySpending(spendingByCategory);
+    } catch (error) {
+      console.error("Error fetching spending data:", error);
+    }
+  };
+
+  //expense type
+  const [expensedata, setExpensedata] = useState<ExpenseItem[]>([]);
+  const fetchExpensesType = async () => {
+    try {
+      const expensesTypes = await getExpenseTypes();
+      const formattedExpensesType = expensesTypes.map((expenseType: any) => ({
+        id: expenseType.$id,
+        category: expenseType.category,
+        amount: expenseType.amount,
+        color: expenseType.color,
+      }));
+      setExpensedata(formattedExpensesType);
+    } catch (error) {
+      console.error("Error fetching expenses:", error);
+    }
+  };
+
+  const barData = Object.entries(categorySpending).map(([category, amount]) => {
+    const expense = expensedata.find(
+      (expense) => expense.category === category
+    );
+    return {
+      value: amount,
+      label: category,
+      frontColor: expense ? expense.color : "#4ABFF4",
+    };
+  });
+
   useEffect(() => {
-    fetchMMoods(currentdate);
+    fetchMoods(currentdate);
+    fetchSpending(currentdate);
+    fetchExpensesType();
   }, []);
+
+  useEffect(() => {
+    console.log(expensedata);
+  }, [categorySpending, expensedata]);
 
   return (
     <SafeAreaView className="flex-1 bg-black">
@@ -150,16 +233,26 @@ const Home = () => {
             This Month's Financial Data
           </Text>
           <Text className="text-sm text-white">
-            Total Spent: <Text className="text-yellow-500">$1200</Text>
+            Total Spent: <Text className="text-yellow-500">${totalSpent}</Text>
           </Text>
-          <Text className="text-sm text-white mt-1">
-            Total Income: <Text className="text-yellow-500">$3000</Text>
-          </Text>
-          <View className="h-24 bg-gray-600 rounded-lg mt-4 flex items-center justify-center">
-            <Text className="text-white text-sm">Chart Placeholder</Text>
+          </View>
+
+          <View className="h-48 bg-gray-700 rounded-lg mt-4 flex items-center justify-center p-4 shadow-inner">
+            {/* <BarChart
+              showFractionalValues
+              showYAxisIndices
+              noOfSections={4}
+              data={barData}
+              isAnimated
+            /> */}
+          </View>
+
+          <View className="flex-row justify-center mt-4">
+            <Text className="text-sm text-gray-300">
+              Track your spending and stay within your budget.
+            </Text>
           </View>
         </View>
-      </View>
     </SafeAreaView>
   );
 };
