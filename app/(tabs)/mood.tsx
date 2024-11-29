@@ -94,7 +94,7 @@ const Mood = () => {
           moodEmoji = moodMap2[fetchedMoods[index]!.mood_type].emoji || "";
           moodType = fetchedMoods[index]!.mood_type;
         }
-        if (index < (currentWeek < new Date() ? 7 : days)) {
+        if (index < (weekStart < new Date() ? 7 : days)) {
           moodTypes[index] = moodType;
         }
         if (new Date(fetchedMoods[index]!.datetime).toLocaleDateString().slice(0, 10) == new Date().toLocaleDateString().slice(0, 10)) {
@@ -122,6 +122,9 @@ const Mood = () => {
   const handleViewInsights = async (weekStart: Date) => {
     try {
       setInsightModalVisible(true)
+      if (weekStart > new Date()) {
+        return;
+      }
       const fetchMoodInsight = await getMoodInsight(userId!, weekStart);
       if (fetchMoodInsight.documents.length > 0) {
         setmoodInsight(fetchMoodInsight.documents[0].mood_insight);
@@ -147,6 +150,9 @@ const Mood = () => {
 
   const regenerateInsight = async (weekStart: Date) => {
     try {
+      if (weekStart > new Date()) {
+        return;
+      }
       setIsLoading(true);
       const descriptions = descriptionData.map(desc => desc.description);
       const moodInsightResult = await genMoodInsight(moodTypes, descriptions);
