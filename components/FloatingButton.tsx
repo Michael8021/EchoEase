@@ -131,6 +131,10 @@ const FloatingButton = () => {
                     })
                     .catch(error => console.error('Error creating schedules:', error));
             }
+            contentData.mood.forEach(async (item) => {
+                await createMood(item);
+                refreshMoods();
+            });
 
 
             return;
