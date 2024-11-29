@@ -5,6 +5,7 @@
 
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
+export const expenseTypeColors=["#5e16f8", "#2ac7e7", "#4498f7", "#FFA5BA"];
 
 export const Colors = {
   light: {

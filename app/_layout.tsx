@@ -6,6 +6,7 @@ import GlobalProvider from "../context/GlobalProvider";
 import { LanguageProvider } from '../context/LanguageProvider';
 
 import "../global.css";
+import '../lib/errorHandler';
 
 SplashScreen.preventAutoHideAsync();
 

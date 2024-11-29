@@ -5,12 +5,14 @@ import { useGlobalContext } from '../context/GlobalProvider';
 import { categorizeAndExtractData, transcribeAudio } from '../lib/aiService';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
-import { createHistory, createSchedule } from '../lib/appwrite';
+import { createHistory, createSchedule, createMood } from '../lib/appwrite';
 import { Schedule, History } from '../lib/types';
 import { useHistories } from '../context/HistoriesContext';
 import { CategorizedData } from '../lib/types';
 import { testScheduleOperations } from '../lib/test/scheduleTest';
-// import Schedule from '@/app/(tabs)/schedule';
+
+import { useMoodContext } from '../context/MoodContext';
+
 
 const FloatingButton = () => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -18,6 +20,7 @@ const FloatingButton = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const { user } = useGlobalContext();
     const { addHistory } = useHistories();
+    const { refreshMoods } = useMoodContext();
 
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [permissionResponse, requestPermission] = Audio.usePermissions();
@@ -118,6 +121,7 @@ const FloatingButton = () => {
             
             const contentData: CategorizedData = await categorizeAndExtractData(text, history.$id);
             console.log('Content Data:', contentData);
+
             if (contentData.schedule) {
                 Promise.all(contentData.schedule.map(item => createSchedule(item)))
                     .then(() => {
@@ -127,6 +131,7 @@ const FloatingButton = () => {
                     })
                     .catch(error => console.error('Error creating schedules:', error));
             }
+
 
             return;
         } catch (error) {

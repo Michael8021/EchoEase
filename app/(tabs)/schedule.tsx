@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native'
 import {Card, Avatar} from 'react-native-paper';
 import {Calendar, CalendarList, Agenda} from 'react-native-calendars';
+
 import React, { useEffect, useState, useCallback } from 'react'
 import { getSchedules } from '@/lib/appwrite';
 import tailwind from 'tailwindcss';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useFocusEffect } from '@react-navigation/native';
+
 
 // thing that will fetch from database
 // ------------------------------------------
@@ -51,6 +53,7 @@ const Schedule = () => {
 
   // const [items, setItems] = useState<ScheduleItems>(initialItems);
   const [items, setItems] = useState<ScheduleItems>({});
+
 
   const fetchSchedules = () => {
     setLoading(true);
@@ -115,6 +118,7 @@ const Schedule = () => {
       global.fetchSchedules = undefined;
     };
   }, [fetchSchedules]);
+
 
   const renderEmptyData = () => {
     return (
@@ -219,7 +223,6 @@ const formatTime = (dateString: string | null): string => {
   const date = new Date(dateString);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
-
 
 
 // const styles = StyleSheet.create({
