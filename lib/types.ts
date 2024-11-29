@@ -34,11 +34,17 @@ export interface Finance {
 }
 
 export interface Mood {
+  userId: string;
+  datetime: string;
   mood_type: string;
   description: string;
-  datetime: string;
+  historyId: string | null;
+}
+
+export interface MoodInsight {
   userId: string;
-  historyId: string;
+  datetime: string;
+  mood_insight: string;
 }
 
 export interface Other {

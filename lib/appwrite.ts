@@ -9,9 +9,8 @@ import {
     Permission, 
     Role
   } from "react-native-appwrite";
-  import { SpendingItem,ExpenseItem } from "../type";
-
-import { Schedule } from "./types";
+import { SpendingItem,ExpenseItem } from "../type";
+import { Schedule, Mood, MoodInsight } from "./types";
 
 export const appwriteConfig = {
     endpoint: 'https://cloud.appwrite.io/v1',
@@ -23,7 +22,9 @@ export const appwriteConfig = {
     spendingId:'673df70f000e35b7d8c1',
     scheduleCollectionId: '672878b6000297694b47',
     historyCollectionId: '672eeced0003474523e6',
-    moodCollectionId:'672ce11300183b1fd08f',
+    moodCollectionId: '672ce11300183b1fd08f',
+    mood_insightCollectionId: '6745a21d0014178b09e2',
+    bucketId: '6745e535000b2448cd22'
 }
 
 
@@ -35,6 +36,9 @@ export const client = new Client()
 const account = new Account(client);
 const avatars = new Avatars(client);
 const databases = new Databases(client);
+const storage = new Storage(client);
+
+// ======================== User Management ========================
 
 //----------------------------------------------account---------------------------------------------------------
 // Register user
@@ -130,7 +134,7 @@ export async function changePassword(oldPassword: string, newPassword: string) {
   try {
     const result = await account.updatePassword(newPassword, oldPassword);
     if (!result) throw Error;
-    
+
     return result;
   } catch (error) {
     throw new Error(String(error));
@@ -209,10 +213,532 @@ export async function updateUsername(newUsername: string) {
     throw new Error(String(error));
   }
 }
-//----------------------------------------------account---------------------------------------------------------
 
-//----------------------------------------------finance---------------------------------------------------------
-//add expense type
+// Update Avatar
+export async function updateAvatar(uri: string) {
+  try {
+    let response; try { response = await fetch(uri); } catch (error) { console.log('Error fetching avatar:', error); return null; }
+    const blob = await response.blob();
+    
+    const file = {
+      name: 'profile.jpg',
+      type: 'image/jpeg',
+      size: blob.size,
+      uri: uri
+    };
+
+    // Get current user to find existing avatar
+    const currentAccount = await account.get();
+    const currentUser = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      [Query.equal("accountId", currentAccount.$id)]
+    );
+
+    if (!currentUser.documents[0]) throw new Error("User not found");
+
+    // Delete old avatar if it exists
+    const currentAvatar = currentUser.documents[0].avatar;
+    if (currentAvatar && currentAvatar.includes(appwriteConfig.bucketId)) {
+      try {
+        // Extract file ID from the URL using regex
+        const fileIdMatch = currentAvatar.match(/files\/([^/]+)\/view/);
+        const fileId = fileIdMatch ? fileIdMatch[1] : null;
+        
+        if (fileId) {
+          try {
+            await storage.deleteFile(appwriteConfig.bucketId, fileId);
+          } catch (deleteError: any) {
+            // Only log the error if it's not a "file not found" error
+            if (deleteError?.code !== 404) {
+              console.log("Error deleting old avatar:", deleteError);
+            }
+          }
+        }
+      } catch (error) {
+        // If there's an error parsing the URL, just log it and continue
+        console.log("Error parsing avatar URL:", error);
+      }
+    }
+
+    // Upload new avatar
+    const fileId = ID.unique();
+    const uploadedFile = await storage.createFile(
+      appwriteConfig.bucketId,
+      fileId,
+      file
+    );
+
+    if (!uploadedFile) throw Error;
+
+    const fileUrl = storage.getFileView(
+      appwriteConfig.bucketId,
+      uploadedFile.$id
+    );
+
+    const updatedUser = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      currentUser.documents[0].$id,
+      {
+        avatar: fileUrl.href
+      }
+    );
+
+    return updatedUser;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}
+
+// ======================== History Management ========================
+
+// Create History
+export async function createHistory(transcribed_text: string,) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    const newHistory = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.historyCollectionId,
+      ID.unique(),
+      {
+        transcribed_text: transcribed_text,
+        userId: currentUser.$id,
+      }
+    );
+
+    if (!newHistory) throw Error;
+
+    return newHistory;
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+// Get History
+export async function getHistory() {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    const histories = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.historyCollectionId,
+      [Query.equal("userId", currentUser.$id)]
+    );
+
+    if (!histories) throw Error;
+
+    return histories.documents;
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+// Delete History
+export async function deleteHistory(documentId: string) {
+  try {
+    const deletedHistory = await databases.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.historyCollectionId,
+      documentId
+    );
+
+    if (!deletedHistory) throw Error;
+
+    return deletedHistory;
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+// ======================== Schedule Management ========================
+
+// Update History
+export async function updateHistory(documentId: string, data: Partial<Schedule>) {
+  try {
+    const updatedHistory = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.historyCollectionId,
+      documentId,
+      data
+    );
+
+    if (!updatedHistory) throw Error;
+
+    return updatedHistory;
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+//----------------------------------------------history---------------------------------------------------------
+
+//----------------------------------------------schedule---------------------------------------------------------
+// Create Schedule
+export async function createSchedule(schedule: Omit<Schedule, '$id'>) {
+  try {
+
+    // Clean up date fields
+    const cleanedSchedule = {
+      ...schedule,
+      status: schedule.status || null,
+      start_time: schedule.start_time || null,
+      end_time: schedule.end_time || null,
+      notify_at: schedule.notify_at || null,
+      due_date: schedule.due_date || null,
+      userId: schedule.userId
+    };
+
+    const newSchedule = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.scheduleCollectionId,
+      ID.unique(),
+      cleanedSchedule
+    );
+
+    if (!newSchedule) throw Error;
+
+    return newSchedule as unknown as Schedule;
+  } catch (error) {
+    console.log('Schedule creation error:', schedule);
+    throw new Error(String(error));
+  }
+}
+
+// Get Schedules
+export async function getSchedules() {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    const schedules = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.scheduleCollectionId,
+      [Query.equal("userId", currentUser.$id)]
+    );
+
+    if (!schedules) throw Error;
+
+    return schedules.documents as unknown as Schedule[];
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+// Update Schedule
+export async function updateSchedule(
+  documentId: string,
+  schedule: Partial<Omit<Schedule, '$id'>>
+) {
+  try {
+    const updatedSchedule = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.scheduleCollectionId,
+      documentId,
+      schedule
+    );
+
+    if (!updatedSchedule) throw Error;
+
+    return updatedSchedule as unknown as Schedule;
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+// Delete Schedule
+export async function deleteSchedule(documentId: string) {
+  try {
+    const deletedSchedule = await databases.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.scheduleCollectionId,
+      documentId
+    );
+
+    if (!deletedSchedule) throw Error;
+
+    return deletedSchedule as Schedule;
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+//----------------------------------------------schedule---------------------------------------------------------
+//----------------------------------------------Home---------------------------------------------------------
+export async function getMoodByDate(date: Date) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not authenticated");
+
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const moodData = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.moodCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.greaterThanEqual("datetime", startOfDay.toISOString()),
+        Query.lessThanEqual("datetime", endOfDay.toISOString()),
+      ]
+    );
+
+    return moodData.documents; 
+  } catch (error) {
+    console.error("Error retrieving mood data:", error);
+    alert("Failed to retrieve the mood of today. Please try again.");
+    return []; 
+  }
+}
+
+export const getSpendingByMonth = async (currentDate: Date) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString(); 
+    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59).toISOString(); 
+
+    // Query the spending documents from the Appwrite database
+    const spending = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.spendingId,
+      [
+        Query.equal("userId", currentUser.$id), 
+        Query.greaterThanEqual("date", startOfMonth), 
+        Query.lessThanEqual("date", endOfMonth)       
+      ]
+    );
+    return spending.documents;
+  } catch (error) {
+    console.error('Error retrieving expense types:', error);
+    alert('Failed to retrieve expense types. Please try again.');
+    return [];
+  }
+};
+
+export async function getRemindersByDate(date: Date) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not authenticated");
+
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const reminders = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.scheduleCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.equal("type", "reminder"),
+        Query.greaterThanEqual("due_date", startOfDay.toISOString()),
+        Query.lessThanEqual("due_date", endOfDay.toISOString()),
+
+      ]
+    );
+
+    return reminders.documents;
+  } catch (error) {
+    console.error(`Error fetching reminders: ${error}`);
+    alert('Failed to retrieve reminders. Please try again.');
+    return [];
+  }
+}
+
+export async function getEventsByDate(date: Date) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not authenticated");
+
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const events= await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.scheduleCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.equal("type", "event"),
+        Query.greaterThanEqual("start_time", startOfDay.toISOString()),
+        Query.lessThanEqual("start_time", endOfDay.toISOString()),
+
+      ]
+    );
+    return events.documents;
+  } catch (error) {
+    console.error(`Error fetching events: ${error}`);
+    alert('Failed to retrieve events. Please try again.');
+    return [];
+  }
+}
+
+//----------------------------------------------Home---------------------------------------------------------
+//----------------------------------------------Mood---------------------------------------------------------
+export async function createMood(mood: Mood) {
+  try {
+    // Set the start and end of the day for the given date
+    const date = new Date();
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    const existing = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.moodCollectionId,
+      [
+        Query.equal("userId", mood.userId),
+        Query.greaterThanEqual("datetime", startOfDay.toISOString()),
+        Query.lessThanEqual("datetime", endOfDay.toISOString())
+      ]
+    );
+
+    if (existing.total > 0) {
+      const moodId = existing.documents[0].$id;
+      const updatedMood = await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.moodCollectionId,
+        moodId,
+        {
+          datetime: mood.datetime,
+          mood_type: mood.mood_type,
+          description: mood.description,
+          historyId: mood.historyId
+        }
+      );
+      return updatedMood;
+    } else {
+      const newMood = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.moodCollectionId,
+        ID.unique(),
+        {
+          userId: mood.userId,
+          datetime: mood.datetime,
+          mood_type: mood.mood_type,
+          description: mood.description,
+          historyId: mood.historyId
+        }
+      );
+      return newMood;
+    }
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+export async function getMoods(userId: string, weekStart: Date) {
+  const day = weekStart.getDay();
+  const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(weekStart.setDate(diff));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  // Set monday to the start of the day (00:00:00)
+  monday.setHours(0, 0, 0, 0);
+  // Set sunday to the end of the day (23:59:59)
+  sunday.setHours(23, 59, 59, 999);
+  const moods = await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.moodCollectionId,
+    [
+      Query.equal("userId", userId),
+      Query.greaterThanEqual("datetime", monday.toISOString()),
+      Query.lessThanEqual("datetime", sunday.toISOString())
+    ]
+  );
+  // Create a map of dates to mood documents
+  const moodMap = new Map(moods.documents.map(mood => [new Date(mood.datetime).toLocaleDateString().split('T')[0], mood]));
+
+  // Initialize an array to hold the results
+  const result = [];
+
+  // Iterate through each day of the week
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(monday);
+    currentDate.setDate(monday.getDate() + i);
+    const dateString = currentDate.toLocaleDateString().split('T')[0];
+    if (moodMap.has(dateString)) {
+      result.push(moodMap.get(dateString));
+    } else {
+      result.push({ datetime: dateString, mood_type: null, description: null });
+    }
+  }
+  return result;
+}
+
+export async function createMoodInsight(moodInsight: MoodInsight, weekStart: Date) {
+  try {
+    // Set the start and end of the day for the given date
+    const startOfWeek = new Date(weekStart);
+    startOfWeek.setDate(weekStart.getDate() - weekStart.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const existing = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.mood_insightCollectionId,
+      [
+        Query.equal("userId", moodInsight.userId),
+        Query.greaterThanEqual("datetime", startOfWeek.toISOString()),
+        Query.lessThanEqual("datetime", today.toISOString())
+      ]
+    );
+
+    if (existing.total > 0) {
+      const moodInsightId = existing.documents[0].$id;
+      const updatedMoodInsight = await databases.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.mood_insightCollectionId,
+        moodInsightId,
+        {
+          datetime: moodInsight.datetime,
+          mood_insight: moodInsight.mood_insight,
+        }
+      );
+      return updatedMoodInsight;
+    } else {
+      const newMoodInsight = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.mood_insightCollectionId,
+        ID.unique(),
+        {
+          userId: moodInsight.userId,
+          datetime: moodInsight.datetime,
+          mood_insight: moodInsight.mood_insight,
+        }
+      );
+      return newMoodInsight;
+    }
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+
+export async function getMoodInsight(userId: string, weekStart: Date) {
+  const startOfWeek = new Date(weekStart);
+  startOfWeek.setDate(weekStart.getDate() - weekStart.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  const moodInsight = await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.mood_insightCollectionId,
+    [
+      Query.equal("userId", userId),
+      Query.greaterThanEqual("datetime", startOfWeek.toISOString()),
+      Query.lessThanEqual("datetime", today.toISOString())
+    ]
+  );
+  return moodInsight;
+}
+//----------------------------------------------Mood---------------------------------------------------------
 export const addExpenseType = async (expenseCategory:string,selectedColor:string) => {
   try {
     const currentUser = await getCurrentUser();
@@ -361,293 +887,4 @@ export const deleteSpending = async (spending: SpendingItem) => {
     alert('Failed to delete spending. Please try again.');
   }
 };
-
-
-
 //----------------------------------------------finance---------------------------------------------------------
-
-//----------------------------------------------history---------------------------------------------------------
-// Create History
-export async function createHistory(transcribed_text: string,) {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw Error;
-
-    const newHistory = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.historyCollectionId,
-      ID.unique(),
-      {
-        transcribed_text: transcribed_text,
-        userId: currentUser.$id,
-      }
-    );
-
-    if (!newHistory) throw Error;
-
-    return newHistory;
-  } catch (error) {
-    throw new Error(String(error));
-  }
-}
-
-// Get History
-export async function getHistory() {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw Error;
-
-    const histories = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.historyCollectionId,
-      [Query.equal("userId", currentUser.$id)]
-    );
-
-    if (!histories) throw Error;
-
-    return histories.documents;
-  } catch (error) {
-    throw new Error(String(error));
-  }
-}
-
-// Delete History
-export async function deleteHistory(documentId: string) {
-  try {
-    const deletedHistory = await databases.deleteDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.historyCollectionId,
-      documentId
-    );
-
-    if (!deletedHistory) throw Error;
-
-    return deletedHistory;
-  } catch (error) {
-    throw new Error(String(error));
-  }
-}
-
-// Update History
-export async function updateHistory(documentId: string, data: Partial<Schedule>) {
-  try {
-    const updatedHistory = await databases.updateDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.historyCollectionId,
-      documentId,
-      data
-    );
-
-    if (!updatedHistory) throw Error;
-
-    return updatedHistory;
-  } catch (error) {
-    throw new Error(String(error));
-  }
-}
-//----------------------------------------------history---------------------------------------------------------
-
-//----------------------------------------------schedule---------------------------------------------------------
-// Create Schedule
-export async function createSchedule(schedule: Omit<Schedule, '$id'>) {
-  try {
-
-    // Clean up date fields
-    const cleanedSchedule = {
-      ...schedule,
-      status: schedule.status || null,
-      start_time: schedule.start_time || null,
-      end_time: schedule.end_time || null,
-      notify_at: schedule.notify_at || null,
-      due_date: schedule.due_date || null,
-      userId: schedule.userId
-    };
-
-    const newSchedule = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.scheduleCollectionId,
-      ID.unique(),
-      cleanedSchedule
-    );
-
-    if (!newSchedule) throw Error;
-
-    return newSchedule as unknown as Schedule;
-  } catch (error) {
-    console.log('Schedule creation error:', schedule);
-    throw new Error(String(error));
-  }
-}
-
-// Get Schedules
-export async function getSchedules() {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw Error;
-
-    const schedules = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.scheduleCollectionId,
-      [Query.equal("userId", currentUser.$id)]
-    );
-
-    if (!schedules) throw Error;
-
-    return schedules.documents as unknown as Schedule[];
-  } catch (error) {
-    throw new Error(String(error));
-  }
-}
-
-// Update Schedule
-export async function updateSchedule(
-  documentId: string,
-  schedule: Partial<Omit<Schedule, '$id'>>
-) {
-  try {
-    const updatedSchedule = await databases.updateDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.scheduleCollectionId,
-      documentId,
-      schedule
-    );
-
-    if (!updatedSchedule) throw Error;
-
-    return updatedSchedule as unknown as Schedule;
-  } catch (error) {
-    throw new Error(String(error));
-  }
-}
-
-// Delete Schedule
-export async function deleteSchedule(documentId: string) {
-  try {
-    const deletedSchedule = await databases.deleteDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.scheduleCollectionId,
-      documentId
-    );
-
-    if (!deletedSchedule) throw Error;
-
-    return deletedSchedule as Schedule;
-  } catch (error) {
-    throw new Error(String(error));
-  }
-}
-//----------------------------------------------schedule---------------------------------------------------------
-//----------------------------------------------mood---------------------------------------------------------
-export async function getMoodByDate(date: Date) {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw new Error("User not authenticated");
-
-    const startOfDay = new Date(date);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setUTCHours(23, 59, 59, 999);
-
-    const moodData = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.moodCollectionId,
-      [
-        Query.equal("userId", currentUser.$id),
-        Query.greaterThanEqual("datetime", startOfDay.toISOString()),
-        Query.lessThanEqual("datetime", endOfDay.toISOString()),
-      ]
-    );
-
-    return moodData.documents; 
-  } catch (error) {
-    console.error("Error retrieving mood data:", error);
-    alert("Failed to retrieve the mood of today. Please try again.");
-    return []; 
-  }
-}
-
-export const getSpendingByMonth = async (currentDate: Date) => {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw Error;
-
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString(); 
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59).toISOString(); 
-
-    // Query the spending documents from the Appwrite database
-    const spending = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.spendingId,
-      [
-        Query.equal("userId", currentUser.$id), 
-        Query.greaterThanEqual("date", startOfMonth), 
-        Query.lessThanEqual("date", endOfMonth)       
-      ]
-    );
-    return spending.documents;
-  } catch (error) {
-    console.error('Error retrieving expense types:', error);
-    alert('Failed to retrieve expense types. Please try again.');
-    return [];
-  }
-};
-
-export async function getRemindersByDate(date: Date) {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw new Error("User not authenticated");
-
-    const startOfDay = new Date(date);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setUTCHours(23, 59, 59, 999);
-
-    const reminders = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.scheduleCollectionId,
-      [
-        Query.equal("userId", currentUser.$id),
-        Query.equal("type", "reminder"),
-        Query.greaterThanEqual("due_date", startOfDay.toISOString()),
-        Query.lessThanEqual("due_date", endOfDay.toISOString()),
-
-      ]
-    );
-
-    return reminders.documents;
-  } catch (error) {
-    console.error(`Error fetching reminders: ${error}`);
-    alert('Failed to retrieve reminders. Please try again.');
-    return [];
-  }
-}
-
-export async function getEventsByDate(date: Date) {
-  try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw new Error("User not authenticated");
-
-    const startOfDay = new Date(date);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setUTCHours(23, 59, 59, 999);
-
-    const events= await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.scheduleCollectionId,
-      [
-        Query.equal("userId", currentUser.$id),
-        Query.equal("type", "event"),
-        Query.greaterThanEqual("start_time", startOfDay.toISOString()),
-        Query.lessThanEqual("start_time", endOfDay.toISOString()),
-
-      ]
-    );
-    return events.documents;
-  } catch (error) {
-    console.error(`Error fetching events: ${error}`);
-    alert('Failed to retrieve events. Please try again.');
-    return [];
-  }
-}
-

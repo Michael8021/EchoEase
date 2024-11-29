@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import * as Localization from 'expo-localization';
-import {  CategorizedData } from './types';
+import { CategorizedData, MoodInsight } from './types';
 import { getCurrentUser } from './appwrite';
 
 
@@ -54,11 +54,11 @@ export const categorizeAndExtractData = async (
   try {
     // Define the chat request
     const chatRequest = {
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o-mini-2024-07-18',
       messages: [
         {
           role: 'system',
-          content: `You are an AI assistant that categorizes and extracts information from user input. Categorize the input into the following types: schedule, expense types, spending, mood, or other. For each category, extract relevant details as specified below.
+          content: `You are an AI assistant that categorizes and extracts information from user input. Categorize the input into the following types: schedule, finance, mood, or other. For each category, extract relevant details as specified below.
 
 **Categories and Required Fields**:
 
@@ -83,45 +83,43 @@ export const categorizeAndExtractData = async (
         - start_time: leave blank
         - end_time: leave blank
 
-2. **Expense types**:
-    - color: string (e.g., "white")
-    - category: string (e.g., "rent", "salary")
-
-3. **Spending**:
-    - name: string
+2. **Finance**:
+    - transaction_type: "expense" or "income"
     - amount: number
+    - currency: string (e.g., "USD")
+    - category: string (e.g., "rent", "salary")
     - date: ISO 8601 string
-    - category:string (e.g., should appear in the expense types, otherwise create an expense types first)
+    - description: string
 
-4. **Mood**:
-    - mood_type: string (e.g., "happy", "sad")
+3. **Mood**:
+    - mood_type: string (e.g., "Very Sad", "Sad", "Neutral", "Happy", "Very Happy")
     - description: string
     - datetime: ISO 8601 string
 
-5. **Other**:
+4. **Other**:
     - title: string
     - description: string
     - datetime: ISO 8601 string
 
-**Instructions**:
-- You should be aware of the current time is ${new Intl.DateTimeFormat('en-US', {
-  day: '2-digit',
-  month: 'long', // Full month name
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: false // Use 24-hour format
-}).format(new Date())}.
-- The timezone of the user is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.
-- Analyze the input text.
-- Categorize each relevant part into one or more of the above categories.
-- Extract the required fields for each categorized entry.
-- Multiple entries can exist for each category.
-- An input can belong to multiple categories.
-
-**Final Output**:
-Return a JSON object with the following structure:
+    **Instructions**:
+    - You should be aware of the current time is ${new Intl.DateTimeFormat('en-US', {
+      day: '2-digit',
+      month: 'long', // Full month name
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false // Use 24-hour format
+    }).format(new Date())}.
+    - The timezone of the user is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.
+    - Analyze the input text.
+    - Categorize each relevant part into one or more of the above categories.
+    - Extract the required fields for each categorized entry.
+    - Multiple entries can exist for each category.
+    - An input can belong to multiple categories.
+    
+    **Final Output**:
+    Return a JSON object with the following structure:
 
 \`\`\`json
 {
@@ -172,36 +170,25 @@ Return a JSON object with the following structure:
                   additionalProperties: false,
                 },
               },
-              expense_types: {
+              finance: {
                 type: 'array',
                 items: {
                   type: 'object',
                   properties: {
-                    color: { type: 'string' },
-                    category: { type: 'string' }, 
-                  },
-                  required: ['color', 'category'],
-                  additionalProperties: false,
-                },
-              },
-              spending: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    name: { type: 'string' },
+                    transaction_type: { type: 'string', enum: ['expense', 'income'] },
                     amount: { type: 'number' },
-                    date: { type: 'string', format: 'date-time' }, 
-                    category: { 
-                      type: 'string', 
-                      description: 'Must match an existing expense type category. If not found, create the category first.' 
-                    },
+                    currency: { type: 'string' },
+                    category: { type: 'string' },
+                    date: { type: 'string' },
+                    description: { type: 'string' },
                   },
                   required: [
-                    'name',
+                    'transaction_type',
                     'amount',
-                    'date',
+                    'currency',
                     'category',
+                    'date',
+                    'description',
                   ],
                   additionalProperties: false,
                 },
@@ -211,11 +198,11 @@ Return a JSON object with the following structure:
                 items: {
                   type: 'object',
                   properties: {
+                    datetime: { type: 'string' },
                     mood_type: { type: 'string' },
                     description: { type: 'string' },
-                    datetime: { type: 'string' },
                   },
-                  required: ['mood_type', 'description', 'datetime'],
+                  required: ['datetime', 'mood_type', 'description'],
                   additionalProperties: false,
                 },
               },
@@ -295,6 +282,59 @@ Return a JSON object with the following structure:
     return categorizedData;
   } catch (error) {
     console.error('Categorization and Extraction Error:', error);
+    throw error;
+  }
+};
+
+export const genMoodInsight = async (
+  moodData: string[],
+  descriptions: string[]
+): Promise<string> => {
+  try {
+    // Define the chat request
+    const chatRequest = {
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an AI assistant that analyzes mood data for insights. Analyze the following mood data for the week: ${JSON.stringify(moodData)}. Provide a brief summary of mood patterns and trends. 
+          
+Note: 'No data' means mood not logged for future days. The number of mood entries indicates today’s day (e.g., 3 entries mean today is Wednesday), so avoid mentioning missing moods after today, as they pertain to the future. Please keep your insights concise.
+          
+**Final Output**:
+Return a string with the mood pattern analysis and insights.`,
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({ moodData, descriptions }),
+        },
+      ],
+    };
+
+    // Send the request to OpenAI API
+    const response = await fetch(`${process.env.EXPO_PUBLIC_OPENAI_API_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.EXPO_PUBLIC_OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(chatRequest),
+    });
+
+    // Handle API errors
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`Failed to analyze mood data: ${response.status}`);
+    }
+
+    // Parse the response
+    const data = await response.json();
+    const moodInsight: string = data.choices[0].message.content;
+
+    return moodInsight;
+  } catch (error) {
+    console.error('Mood Analysis Error:', error);
     throw error;
   }
 };
