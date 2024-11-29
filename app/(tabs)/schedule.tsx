@@ -1,10 +1,11 @@
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native'
 import {Card, Avatar} from 'react-native-paper';
 import {Calendar, CalendarList, Agenda} from 'react-native-calendars';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { getSchedules } from '@/lib/appwrite';
 import tailwind from 'tailwindcss';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useFocusEffect } from '@react-navigation/native';
 
 // thing that will fetch from database
 // ------------------------------------------
@@ -51,72 +52,69 @@ const Schedule = () => {
   // const [items, setItems] = useState<ScheduleItems>(initialItems);
   const [items, setItems] = useState<ScheduleItems>({});
 
-  useEffect(() => {
-    fetchSchedules(); // Initial fetch
-
-    // Set up polling every 10 seconds
-    const intervalId = setInterval(fetchSchedules, 10000); // Adjust the interval as needed
-
-    // Cleanup on unmount
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, []);
-
-  const fetchSchedules = async () => {
+  const fetchSchedules = () => {
     setLoading(true);
-    try {
-      const schedules = await getSchedules();
-      const formattedItems: ScheduleItems = {};
+    return getSchedules()
+      .then(schedules => {
+        const formattedItems: ScheduleItems = {};
 
-      schedules.forEach(schedule => {
-        // Handle null start_time and end_time
-        const startTime = schedule.start_time;
-        const endTime =schedule.end_time;
-        const dueDate = schedule.due_date;
-        const notifyAt = schedule.notify_at;
-        const type = schedule.type;
+        schedules.forEach(schedule => {
+          // Handle null start_time and end_time
+          const startTime = schedule.start_time;
+          const endTime =schedule.end_time;
+          const dueDate = schedule.due_date;
+          const notifyAt = schedule.notify_at;
+          const type = schedule.type;
 
-        let date = null;
-        if (type === 'event' && startTime) {
-          date = startTime.split('T')[0]; // Use start_time for events
-        } else if (type === 'reminder' && dueDate) {
-            date = dueDate.split('T')[0]; // Use end_time for reminders
-        }  
-        const formattedTime = startTime ? formatTime(startTime) : null; // Format time
-        const formattedEndTime = endTime ? formatTime(endTime) : null; // Format
+          let date = null;
+          if (type === 'event' && startTime) {
+            date = startTime.split('T')[0]; 
+          } else if (type === 'reminder' && dueDate) {
+            date = dueDate.split('T')[0]; 
+          }  
+          const formattedTime = startTime ? formatTime(startTime) : null; 
+          const formattedEndTime = endTime ? formatTime(endTime) : null; 
 
-        if (date) {
-          if (!formattedItems[date]) {
-            formattedItems[date] = []; // Initialize the array if it doesn't exist
+          if (date) {
+            if (!formattedItems[date]) {
+              formattedItems[date] = []; 
+            }
+            formattedItems[date].push({
+              name: schedule.title,
+              start_time: formattedTime,
+              end_time: formattedEndTime,
+              description: schedule.description,
+              type: schedule.type,
+              status: schedule.status,
+              notify_at: notifyAt ? formatTime(notifyAt) : null,
+            });
           }
-          formattedItems[date].push({
-            name: schedule.title,
-            start_time: formattedTime,
-            end_time: formattedEndTime,
-            description: schedule.description,
-            type: schedule.type,
-            status: schedule.status,
-            notify_at: notifyAt ? formatTime(notifyAt) : null,
-          });
-        }
+        });
 
-
+        setItems(formattedItems);
+      })
+      .catch(error => {
+        console.error('Error fetching schedules:', error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-
-      
-      setItems(formattedItems);
-    } catch (error) {
-      console.error('Failed to fetch schedules:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
-  // update Schedules when float button pressed
-  // const forceUpdateSchedules = () => {
-  //   fetchSchedules(); 
-  // };
+  // Use useFocusEffect instead of useEffect with interval
+  useFocusEffect(
+    useCallback(() => {
+      fetchSchedules();
+    }, [])
+  );
+
+  // Export fetchSchedules for use by FloatingButton
+  useEffect(() => {
+    global.fetchSchedules = fetchSchedules;
+    return () => {
+      global.fetchSchedules = undefined;
+    };
+  }, [fetchSchedules]);
 
   const renderEmptyData = () => {
     return (

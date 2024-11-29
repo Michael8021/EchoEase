@@ -118,11 +118,15 @@ const FloatingButton = () => {
             
             const contentData: CategorizedData = await categorizeAndExtractData(text, history.$id);
             console.log('Content Data:', contentData);
-            contentData.schedule.forEach(async (item) => {
-                await createSchedule(item);
-            });
-            
-            // forceUpdateSchedules();
+            if (contentData.schedule) {
+                Promise.all(contentData.schedule.map(item => createSchedule(item)))
+                    .then(() => {
+                        if (typeof global.fetchSchedules === 'function') {
+                            global.fetchSchedules();
+                        }
+                    })
+                    .catch(error => console.error('Error creating schedules:', error));
+            }
 
             return;
         } catch (error) {
