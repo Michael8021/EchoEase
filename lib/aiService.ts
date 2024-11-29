@@ -101,24 +101,25 @@ export const categorizeAndExtractData = async (
     - description: string
     - datetime: ISO 8601 string
 
-**Instructions**:
-- You should be aware of the current time is ${new Intl.DateTimeFormat('en-US', {
-            day: '2-digit',
-            month: 'long', // Full month name
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false // Use 24-hour format
-          }).format(new Date())}.
-- Analyze the input text.
-- Categorize each relevant part into one or more of the above categories.
-- Extract the required fields for each categorized entry.
-- Multiple entries can exist for each category.
-- An input can belong to multiple categories.
-
-**Final Output**:
-Return a JSON object with the following structure:
+    **Instructions**:
+    - You should be aware of the current time is ${new Intl.DateTimeFormat('en-US', {
+      day: '2-digit',
+      month: 'long', // Full month name
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false // Use 24-hour format
+    }).format(new Date())}.
+    - The timezone of the user is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.
+    - Analyze the input text.
+    - Categorize each relevant part into one or more of the above categories.
+    - Extract the required fields for each categorized entry.
+    - Multiple entries can exist for each category.
+    - An input can belong to multiple categories.
+    
+    **Final Output**:
+    Return a JSON object with the following structure:
 
 \`\`\`json
 {
