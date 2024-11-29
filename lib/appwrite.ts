@@ -23,7 +23,7 @@ export const appwriteConfig = {
     scheduleCollectionId: '672878b6000297694b47',
     historyCollectionId: '672eeced0003474523e6',
     moodCollectionId: '672ce11300183b1fd08f',
-    mood_insightCollectionId: '6745a21d0014178b09e2'
+    mood_insightCollectionId: '6745a21d0014178b09e2',
     bucketId: '6745e535000b2448cd22'
 }
 
