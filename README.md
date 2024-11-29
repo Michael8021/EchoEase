@@ -8,7 +8,14 @@
    npm install
    ```
 
-2. Start the app
+   ```bash
+   npx expo install react-native-appwrite react-native-url-polyfill
+   npx expo install react-native-gifted-charts expo-linear-gradient react-native-svg
+   npm install nativewind tailwindcss react-native-reanimated react-native-safe-area-context
+   npm install @react-native-community/datetimepicker --save
+   npm install react-native-input-select
+   ```
+3. Start the app
 
    ```bash
    npm start
