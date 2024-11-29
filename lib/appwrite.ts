@@ -592,3 +592,35 @@ export const getSpendingByMonth = async (currentDate: Date) => {
     return [];
   }
 };
+
+export async function getSchedulesByDate(date: Date) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("No user logged in");
+
+    const startOfDay = new Date(date.setHours(0, 0, 0, 0)); 
+    const endOfDay = new Date(date.setHours(23, 59, 59, 999)); 
+    const formattedStartOfDay = startOfDay.toISOString();
+    const formattedEndOfDay = endOfDay.toISOString();
+
+    console.log("Fetching schedules for the day: ", formattedStartOfDay, formattedEndOfDay);
+
+    const schedules = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.scheduleCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        // Query.greaterThan("start_time", formattedStartOfDay),
+        // Query.lessThan("start_time", formattedEndOfDay)
+      ]
+    );
+
+    console.log("Schedules found: ", schedules);
+
+    return schedules.documents;
+  } catch (error) {
+    console.error(`Error fetching schedules: ${error}`);
+    alert('Failed to retrieve schedules. Please try again.');
+    return [];
+  }
+}

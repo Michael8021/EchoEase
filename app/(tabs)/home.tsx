@@ -14,12 +14,12 @@ import {
   getMoodByDate,
   getSpendingByMonth,
   getExpenseTypes,
+  getSchedulesByDate,
   client,
   appwriteConfig,
 } from "../../lib/appwrite";
-import { ExpenseItem, SpendingItem } from "../../type";
+import { ExpenseItem } from "../../type";
 import { BarChart } from "react-native-gifted-charts";
-import { white } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
 
 interface ScheduleItem {
   time: string;
@@ -36,7 +36,7 @@ const moodMap: { [key: string]: { value: number; emoji: string } } = {
 
 // Mock data
 const mockSchedule = [
-  { time: "08:00 AM", task: "Morning Jog" },
+  { time: "08:00 AM", task: "Morning Jog", type: "" },
   { time: "10:00 AM", task: "Team Meeting" },
   { time: "02:00 PM", task: "Doctor Appointment" },
   { time: "05:00 PM", task: "Grocery Shopping" },
@@ -49,20 +49,38 @@ const getFormattedDate = (date: Date): string => {
     month: "long",
     day: "numeric",
   };
-  return date.toLocaleDateString(undefined, options); // Use system locale
+  return date.toLocaleDateString(undefined, options);
 };
-const formatTime = (datetime: string) => {
+const formatTime = (datetime: string): string => {
   const date = new Date(datetime);
-  return `${date.getHours().toString().padStart(2, "0")}:${date
-    .getMinutes()
-    .toString()
-    .padStart(2, "0")}`;
+  const options: Intl.DateTimeFormatOptions = {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  return new Intl.DateTimeFormat("en-US", options).format(date);
 };
 
 const Home = () => {
   const router = useRouter();
   const currentdate = new Date();
   const formatDate = getFormattedDate(currentdate);
+
+  //schedule
+  const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
+
+  const fetchSchedules = async (current: Date) => {
+    try {
+      const schedules = await getSchedulesByDate(current);
+      const formattedSchedules = schedules.map((schedule: any) => ({
+        time: schedule.start_time,
+        task: schedule.title,
+      }));
+      setScheduleData(formattedSchedules);
+    } catch (error) {
+      console.error("Error fetching schedule data:", error);
+    }
+  };
 
   //mood
   const [mooddata, setMooddata] = useState<any[]>([]);
@@ -137,20 +155,19 @@ const Home = () => {
     }
   };
 
-  const barData = Object.entries(categorySpending).map(([category, amount]) => {
-    const expense = expensedata.find(
-      (expense) => expense.category === category
-    );
+  const barData = expensedata.map((expense) => {
+    const amount = categorySpending[expense.category] || 0; 
     return {
       value: amount,
-      label: category,
-      frontColor: expense ? expense.color : "#4ABFF4",
+      label: expense.category,
+      frontColor: expense.color || "#4ABFF4", 
     };
   });
 
   useEffect(() => {
     fetchMoods(currentdate);
     fetchSpending(currentdate);
+    fetchSchedules(currentdate);
     fetchExpensesType();
 
     // Subscribe to real-time updates for mood data
@@ -313,6 +330,10 @@ const Home = () => {
     };
   }, []);
 
+  useEffect(() => {
+    console.log(scheduleData);
+  }, [scheduleData]);
+
   return (
     <SafeAreaView className="flex-1 bg-black">
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -340,16 +361,20 @@ const Home = () => {
             <Text className="text-lg font-bold text-yellow-400 mb-3">
               Today's Schedule
             </Text>
-            {/* <FlatList
-            data={mockSchedule}
-            keyExtractor={(item: any, index: any) => `${index}`}
-            renderItem={({ item }: { item: ScheduleItem }) => (
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-sm text-white">{item.time}</Text>
-                <Text className="text-sm text-gray-300">{item.task}</Text>
+
+            {/* Check if scheduleData is null or empty */}
+            {mockSchedule && mockSchedule.length > 0 ? (
+              mockSchedule.map((item: ScheduleItem, index: number) => (
+                <View key={index} className="flex-row justify-between mb-2">
+                  <Text className="text-gray-400 text-sm">{item.time}</Text>
+                  <Text className="text-sm text-gray-300">{item.task}</Text>
+                </View>
+              ))
+            ) : (
+              <View className="flex-1 justify-center items-center">
+                <Text className="text-gray-400">No schedule for today.</Text>
               </View>
             )}
-          /> */}
           </View>
 
           {/* Today's Mood */}
@@ -387,9 +412,11 @@ const Home = () => {
                 );
               })
             ) : (
-              <Text className="text-gray-400">
-                No mood data available for today.
-              </Text>
+              <View className="flex-1 justify-center items-center">
+                <Text className="text-gray-400">
+                  No mood data available for today.
+                </Text>
+              </View>
             )}
           </View>
 
@@ -402,7 +429,13 @@ const Home = () => {
               Total Spent:{" "}
               <Text className="text-yellow-500">${totalSpent.toFixed(2)}</Text>
             </Text>
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
               <BarChart
                 showFractionalValues
                 showYAxisIndices
