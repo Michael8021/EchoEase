@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Image, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  FlatList,
+  ScrollView,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { icons } from "../../constants";
@@ -12,6 +19,7 @@ import {
 } from "../../lib/appwrite";
 import { ExpenseItem, SpendingItem } from "../../type";
 import { BarChart } from "react-native-gifted-charts";
+import { white } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
 
 interface ScheduleItem {
   time: string;
@@ -144,37 +152,195 @@ const Home = () => {
     fetchMoods(currentdate);
     fetchSpending(currentdate);
     fetchExpensesType();
-  }, []);
 
-  useEffect(() => {
-    console.log(expensedata);
-  }, [categorySpending, expensedata]);
+    // Subscribe to real-time updates for mood data
+    const unsubscribeMoods = client.subscribe(
+      [
+        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.moodCollectionId}.documents`,
+      ],
+      (response) => {
+        const { events, payload } = response;
+        const mood = payload as any;
+
+        if (events.some((event) => event.includes(".create"))) {
+          const newMood = {
+            mood_type: mood.mood_type,
+            description: mood.description,
+            datetime: mood.datetime,
+          };
+          setMooddata((prevData) => [...prevData, newMood]);
+        }
+
+        if (events.some((event) => event.includes(".delete"))) {
+          setMooddata((prevData) =>
+            prevData.filter(
+              (existingMood) => existingMood.datetime !== mood.datetime
+            )
+          );
+        }
+      }
+    );
+
+    // Subscribe to real-time updates for spending data
+    const unsubscribeSpending = client.subscribe(
+      [
+        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.spendingId}.documents`,
+      ],
+      (response) => {
+        const { events, payload } = response;
+        const spending = payload as any;
+
+        if (events.some((event) => event.includes(".create"))) {
+          const newSpendingAmount = parseFloat(spending.amount);
+          const newSpendingCategory = spending.category;
+
+          // If the amount is valid, update total and category spending
+          if (!isNaN(newSpendingAmount)) {
+            // Update totalSpent
+            setTotalSpent((prevTotal) => prevTotal + newSpendingAmount);
+
+            // Update categorySpending
+            setCategorySpending((prevCategorySpending) => {
+              const updatedCategorySpending = { ...prevCategorySpending };
+              updatedCategorySpending[newSpendingCategory] =
+                (updatedCategorySpending[newSpendingCategory] || 0) +
+                newSpendingAmount;
+              return updatedCategorySpending;
+            });
+          }
+        }
+
+        if (events.some((event) => event.includes(".delete"))) {
+          const deletedSpendingAmount = parseFloat(spending.amount);
+          const deletedSpendingCategory = spending.category;
+
+          // If the amount is valid, update total and category spending
+          if (!isNaN(deletedSpendingAmount)) {
+            // Update totalSpent
+            setTotalSpent((prevTotal) => prevTotal - deletedSpendingAmount);
+
+            // Update categorySpending
+            setCategorySpending((prevCategorySpending) => {
+              const updatedCategorySpending = { ...prevCategorySpending };
+              updatedCategorySpending[deletedSpendingCategory] =
+                (updatedCategorySpending[deletedSpendingCategory] || 0) -
+                deletedSpendingAmount;
+
+              // Remove the category if its spending amount becomes 0
+              if (updatedCategorySpending[deletedSpendingCategory] <= 0) {
+                delete updatedCategorySpending[deletedSpendingCategory];
+              }
+
+              return updatedCategorySpending;
+            });
+          }
+        }
+
+        if (events.some((event) => event.includes(".update"))) {
+          const updatedSpendingAmount = parseFloat(spending.amount);
+          const updatedSpendingCategory = spending.category;
+          const oldSpendingAmount = parseFloat(spending.oldAmount); // Assuming oldAmount is available
+
+          // If the amount is valid and the spending category exists, update total and category spending
+          if (!isNaN(updatedSpendingAmount)) {
+            setTotalSpent((prevTotal) => {
+              // Calculate the updated total by subtracting old amount and adding the new one
+              const newTotal =
+                prevTotal - oldSpendingAmount + updatedSpendingAmount;
+              return newTotal;
+            });
+
+            // Update categorySpending
+            setCategorySpending((prevCategorySpending) => {
+              const updatedCategorySpending = { ...prevCategorySpending };
+
+              // Subtract the old amount for the category
+              updatedCategorySpending[updatedSpendingCategory] =
+                (updatedCategorySpending[updatedSpendingCategory] || 0) -
+                oldSpendingAmount;
+
+              // Add the new amount for the category
+              updatedCategorySpending[updatedSpendingCategory] =
+                (updatedCategorySpending[updatedSpendingCategory] || 0) +
+                updatedSpendingAmount;
+
+              // If the spending for the category becomes zero, remove it
+              if (updatedCategorySpending[updatedSpendingCategory] <= 0) {
+                delete updatedCategorySpending[updatedSpendingCategory];
+              }
+
+              return updatedCategorySpending;
+            });
+          }
+        }
+      }
+    );
+
+    // Subscribe to real-time updates for expense types
+    const unsubscribeExpenses = client.subscribe(
+      [
+        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.expense_typeId}.documents`,
+      ],
+      (response) => {
+        const { events, payload } = response;
+        const expense = payload as any;
+
+        if (events.some((event) => event.includes(".create"))) {
+          const newExpense = {
+            id: expense.$id,
+            category: expense.category,
+            amount: expense.amount,
+            color: expense.color,
+          };
+          setExpensedata((prevData) => [...prevData, newExpense]);
+        }
+
+        if (events.some((event) => event.includes(".delete"))) {
+          setExpensedata((prevData) =>
+            prevData.filter(
+              (existingExpense) => existingExpense.category !== expense.category
+            )
+          );
+        }
+      }
+    );
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      unsubscribeMoods();
+      unsubscribeSpending();
+      unsubscribeExpenses();
+    };
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-black">
-      {/* Header */}
-      <View className="flex-row justify-between items-center px-4 py-6 bg-black">
-        <Text className="text-3xl font-semibold text-secondary">EchoEase</Text>
-        <TouchableOpacity onPress={() => router.push("/settings")}>
-          <Image source={icons.settings} className="w-7 h-7" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Content */}
-      <View className="flex-1 px-4">
-        {/* Display today's date */}
-        <View className="bg-gray-800 rounded-lg p-3 mb-4 shadow-lg">
-          <Text className="text-base text-yellow-400 font-semibold text-center">
-            {formatDate}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View className="flex-row justify-between items-center px-4 py-6 bg-black">
+          <Text className="text-3xl font-semibold text-secondary">
+            EchoEase
           </Text>
+          <TouchableOpacity onPress={() => router.push("/settings")}>
+            <Image source={icons.settings} className="w-7 h-7" />
+          </TouchableOpacity>
         </View>
 
-        {/* Today's Schedule */}
-        <View className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
-          <Text className="text-lg font-bold text-yellow-400 mb-3">
-            Today's Schedule
-          </Text>
-          <FlatList
+        {/* Content */}
+        <View className="flex-1 px-4">
+          {/* Display today's date */}
+          <View className="bg-gray-800 rounded-lg p-3 mb-4 shadow-lg">
+            <Text className="text-base text-yellow-400 font-semibold text-center">
+              {formatDate}
+            </Text>
+          </View>
+
+          {/* Today's Schedule */}
+          <View className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
+            <Text className="text-lg font-bold text-yellow-400 mb-3">
+              Today's Schedule
+            </Text>
+            {/* <FlatList
             data={mockSchedule}
             keyExtractor={(item: any, index: any) => `${index}`}
             renderItem={({ item }: { item: ScheduleItem }) => (
@@ -183,68 +349,78 @@ const Home = () => {
                 <Text className="text-sm text-gray-300">{item.task}</Text>
               </View>
             )}
-          />
-        </View>
-
-        {/* Today's Mood */}
-        <View className="bg-gray-700 rounded-lg p-4 mb-4 shadow-lg">
-          <Text className="text-lg font-bold text-yellow-400 mb-2">
-            Today's Mood
-          </Text>
-          {mooddata.length > 0 ? (
-            mooddata.map((mood, index) => {
-              const moodDetails = moodMap[mood.mood_type]; // Fetch mood details from moodMap
-              return (
-                <View
-                  key={index}
-                  className="flex-row items-center justify-between border-b border-gray-500 pb-2 mb-2"
-                >
-                  {/* Time on the left */}
-                  <Text className="text-gray-400 text-sm">
-                    {formatTime(mood.datetime)}
-                  </Text>
-
-                  {/* Mood type and emoji on the left */}
-                  <View className="flex-row items-center ml-2">
-                    <Text className="text-white text-base">
-                      {moodDetails?.emoji || "❓"} {mood.mood_type}
-                    </Text>
-                  </View>
-
-                  {/* Description at the end, aligned to the right */}
-                  <View className="ml-2 flex-1 items-end">
-                    <Text className="text-gray-300 text-sm">
-                      {mood.description}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })
-          ) : (
-            <Text className="text-gray-400">
-              No mood data available for today.
-            </Text>
-          )}
-        </View>
-
-        {/* Monthly Financial Data */}
-        <View className="bg-gray-800 rounded-lg p-4 shadow-lg">
-          <Text className="text-lg font-bold text-yellow-400 mb-3">
-            This Month's Financial Data
-          </Text>
-          <Text className="text-sm text-white">
-            Total Spent: <Text className="text-yellow-500">${totalSpent}</Text>
-          </Text>
+          /> */}
           </View>
 
-          <View className="h-48 bg-gray-700 rounded-lg mt-4 flex items-center justify-center p-4 shadow-inner">
-            {/* <BarChart
-              showFractionalValues
-              showYAxisIndices
-              noOfSections={4}
-              data={barData}
-              isAnimated
-            /> */}
+          {/* Today's Mood */}
+          <View className="bg-gray-700 rounded-lg p-4 mb-4 shadow-lg">
+            <Text className="text-lg font-bold text-yellow-400 mb-2">
+              Today's Mood
+            </Text>
+            {mooddata.length > 0 ? (
+              mooddata.map((mood, index) => {
+                const moodDetails = moodMap[mood.mood_type]; // Fetch mood details from moodMap
+                return (
+                  <View
+                    key={index}
+                    className="flex-row items-center justify-between border-b border-gray-500 pb-2 mb-2"
+                  >
+                    {/* Time on the left */}
+                    <Text className="text-gray-400 text-sm">
+                      {formatTime(mood.datetime)}
+                    </Text>
+
+                    {/* Mood type and emoji on the left */}
+                    <View className="flex-row items-center ml-2">
+                      <Text className="text-white text-base">
+                        {moodDetails?.emoji || "❓"} {mood.mood_type}
+                      </Text>
+                    </View>
+
+                    {/* Description at the end, aligned to the right */}
+                    <View className="ml-2 flex-1 items-end">
+                      <Text className="text-gray-300 text-sm">
+                        {mood.description}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })
+            ) : (
+              <Text className="text-gray-400">
+                No mood data available for today.
+              </Text>
+            )}
+          </View>
+
+          {/* Monthly Financial Data */}
+          <View className="bg-gray-800 rounded-lg p-4 shadow-lg">
+            <Text className="text-lg font-bold text-yellow-400 mb-3">
+              This Month's Financial Data
+            </Text>
+            <Text className="text-sm text-white mb-5">
+              Total Spent:{" "}
+              <Text className="text-yellow-500">${totalSpent.toFixed(2)}</Text>
+            </Text>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <BarChart
+                showFractionalValues
+                showYAxisIndices
+                noOfSections={4}
+                data={barData}
+                isAnimated
+                xAxisLabelTextStyle={{
+                  color: "#ffffff",
+                  fontSize: 12,
+                  fontWeight: "bold",
+                }}
+                yAxisTextStyle={{
+                  color: "#FFEE58",
+                  fontSize: 12,
+                  fontWeight: "bold",
+                }}
+              />
+            </View>
           </View>
 
           <View className="flex-row justify-center mt-4">
@@ -253,6 +429,7 @@ const Home = () => {
             </Text>
           </View>
         </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
