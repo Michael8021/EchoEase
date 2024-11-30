@@ -49,9 +49,9 @@ const mockSchedule = [
 
 const getFormattedDate = (date: Date): string => {
   const options: Intl.DateTimeFormatOptions = {
-    weekday: "long",
+    weekday: "short",
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   };
   return date.toLocaleDateString(undefined, options);
@@ -340,12 +340,16 @@ const Home = () => {
         <View className="flex-1 px-6">
           {/* Display today's date */}
           <View className="mb-8">
-            <Text className="text-2xl font-pmedium text-secondary-light text-center mb-1">
+            <Text className="text-3xl font-pbold text-component-schedule-accent text-center mb-2">
               {formatDate}
             </Text>
-            <Text className="text-sm font-plight text-gray-200 text-center">
-              Your daily overview
-            </Text>
+            <View className="flex-row items-center justify-center">
+              <View className="w-1 h-1 rounded-full bg-component-schedule-text/20 mx-2" />
+              <Text className="text-sm font-plight text-component-schedule-text/60">
+                Your daily overview
+              </Text>
+              <View className="w-1 h-1 rounded-full bg-component-schedule-text/20 mx-2" />
+            </View>
           </View>
 
           {/* Today's Schedule */}

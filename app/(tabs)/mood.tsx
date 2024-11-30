@@ -37,13 +37,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   todayMoodContainer: {
-    backgroundColor: '#1F1F2E',
+    backgroundColor: 'rgba(45, 36, 59, 0.15)',
     padding: 16,
     borderRadius: 16,
     marginTop: 14,
     marginHorizontal: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 156, 1, 0.2)',
+    borderColor: 'rgba(157, 138, 176, 0.2)',
     alignItems: 'center',
   },
   todayMoodButton: {
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     color: '#FF9C01',
   },
   chartContainer: {
-    backgroundColor: "#1F1F2E",
+    backgroundColor: "rgba(36, 59, 45, 0.15)",
     marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 16,
@@ -80,13 +80,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
     borderWidth: 1,
-    borderColor: 'rgba(255, 156, 1, 0.2)',
+    borderColor: 'rgba(138, 176, 157, 0.2)',
   },
   weekSwitcher: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1F1F2E',
+    backgroundColor: 'rgba(59, 36, 45, 0.15)',
     marginHorizontal: 16,
     marginTop: 16,
     padding: 16,
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
     borderWidth: 1,
-    borderColor: 'rgba(255, 156, 1, 0.2)',
+    borderColor: 'rgba(176, 138, 157, 0.2)',
   },
   weekText: {
     color: '#FF9C01',
@@ -110,26 +110,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 16,
   },
-  button: {
+  logMoodButton: {
     flex: 1,
-    marginHorizontal: 8,
+    marginRight: 8,
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#1F1F2E",
+    backgroundColor: "rgba(45, 36, 59, 0.25)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
     borderWidth: 1,
-    borderColor: 'rgba(255, 156, 1, 0.2)',
+    borderColor: 'rgba(157, 138, 176, 0.3)',
   },
-  buttonText: {
-    color: "#FF9C01",
+  insightsButton: {
+    flex: 1,
+    marginLeft: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(36, 59, 45, 0.25)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(138, 176, 157, 0.3)',
+  },
+  logMoodButtonText: {
+    color: "#B8A5CC",
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  insightsButtonText: {
+    color: "#A5CCB8",
     marginLeft: 8,
     fontSize: 16,
     fontWeight: '600',
@@ -543,13 +567,13 @@ const Mood = () => {
                 initialSpacing={11}
                 yAxisThickness={0}
                 xAxisThickness={0}
-                backgroundColor={"#1F1F2E"}
+                backgroundColor={"rgba(36, 59, 45)"}
                 frontColor={getMoodColor(todayMood).accent}
                 yAxisLabelTexts={["😶", "😭", "😢", "😐", "😊", "😁", ""]}
                 barBorderRadius={4}
                 noOfSections={6}
                 stepValue={1}
-                stepHeight={42}
+                stepHeight={38}
                 data={loading ? [{value: 0, label: "Mon", labelTextStyle: { color: '#FF9C01' }},
                   {value: 0, label: "Tue", labelTextStyle: { color: '#FF9C01' }},
                   {value: 0, label: "Wed", labelTextStyle: { color: '#FF9C01' }},
@@ -597,18 +621,18 @@ const Mood = () => {
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.button}
+                style={styles.logMoodButton}
                 onPress={() => setLogModalVisible(true)}
               >
-                <MaterialIcons name="edit" size={20} color="#FF9C01" />
-                <Text style={styles.buttonText}>Log Mood</Text>
+                <MaterialIcons name="edit" size={20} color="#B8A5CC" />
+                <Text style={styles.logMoodButtonText}>Log Mood</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.button}
+                style={styles.insightsButton}
                 onPress={() => handleViewInsights(currentWeek)}
               >
-                <MaterialIcons name="insights" size={20} color="#FF9C01" />
-                <Text style={styles.buttonText}>View Insights</Text>
+                <MaterialIcons name="insights" size={20} color="#A5CCB8" />
+                <Text style={styles.insightsButtonText}>View Insights</Text>
               </TouchableOpacity>
             </View>
 

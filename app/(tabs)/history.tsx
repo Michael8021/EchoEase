@@ -168,28 +168,32 @@ const HistoryScreen = () => {
                     {group.items.map((item) => (
                       <View 
                         key={item.$id} 
-                        className="flex-row items-start justify-between bg-black-400/30 rounded-xl p-3 border border-gray-100/10 mb-1.5"
+                        className="bg-black-400/30 rounded-xl p-3 border border-gray-100/10 mb-1.5"
                       >
-                        <View className="flex-1">
-                          <View className="flex-row justify-between items-center">
-                            <Text className="text-gray-100 font-pmedium flex-1">
-                              {item.transcribed_text}
+                        <View className="flex-row justify-between items-start">
+                          <Text className="text-gray-100 font-pmedium flex-1 mr-3">
+                            {item.transcribed_text}
+                          </Text>
+                          <View className="flex-row items-center shrink-0">
+                            <Text className="text-gray-300 text-xs font-plight">
+                              {new Date(item.$createdAt).toLocaleTimeString(i18n.language === 'zh-TW' ? 'zh-TW' : 'en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                              })}
                             </Text>
-                            <Text className="text-gray-300 text-xs font-plight ml-2">
-                              {new Date(item.$createdAt).toLocaleTimeString()}
-                            </Text>
+                            <TouchableOpacity 
+                              onPress={() => handleDelete(item.$id)}
+                              className="ml-2 p-1"
+                            >
+                              <Image 
+                                source={icons.deleteIcon}
+                                className="w-5 h-5 opacity-70"
+                                tintColor="#FF6B6B"
+                              />
+                            </TouchableOpacity>
                           </View>
                         </View>
-                        <TouchableOpacity 
-                          onPress={() => handleDelete(item.$id)}
-                          className="ml-3 p-1"
-                        >
-                          <Image 
-                            source={icons.deleteIcon}
-                            className="w-5 h-5 opacity-70"
-                            tintColor="#FF6B6B"
-                          />
-                        </TouchableOpacity>
                       </View>
                     ))}
                   </View>
