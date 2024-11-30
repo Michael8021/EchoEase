@@ -10,6 +10,7 @@ import { createMood, getMoods, getCurrentUser, createMoodInsight, getMoodInsight
 import { useMoodContext } from '../../context/MoodContext';
 import { genMoodInsight } from '../../lib/aiService';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTranslation } from "react-i18next";
 
 const styles = StyleSheet.create({
   androidSafeArea: {
@@ -223,18 +224,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: '#2A2A3C',
-    padding: 5,
+    padding: 12,
     borderRadius: 16,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 156, 1, 0.1)',
   },
   moodButton: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 26,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: 'transparent',
     backgroundColor: 'rgba(255, 156, 1, 0.05)',
@@ -242,10 +243,11 @@ const styles = StyleSheet.create({
   selectedMoodButton: {
     backgroundColor: 'rgba(255, 156, 1, 0.2)',
     borderColor: '#FF9C01',
-    transform: [{ scale: 1.1 }],
+    transform: [{ scale: 1.05 }],
   },
   moodButtonEmoji: {
-    fontSize: 28,
+    fontSize: 24,
+    transform: [{ scale: 0.95 }],
   },
   inputContainer: {
     padding: 2,
@@ -330,6 +332,7 @@ async function getUserId() {
 };
 
 const Mood = () => {
+  const { t, i18n } = useTranslation();
   const [initialLoad, setInitialLoad] = useState(true);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -409,7 +412,7 @@ const Mood = () => {
         return;
       }
       const descriptions = descriptionData.map(desc => desc.description);
-      const moodInsightResult = await genMoodInsight(moodTypes, descriptions);
+      const moodInsightResult = await genMoodInsight(moodTypes, descriptions, i18n.language);
       setmoodInsight(moodInsightResult);
 
       const datetime = new Date().toISOString();
@@ -422,7 +425,7 @@ const Mood = () => {
       await createMoodInsight(newMoodInsight, weekStart);
     } catch (error) {
       console.error("Error fetching mood insights:", error);
-      Alert.alert("Error", "Failed to fetch mood insights");
+      Alert.alert(t('mood.alerts.error'), t('mood.alerts.insightError'));
     }
   };
 
@@ -433,7 +436,7 @@ const Mood = () => {
       }
       setIsLoading(true);
       const descriptions = descriptionData.map(desc => desc.description);
-      const moodInsightResult = await genMoodInsight(moodTypes, descriptions);
+      const moodInsightResult = await genMoodInsight(moodTypes, descriptions, i18n.language);
       setmoodInsight(moodInsightResult);
 
       const newMoodInsight = {
@@ -446,7 +449,7 @@ const Mood = () => {
       setIsLoading(false);
     } catch (error) {
       console.error("Error regenerating mood insights:", error);
-      Alert.alert("Error", "Failed to regenerate mood insights");
+      Alert.alert(t('mood.alerts.error'), t('mood.alerts.regenerateFailed'));
       setIsLoading(false);
     }
   };
@@ -501,17 +504,17 @@ const Mood = () => {
       }
       try {
         await createMood(newMood);
-        Alert.alert("Success", "Mood saved successfully");
+        Alert.alert(t('mood.alerts.success'), t('mood.alerts.moodSaved'));
         fetchMoodData(currentWeek);
       } catch (error) {
-        Alert.alert("Error", "Failed to save mood");
+        Alert.alert(t('mood.alerts.error'), t('mood.alerts.saveFailed'));
       }
       setLogModalVisible(false);
       setSelectedMood("");
       setDescription("");
       regenerateInsight(currentWeek);
     } else {
-      Alert.alert("Error", "Please select a mood");
+      Alert.alert(t('mood.alerts.error'), t('mood.alerts.selectMood'));
     }
   };
 
@@ -544,13 +547,13 @@ const Mood = () => {
           <View className="bg-primary px-6 pt-2 pb-4">
             <View className="flex-row justify-between items-center">
               <Text className="text-4xl font-pbold text-secondary">
-                Mood Map
+                {t('mood.title')}
               </Text>
             </View>
           </View>
           <View style={styles.container}>
             <View style={styles.todayMoodContainer}>
-              <Text style={styles.moodText}>Today's Mood</Text>
+              <Text style={styles.moodText}>{t('mood.todayMood')}</Text>
               {todayMood ? (
                 <Text style={[styles.moodText, { color: getMoodColor(todayMood).text }]}>{todayMood}</Text>
               ) : (
@@ -559,7 +562,7 @@ const Mood = () => {
                   onPress={() => setLogModalVisible(true)}
                 >
                   <MaterialIcons name="add-reaction" size={20} color="#161622" />
-                  <Text style={styles.todayMoodButtonText}>Set Today's Mood</Text>
+                  <Text style={styles.todayMoodButtonText}>{t('mood.setTodayMood')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -629,14 +632,14 @@ const Mood = () => {
                 onPress={() => setLogModalVisible(true)}
               >
                 <MaterialIcons name="edit" size={20} color="#B8A5CC" />
-                <Text style={styles.logMoodButtonText}>Log Mood</Text>
+                <Text style={styles.logMoodButtonText}>{t('mood.logMood')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.insightsButton}
                 onPress={() => handleViewInsights(currentWeek)}
               >
                 <MaterialIcons name="insights" size={20} color="#A5CCB8" />
-                <Text style={styles.insightsButtonText}>View Insights</Text>
+                <Text style={styles.insightsButtonText}>{t('mood.viewInsights')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -647,7 +650,7 @@ const Mood = () => {
                 contentContainerStyle={styles.modalContainer}
               >
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Mood Insights</Text>
+                  <Text style={styles.modalTitle}>{t('mood.moodInsights')}</Text>
                   <View style={styles.modalHeaderButtons}>
                     <TouchableOpacity 
                       style={styles.modalCloseButton}
@@ -669,7 +672,7 @@ const Mood = () => {
                     keyboardShouldPersistTaps="handled"
                   >
                     <Text style={styles.insightText}>
-                      {isLoading ? "Loading..." : moodInsight}
+                      {isLoading ? t('mood.loading') : moodInsight}
                     </Text>
                   </ScrollView>
                 </View>
@@ -681,7 +684,9 @@ const Mood = () => {
                 contentContainerStyle={styles.modalContainer}
               >
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Mood on {selectedDay}</Text>
+                  <Text style={styles.modalTitle}>
+                    {t('mood.moodOnDay', { day: selectedDay })}
+                  </Text>
                   <TouchableOpacity 
                     style={styles.modalCloseButton}
                     onPress={() => setChartModalVisible(false)}
@@ -702,7 +707,7 @@ const Mood = () => {
                 contentContainerStyle={styles.modalContainer}
               >
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>How are you feeling?</Text>
+                  <Text style={styles.modalTitle}>{t('mood.howAreYouFeeling')}</Text>
                   <TouchableOpacity 
                     style={styles.modalCloseButton}
                     onPress={handleCloseLogModal}
@@ -732,7 +737,7 @@ const Mood = () => {
                     <View style={styles.inputContainer}>
                       <TextInput
                         mode="outlined"
-                        placeholder="How are you feeling today? (optional)"
+                        placeholder={t('mood.feelingDescription')}
                         placeholderTextColor="rgba(255, 255, 255, 0.4)"
                         value={description}
                         onChangeText={(text: string) => setDescription(text)}
@@ -763,7 +768,7 @@ const Mood = () => {
                       style={[styles.modalButton, { marginBottom: 8 }]}
                       onPress={saveMoodToDatabase}
                     >
-                      <Text style={styles.modalButtonText}>Save Mood</Text>
+                      <Text style={styles.modalButtonText}>{t('mood.saveMood')}</Text>
                     </TouchableOpacity>
                   </ScrollView>
                 </View>

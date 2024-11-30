@@ -2,13 +2,14 @@ import { StatusBar } from "expo-status-bar";
 import { Redirect, Tabs } from "expo-router";
 import { Image, Text, View } from "react-native";
 import { ImageSourcePropType } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { icons } from "../../constants";
 import Loader from '../../components/Loader';
 import { useGlobalContext } from "../../context/GlobalProvider";
 import FloatingButton from '../../components/FloatingButton';
 import { AppProviders } from '../../context/AppProviders';
-import { MoodProvider } from '../../context/MoodContext'; // Import MoodProvider
+import { MoodProvider } from '../../context/MoodContext';
 
 interface TabIconProps {
   icon: ImageSourcePropType;
@@ -39,6 +40,7 @@ const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
 
 const TabLayout = () => {
   const { loading, isLogged } = useGlobalContext();
+  const { t } = useTranslation();
 
   if (!loading && !isLogged) return <Redirect href="/sign-in" />;
 
@@ -61,13 +63,13 @@ const TabLayout = () => {
           <Tabs.Screen
             name="home"
             options={{
-              title: "Home",
+              title: t('tabs.home'),
               headerShown: false,
               tabBarIcon: ({ color, focused }) => (
                 <TabIcon
                   icon={icons.home}
                   color={color}
-                  name="Home"
+                  name={t('tabs.home')}
                   focused={focused}
                 />
               ),
@@ -76,13 +78,13 @@ const TabLayout = () => {
           <Tabs.Screen
             name="schedule"
             options={{
-              title: "Schedule",
+              title: t('tabs.schedule'),
               headerShown: false,
               tabBarIcon: ({ color, focused }) => (
                 <TabIcon
                   icon={icons.schedule}
                   color={color}
-                  name="Schedule"
+                  name={t('tabs.schedule')}
                   focused={focused}
                 />
               ),
@@ -91,13 +93,13 @@ const TabLayout = () => {
           <Tabs.Screen
             name="finance"
             options={{
-              title: "Finance",
+              title: t('tabs.finance'),
               headerShown: false,
               tabBarIcon: ({ color, focused }) => (
                 <TabIcon
                   icon={icons.finance}
                   color={color}
-                  name="Finance"
+                  name={t('tabs.finance')}
                   focused={focused}
                 />
               ),
@@ -106,13 +108,13 @@ const TabLayout = () => {
           <Tabs.Screen
             name="mood"
             options={{
-              title: "Mood",
+              title: t('tabs.mood'),
               headerShown: false,
               tabBarIcon: ({ color, focused }) => (
                 <TabIcon
                   icon={icons.mood}
                   color={color}
-                  name="Mood"
+                  name={t('tabs.mood')}
                   focused={focused}
                 />
               ),
@@ -121,13 +123,13 @@ const TabLayout = () => {
           <Tabs.Screen
             name="history"
             options={{
-              title: "History",
+              title: t('tabs.history'),
               headerShown: false,
               tabBarIcon: ({ color, focused }) => (
                 <TabIcon
                   icon={icons.history}
                   color={color}
-                  name="History"
+                  name={t('tabs.history')}
                   focused={focused}
                 />
               ),

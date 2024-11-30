@@ -25,6 +25,7 @@ import {
 import { ExpenseItem } from "../../type";
 import { BarChart } from "react-native-gifted-charts";
 import { useMoodContext } from '../../context/MoodContext';
+import { useTranslation } from "react-i18next";
 
 interface ScheduleItem {
   time: string;
@@ -72,6 +73,7 @@ function formatScheduleTime(dateString: string): string {
 
 const Home = () => {
   const router = useRouter();
+  const { t } = useTranslation();
   const currentdate = new Date();
   const formatDate = getFormattedDate(currentdate);
   const [userId, setUserId] = useState<string | null>(null);
@@ -318,7 +320,7 @@ const Home = () => {
       <View className="bg-primary px-6 pt-2 pb-4">
         <View className="flex-row justify-between items-center">
           <Text className="text-4xl font-pbold text-secondary">
-            EchoEase
+            {t('home.title')}
           </Text>
           <TouchableOpacity 
             onPress={() => router.push("/settings")}
@@ -346,7 +348,7 @@ const Home = () => {
             <View className="flex-row items-center justify-center">
               <View className="w-1 h-1 rounded-full bg-component-schedule-text/20 mx-2" />
               <Text className="text-sm font-plight text-component-schedule-text/60">
-                Your daily overview
+                {t('home.dailyOverview')}
               </Text>
               <View className="w-1 h-1 rounded-full bg-component-schedule-text/20 mx-2" />
             </View>
@@ -363,7 +365,7 @@ const Home = () => {
             <View className="flex-row items-center mb-4">
               <View className="w-1 h-6 bg-component-schedule-accent rounded-full mr-3" />
               <Text className="text-xl font-psemibold text-component-schedule-text">
-                Today's Schedule
+                {t('home.todaySchedule')}
               </Text>
             </View>
 
@@ -378,7 +380,7 @@ const Home = () => {
               ))
             ) : (
               <View className="flex-row justify-center items-center py-6 bg-black-400/30 rounded-xl border border-component-schedule-accent/10">
-                <Text className="text-component-schedule-text/70 font-plight text-base">No schedule for today</Text>
+                <Text className="text-component-schedule-text/70 font-plight text-base">{t('home.noSchedule')}</Text>
               </View>
             )}
           </View>
@@ -394,7 +396,7 @@ const Home = () => {
             <View className="flex-row items-center mb-4">
               <View className="w-1 h-6 bg-component-mood-accent rounded-full mr-3" />
               <Text className="text-xl font-psemibold text-component-mood-text">
-                Today's Mood
+                {t('home.todayMood')}
               </Text>
             </View>
 
@@ -421,7 +423,7 @@ const Home = () => {
               <View className="flex-1">
                 <View className="justify-center items-center py-4 bg-black-400/30 rounded-xl mb-4">
                   <Text className="text-component-mood-text/70 font-plight mb-2">
-                    How are you feeling today?
+                    {t('home.howAreYouFeeling')}
                   </Text>
                 </View>
                 <View className="flex-row justify-around bg-black-400/30 rounded-xl p-4">
@@ -433,7 +435,7 @@ const Home = () => {
                     >
                       <Text className="text-2xl mb-1">{details.emoji}</Text>
                       <Text className="text-component-mood-text/70 text-xs font-plight">
-                        {moodType}
+                        {t(`home.${moodType.toLowerCase().replace(/\s+/g, '')}`)}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -453,7 +455,7 @@ const Home = () => {
             <View className="flex-row items-center mb-6">
               <View className="w-1 h-6 bg-component-finance-accent rounded-full mr-3" />
               <Text className="text-xl font-psemibold text-component-finance-text">
-                This Month's Financial Data
+                {t('home.monthlyFinance')}
               </Text>
             </View>
             
@@ -461,7 +463,7 @@ const Home = () => {
             <View className="flex-row justify-between mb-6">
               <View className="flex-1 bg-black-400/30 rounded-xl p-4 mr-2 border border-component-finance-accent/10">
                 <Text className="text-sm text-component-finance-text/85 font-pmedium mb-1">
-                  Total Spent
+                  {t('home.totalSpent')}
                 </Text>
                 <Text className="text-2xl font-pbold text-component-finance-text">
                   ${totalSpent.toFixed(2)}
@@ -469,7 +471,7 @@ const Home = () => {
               </View>
               <View className="flex-1 bg-black-400/30 rounded-xl p-4 ml-2 border border-component-finance-accent/10">
                 <Text className="text-sm text-component-finance-text/85 font-pmedium mb-1">
-                  Categories
+                  {t('home.categories')}
                 </Text>
                 <Text className="text-2xl font-pbold text-component-finance-text">
                   {Object.keys(categorySpending).length}
@@ -480,7 +482,7 @@ const Home = () => {
             {/* Category Breakdown */}
             <View className="bg-black-400/30 rounded-xl p-4 border border-component-finance-accent/10">
               <Text className="text-sm text-component-finance-text/85 font-pmedium mb-4">
-                Spending by Category
+                {t('home.spendingByCategory')}
               </Text>
               <View className="flex-1 justify-center items-center">
                 <BarChart
@@ -514,7 +516,7 @@ const Home = () => {
 
           <View className="flex-row justify-center mt-6 mb-8">
             <Text className="text-sm text-gray-200 font-plight">
-              Track your spending and stay within your budget.
+              {t('home.trackSpending')}
             </Text>
           </View>
         </View>

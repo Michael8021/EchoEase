@@ -16,6 +16,7 @@ import { ExpenseItem, SpendingItem} from "../../type";
 import * as ImagePicker from 'expo-image-picker';
 import { recognizeReceipt } from "../../lib/aiService";
 import { icons } from "../../constants";
+import { useTranslation } from "react-i18next";
 
 type PickerItem = {
   label: string;
@@ -24,6 +25,7 @@ type PickerItem = {
 };
 
 const Finance = () => {
+  const { t } = useTranslation();
   //expense type
   const [expensedata, setExpensedata] = useState<ExpenseItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -207,7 +209,7 @@ const Finance = () => {
       // Request permission
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
-        Alert.alert("Permission Required", "Please allow access to your photo library to scan receipts.");
+        Alert.alert(t('finance.permissionRequired'), t('finance.permissionMessage'));
         return;
       }
 
@@ -248,14 +250,14 @@ const Finance = () => {
 
           // Refresh spending data
           fetchSpending();
-          Alert.alert("Success", `${receiptDataArray.length} receipts processed and added successfully!`);
+          Alert.alert(t('finance.success'), t('finance.processSuccess', { count: receiptDataArray.length }));
         } finally {
           setIsProcessing(false);
         }
       }
     } catch (error) {
       console.error("Error processing receipts:", error);
-      Alert.alert("Error", "Failed to process receipts. Please try again.");
+      Alert.alert(t('finance.error'), t('finance.processError'));
       setIsProcessing(false);
     }
   };
@@ -266,7 +268,7 @@ const Finance = () => {
       <View className="bg-primary px-6 pt-2 pb-4">
         <View className="flex-row justify-between items-center">
           <Text className="text-4xl font-pbold text-secondary">
-            Finance
+            {t('finance.title')}
           </Text>
           <TouchableOpacity 
             onPress={handleImageUpload}
@@ -288,7 +290,7 @@ const Finance = () => {
           <View className="mx-5 flex flex-row justify-between items-center">
             <View>
               <Text className="text-yellow-400 text-1.5xl">
-                My <Text className="font-bold">Expenses</Text>
+                {t('finance.myExpenses')}
               </Text>
               <Text className="text-white my-3 text-4xl font-semibold">
                 ${whole}.<Text className="text-2xl font-light">{decimal}</Text>

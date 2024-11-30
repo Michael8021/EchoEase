@@ -288,7 +288,8 @@ export const categorizeAndExtractData = async (
 
 export const genMoodInsight = async (
   moodData: string[],
-  descriptions: string[]
+  descriptions: string[],
+  language: string = 'en'
 ): Promise<string> => {
   try {
     // Define the chat request
@@ -299,10 +300,12 @@ export const genMoodInsight = async (
           role: 'system',
           content: `You are an AI assistant that analyzes mood data for insights. Analyze the following mood data for the week: ${JSON.stringify(moodData)}. Provide a brief summary of mood patterns and trends. 
           
-Note: 'No data' means mood not logged for future days. The number of mood entries indicates today’s day (e.g., 3 entries mean today is Wednesday), so avoid mentioning missing moods after today, as they pertain to the future. Please keep your insights concise.
+Note: 'No data' means mood not logged for future days. The number of mood entries indicates today's day (e.g., 3 entries mean today is Wednesday), so avoid mentioning missing moods after today, as they pertain to the future. Please keep your insights concise.
+
+Important: Please provide the analysis in ${language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English'}.
           
 **Final Output**:
-Return a string with the mood pattern analysis and insights.`,
+Return a string with the mood pattern analysis and insights in the specified language.`,
         },
         {
           role: 'user',

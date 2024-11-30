@@ -7,9 +7,11 @@ import { Link } from 'expo-router';
 import { createUser } from '../../lib/appwrite';
 import { useGlobalContext } from "../../context/GlobalProvider";
 import { router } from 'expo-router';
+import { useTranslation } from "react-i18next";
 
 const SignUp = () => {
   const { setUser, setIsLogged } = useGlobalContext();
+  const { t } = useTranslation();
 
   const [form, setForm] = useState({
     username: "",
@@ -20,7 +22,7 @@ const SignUp = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submit = async () => {
     if (form.username === "" || form.email === "" || form.password === "") {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert("Error", t('auth.errors.fillFields'));
     }
 
     setIsSubmitting(true);
@@ -48,32 +50,33 @@ const SignUp = () => {
             />
           </View>
 
-          <Text className="text-2xl text-white text-semibold mt-10 font-psemibold">Sign up to EchoEase</Text>
-
+          <Text className="text-2xl text-white text-semibold mt-10 font-psemibold">
+            {t('auth.signUp.title')}
+          </Text>
 
           <FormField
-            title="Username"
+            title={t('auth.signUp.username')}
             value={form.username}
             handleChangeText={(e) => setForm({ ...form, username: e })}
             otherStyles="mt-7"
           />
 
           <FormField
-            title="Email"
+            title={t('auth.signUp.email')}
             value={form.email}
             handleChangeText={(e) => setForm({ ...form, email: e })}
             otherStyles="mt-7"
           />
 
           <FormField
-            title="Password"
+            title={t('auth.signUp.password')}
             value={form.password}
             handleChangeText={(e) => setForm({ ...form, password: e })}
             otherStyles="mt-7"
           />
 
           <CustomButton
-            title="Sign Up"
+            title={t('auth.signUp.submit')}
             handlePress={submit}
             containerStyles="mt-10"
             isLoading={isSubmitting}
@@ -81,19 +84,16 @@ const SignUp = () => {
 
           <View className="flex justify-center pt-5 flex-row gap-2">
             <Text className="text-lg text-gray-100 font-pregular">
-              Have an account already?
+              {t('auth.signUp.haveAccount')}
             </Text>
             <Link
               href="/sign-in"
               className="text-lg font-psemibold text-secondary"
             >
-              Sign in
+              {t('auth.signUp.signIn')}
             </Link>
           </View>
         </View>
-
-
-
       </ScrollView>
     </SafeAreaView>
   )
