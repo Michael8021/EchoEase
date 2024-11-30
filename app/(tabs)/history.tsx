@@ -107,7 +107,9 @@ const HistoryScreen = () => {
       {/* Fixed Header */}
       <View className="bg-primary px-6 pt-2 pb-4">
         <View className="flex-row justify-between items-center">
-          <Text className="text-4xl font-pbold text-secondary">{t('common.history')}</Text>
+          <Text className="text-4xl font-pbold text-secondary">
+            History
+          </Text>
           <TouchableOpacity 
             onPress={() => router.push("/settings")}
             className="bg-black-100/50 p-2 rounded-full border border-gray-100/10"

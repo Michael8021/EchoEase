@@ -541,8 +541,12 @@ const Mood = () => {
     <View style={styles.androidSafeArea}>
       <SafeAreaView style={styles.container}>
         <Provider>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Mood Map</Text>
+          <View className="bg-primary px-6 pt-2 pb-4">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-4xl font-pbold text-secondary">
+                Mood Map
+              </Text>
+            </View>
           </View>
           <View style={styles.container}>
             <View style={styles.todayMoodContainer}>
