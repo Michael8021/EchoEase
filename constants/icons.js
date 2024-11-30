@@ -19,6 +19,7 @@ import settings from "../assets/icons/settings.png";
 import deleteIcon from "../assets/icons/delete.png";
 import lock from "../assets/icons/lock.png";
 import user from "../assets/icons/user.png";
+import photo from "../assets/icons/photo.png";
 
 export default {
   play,
@@ -42,4 +43,5 @@ export default {
   deleteIcon,
   lock,
   user,
+  photo,
 };

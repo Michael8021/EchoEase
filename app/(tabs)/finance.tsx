@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PieChart } from "react-native-gifted-charts";
@@ -10,8 +10,12 @@ import {
   getSpending,
   client,
   appwriteConfig,
+  addSpending
 } from "../../lib/appwrite";
 import { ExpenseItem, SpendingItem} from "../../type";
+import * as ImagePicker from 'expo-image-picker';
+import { recognizeReceipt } from "../../lib/aiService";
+import { icons } from "../../constants";
 
 type PickerItem = {
   label: string;
@@ -197,10 +201,73 @@ const Finance = () => {
     };
   }, []);
 
+  const handleImageUpload = async () => {
+    try {
+      // Request permission
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert("Permission Required", "Please allow access to your photo library to scan receipts.");
+        return;
+      }
+
+      // Pick multiple images
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: "images",
+        base64: true,
+        quality: 1,
+        allowsMultipleSelection: true,
+        selectionLimit: 4,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        // Get expense types for categorization
+        const expenses = await getExpenseTypes();
+        const formattedExpenses = expenses.map((expense: any) => ({
+          category: expense.category,
+        }));
+
+        // Get base64 strings from all selected images
+        const base64Array = result.assets.map(asset => asset.base64!);
+
+        // Recognize receipts
+        const receiptDataArray = await recognizeReceipt(base64Array, formattedExpenses);
+
+        // Add all receipts to spending
+        for (const receiptData of receiptDataArray) {
+          await addSpending({
+            id: "",
+            name: receiptData.name,
+            amount: receiptData.amount.toString(),
+            date: receiptData.date,
+            category: receiptData.category,
+          });
+        }
+
+        // Refresh spending data
+        fetchSpending();
+        Alert.alert("Success", `${receiptDataArray.length} receipts processed and added successfully!`);
+      }
+    } catch (error) {
+      console.error("Error processing receipts:", error);
+      Alert.alert("Error", "Failed to process receipts. Please try again.");
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-primary">
-      <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
-        <Text className="text-4xl font-pbold text-secondary">Finance</Text>
+      {/* Fixed Header */}
+      <View className="bg-primary px-6 pt-2 pb-4">
+        <View className="flex-row justify-between items-center">
+          <Text className="text-4xl font-pbold text-secondary">
+            Finance
+          </Text>
+          <TouchableOpacity 
+            onPress={handleImageUpload}
+            className="bg-black-100/50 p-2 rounded-full border border-gray-100/10"
+          >
+            <Image source={icons.photo} className="w-6 h-6 opacity-85" />
+          </TouchableOpacity>
+        </View>
       </View>
       <View>
         <ScrollView showsVerticalScrollIndicator={false}>
