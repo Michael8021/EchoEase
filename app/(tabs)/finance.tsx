@@ -254,7 +254,7 @@ const Finance = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-primary">
+    <SafeAreaView className="flex-1 bg-primary" edges={['top', 'left', 'right']}>
       {/* Fixed Header */}
       <View className="bg-primary px-6 pt-2 pb-4">
         <View className="flex-row justify-between items-center">
@@ -269,8 +269,10 @@ const Finance = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <View>
-        <ScrollView showsVerticalScrollIndicator={false}>
+      <View className="flex-1">
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+        >
           <View className="mx-5 flex flex-row justify-between items-center">
             <View>
               <Text className="text-yellow-400 text-1.5xl">
