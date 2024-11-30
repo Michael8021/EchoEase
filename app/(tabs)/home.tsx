@@ -324,7 +324,7 @@ const Home = () => {
             onPress={() => router.push("/settings")}
             className="bg-black-100/50 p-2 rounded-full border border-gray-100/10"
           >
-            <Image source={icons.settings} className="w-6 h-6 opacity-85" />
+            <Image source={icons.settings} className="w-6 h-6 opacity-85" tintColor="#FF9C01" />
           </TouchableOpacity>
         </View>
       </View>

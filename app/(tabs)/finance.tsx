@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from "react-native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PieChart } from "react-native-gifted-charts";
@@ -26,6 +26,7 @@ type PickerItem = {
 const Finance = () => {
   //expense type
   const [expensedata, setExpensedata] = useState<ExpenseItem[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fetchExpenses = async () => {
     try {
       const expenses = await getExpenseTypes();
@@ -220,36 +221,42 @@ const Finance = () => {
       });
 
       if (!result.canceled && result.assets.length > 0) {
-        // Get expense types for categorization
-        const expenses = await getExpenseTypes();
-        const formattedExpenses = expenses.map((expense: any) => ({
-          category: expense.category,
-        }));
+        setIsProcessing(true);
+        try {
+          // Get expense types for categorization
+          const expenses = await getExpenseTypes();
+          const formattedExpenses = expenses.map((expense: any) => ({
+            category: expense.category,
+          }));
 
-        // Get base64 strings from all selected images
-        const base64Array = result.assets.map(asset => asset.base64!);
+          // Get base64 strings from all selected images
+          const base64Array = result.assets.map(asset => asset.base64!);
 
-        // Recognize receipts
-        const receiptDataArray = await recognizeReceipt(base64Array, formattedExpenses);
+          // Recognize receipts
+          const receiptDataArray = await recognizeReceipt(base64Array, formattedExpenses);
 
-        // Add all receipts to spending
-        for (const receiptData of receiptDataArray) {
-          await addSpending({
-            id: "",
-            name: receiptData.name,
-            amount: receiptData.amount.toString(),
-            date: receiptData.date,
-            category: receiptData.category,
-          });
+          // Add all receipts to spending
+          for (const receiptData of receiptDataArray) {
+            await addSpending({
+              id: "",
+              name: receiptData.name,
+              amount: receiptData.amount.toString(),
+              date: receiptData.date,
+              category: receiptData.category,
+            });
+          }
+
+          // Refresh spending data
+          fetchSpending();
+          Alert.alert("Success", `${receiptDataArray.length} receipts processed and added successfully!`);
+        } finally {
+          setIsProcessing(false);
         }
-
-        // Refresh spending data
-        fetchSpending();
-        Alert.alert("Success", `${receiptDataArray.length} receipts processed and added successfully!`);
       }
     } catch (error) {
       console.error("Error processing receipts:", error);
       Alert.alert("Error", "Failed to process receipts. Please try again.");
+      setIsProcessing(false);
     }
   };
 
@@ -263,9 +270,14 @@ const Finance = () => {
           </Text>
           <TouchableOpacity 
             onPress={handleImageUpload}
+            disabled={isProcessing}
             className="bg-black-100/50 p-2 rounded-full border border-gray-100/10"
           >
-            <Image source={icons.photo} className="w-6 h-6 opacity-85" />
+            {isProcessing ? (
+              <ActivityIndicator color="#FF9C01" size="small" />
+            ) : (
+              <Image source={icons.photo} className="w-6 h-6 opacity-85" tintColor="#FF9C01" />
+            )}
           </TouchableOpacity>
         </View>
       </View>
