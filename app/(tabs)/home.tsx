@@ -373,8 +373,8 @@ const Home = () => {
                 </View>
               ))
             ) : (
-              <View className="flex-1 justify-center items-center py-4 bg-black-400/30 rounded-xl">
-                <Text className="text-component-schedule-text/70 font-plight">No schedule for today.</Text>
+              <View className="flex-row justify-center items-center py-6 bg-black-400/30 rounded-xl border border-component-schedule-accent/10">
+                <Text className="text-component-schedule-text/70 font-plight text-base">No schedule for today</Text>
               </View>
             )}
           </View>
