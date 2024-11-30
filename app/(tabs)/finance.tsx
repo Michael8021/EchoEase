@@ -200,13 +200,13 @@ const Finance = () => {
   return (
     <SafeAreaView className="flex-1 bg-primary">
       <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
-        <Text className="text-3xl font-psemibold text-secondary">Finance</Text>
+        <Text className="text-4xl font-pbold text-secondary">Finance</Text>
       </View>
       <View>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View className="mx-5 flex flex-row justify-between items-center">
             <View>
-              <Text className="text-white text-1.5xl">
+              <Text className="text-yellow-400 text-1.5xl">
                 My <Text className="font-bold">Expenses</Text>
               </Text>
               <Text className="text-white my-3 text-4xl font-semibold">

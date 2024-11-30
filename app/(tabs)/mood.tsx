@@ -10,22 +10,266 @@ import { createMood, getMoods, getCurrentUser, createMoodInsight, getMoodInsight
 import { useMoodContext } from '../../context/MoodContext';
 import { genMoodInsight } from '../../lib/aiService';
 import DateTimePicker from '@react-native-community/datetimepicker';
+
 const styles = StyleSheet.create({
   androidSafeArea: {
     flex: 1,
     backgroundColor: "#161622",
-    paddingTop: 0,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#161622",
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    backgroundColor: "#161622",
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 156, 1, 0.2)',
+  },
+  headerText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FF9C01',
+    letterSpacing: 0.5,
+  },
+  todayMoodContainer: {
+    backgroundColor: 'rgba(45, 36, 59, 0.15)',
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 14,
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(157, 138, 176, 0.2)',
+    alignItems: 'center',
+  },
+  todayMoodButton: {
+    backgroundColor: '#FF9C01',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  todayMoodButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#161622',
+    marginLeft: 8,
+  },
+  moodText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FF9C01',
+  },
+  chartContainer: {
+    backgroundColor: "rgba(36, 59, 45, 0.15)",
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 16,
+    padding: 16,
+    paddingLeft: 28,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(138, 176, 157, 0.2)',
   },
   weekSwitcher: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: 'rgba(59, 36, 45, 0.15)',
+    marginHorizontal: 16,
+    marginTop: 16,
     padding: 16,
-    backgroundColor: '#1F1F2E',
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(176, 138, 157, 0.2)',
   },
   weekText: {
     color: '#FF9C01',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  logMoodButton: {
+    flex: 1,
+    marginRight: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(45, 36, 59, 0.25)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(157, 138, 176, 0.3)',
+  },
+  insightsButton: {
+    flex: 1,
+    marginLeft: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(36, 59, 45, 0.25)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(138, 176, 157, 0.3)',
+  },
+  logMoodButtonText: {
+    color: "#B8A5CC",
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  insightsButtonText: {
+    color: "#A5CCB8",
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalContainer: {
+    backgroundColor: '#1F1F2E',
+    width: '90%',
+    alignSelf: 'center',
+    padding: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 156, 1, 0.2)',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 156, 1, 0.1)',
+  },
+  modalHeaderButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  modalCloseButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 156, 1, 0.1)',
+  },
+  modalTitle: {
+    color: '#FF9C01',
+    fontSize: 22,
+    fontWeight: '700',
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 32,
+  },
+  modalContent: {
+    padding: 16,
+    maxHeight: 200,
+    backgroundColor: '#1F1F2E',
+  },
+  modalText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  insightText: {
+    color: '#FFF',
+    fontSize: 15,
+    lineHeight: 26,
+    textAlign: 'left',
+    padding: 8,
+  },
+  moodButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#2A2A3C',
+    padding: 5,
+    borderRadius: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 156, 1, 0.1)',
+  },
+  moodButton: {
+    width: 52,
+    height: 52,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(255, 156, 1, 0.05)',
+  },
+  selectedMoodButton: {
+    backgroundColor: 'rgba(255, 156, 1, 0.2)',
+    borderColor: '#FF9C01',
+    transform: [{ scale: 1.1 }],
+  },
+  moodButtonEmoji: {
+    fontSize: 28,
+  },
+  inputContainer: {
+    padding: 2,
+    paddingBottom: 12,
+    width: '100%',
+  },
+  modalButton: {
+    backgroundColor: '#FF9C01',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalButtonText: {
+    color: '#161622',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 
@@ -43,6 +287,40 @@ const moodMap2: { [key: string]: { value: number, emoji: string } } = {
   "Neutral": { value: 3, emoji: "😐" },
   "Happy": { value: 4, emoji: "😊" },
   "Very Happy": { value: 5, emoji: "😁" },
+};
+
+const moodColors: { [key: string]: { bg: string; text: string; accent: string } } = {
+  "Very Sad": {
+    bg: "#2D243B",
+    text: "#B8A5CC",
+    accent: "#C4B5D5"
+  },
+  "Sad": {
+    bg: "#243B3B",
+    text: "#A5CCCC",
+    accent: "#B5D5D5"
+  },
+  "Neutral": {
+    bg: "#243B2D",
+    text: "#A5CCB8",
+    accent: "#B5D5C4"
+  },
+  "Happy": {
+    bg: "#3B3B24",
+    text: "#CCCCB8",
+    accent: "#D5D5B5"
+  },
+  "Very Happy": {
+    bg: "#3B2D24",
+    text: "#CCB8A5",
+    accent: "#D5C4B5"
+  }
+};
+
+const getMoodColor = (mood: string) => {
+  const moodEmoji = mood?.split(" ")[0] || "😐";
+  const moodType = moodMap[moodEmoji] || "Neutral";
+  return moodColors[moodType];
 };
 
 async function getUserId() {
@@ -102,7 +380,7 @@ const Mood = () => {
         }
         return {
           value: moodValue, label, labelTextStyle: { color: '#FF9C01' }, topLabelComponent: () => (
-            <Text style={{ fontSize: 18, marginBottom: 6 }}>{moodEmoji}</Text>
+            <Text style={{ fontSize: 14, marginBottom: 6 }}>{moodEmoji}</Text>
           ),
         };
       });
@@ -165,11 +443,11 @@ const Mood = () => {
       }
 
       await createMoodInsight(newMoodInsight, weekStart);
-
       setIsLoading(false);
     } catch (error) {
-      console.error("Error fetching mood insights:", error);
-      Alert.alert("Error", "Failed to fetch mood insights");
+      console.error("Error regenerating mood insights:", error);
+      Alert.alert("Error", "Failed to regenerate mood insights");
+      setIsLoading(false);
     }
   };
 
@@ -198,16 +476,17 @@ const Mood = () => {
     fetchMoodData(currentWeek);
     if (!initialLoad) {
       setAutoregenerate(true);
-    }
-    else {
+    } else {
       setInitialLoad(false);
     }
   }, [refreshMoods]);
 
-  if (autoregenerate) {
-    regenerateInsight(currentWeek);
-    setAutoregenerate(false);
-  }
+  useEffect(() => {
+    if (autoregenerate) {
+      regenerateInsight(currentWeek);
+      setAutoregenerate(false);
+    }
+  }, [autoregenerate]);
 
   const saveMoodToDatabase = async () => {
     if (selectedMood) {
@@ -252,63 +531,49 @@ const Mood = () => {
     fetchMoodData(currentWeek).then(() => setRefreshing(false));
   };
 
-  return (
-    <ScrollView
-      contentContainerStyle={styles.androidSafeArea}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      <SafeAreaView style={styles.androidSafeArea}>
-        <Provider>
-          <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
-            {/* Header */}
-            <Text className="text-3xl font-psemibold text-secondary">
-              Mood Tracking
-            </Text>
+  const handleCloseLogModal = () => {
+    setLogModalVisible(false);
+    setDescription('');
+    setSelectedMood('');
+  };
 
-            <TouchableOpacity onPress={() => router.push('/settings')}>
-              <Image
-                source={icons.settings}
-                className="w-7 h-7"
-              />
-            </TouchableOpacity>
+  return (
+    <View style={styles.androidSafeArea}>
+      <SafeAreaView style={styles.container}>
+        <Provider>
+          <View style={styles.header}>
+            <Text style={styles.headerText}>Mood Map</Text>
           </View>
-          <View>
-            <View
-              style={{
-                backgroundColor: "#1F1F2E",
-                padding: 16,
-                flexDirection: "row",
-                justifyContent: "space-between",
-                borderBottomWidth: 1,
-                borderBottomColor: "#FF9C01",
-              }}
-            >
-              <Text className="text-1xl font-psemibold text-secondary">Today's Mood:</Text>
-              <Text className="text-1xl font-psemibold text-secondary">{todayMood}</Text>
+          <View style={styles.container}>
+            <View style={styles.todayMoodContainer}>
+              <Text style={styles.moodText}>Today's Mood</Text>
+              {todayMood ? (
+                <Text style={[styles.moodText, { color: getMoodColor(todayMood).text }]}>{todayMood}</Text>
+              ) : (
+                <TouchableOpacity
+                  style={styles.todayMoodButton}
+                  onPress={() => setLogModalVisible(true)}
+                >
+                  <MaterialIcons name="add-reaction" size={20} color="#161622" />
+                  <Text style={styles.todayMoodButtonText}>Set Today's Mood</Text>
+                </TouchableOpacity>
+              )}
             </View>
-            <View
-              style={{
-                backgroundColor: "#1F1F2E",
-                flexDirection: "row",
-                justifyContent: "space-around",
-                paddingLeft: 28,
-              }}
-            >
+
+            <View style={styles.chartContainer}>
               <BarChart
                 adjustToWidth
-                parentWidth={Dimensions.get('window').width}
-                initialSpacing={10}
+                parentWidth={Dimensions.get('window').width - 20}
+                initialSpacing={11}
                 yAxisThickness={0}
                 xAxisThickness={0}
-                backgroundColor={'#1F1F2E'}
-                frontColor={'#FF9C01'}
+                backgroundColor={"rgba(36, 59, 45)"}
+                frontColor={getMoodColor(todayMood).accent}
                 yAxisLabelTexts={["😶", "😭", "😢", "😐", "😊", "😁", ""]}
                 barBorderRadius={4}
                 noOfSections={6}
                 stepValue={1}
-                stepHeight={50}
+                stepHeight={38}
                 data={loading ? [{value: 0, label: "Mon", labelTextStyle: { color: '#FF9C01' }},
                   {value: 0, label: "Tue", labelTextStyle: { color: '#FF9C01' }},
                   {value: 0, label: "Wed", labelTextStyle: { color: '#FF9C01' }},
@@ -316,7 +581,10 @@ const Mood = () => {
                   {value: 0, label: "Fri", labelTextStyle: { color: '#FF9C01' }},
                   {value: 0, label: "Sat", labelTextStyle: { color: '#FF9C01' }},
                   {value: 0, label: "Sun", labelTextStyle: { color: '#FF9C01' }},
-                ] : moodData}
+                ] : moodData.map(item => ({
+                  ...item,
+                  labelTextStyle: { color: getMoodColor(todayMood).text }
+                }))}
                 hideRules
                 isAnimated
                 onPress={(item: any, index: any) => {
@@ -327,187 +595,180 @@ const Mood = () => {
                 }}
               />
             </View>
+
             <View style={styles.weekSwitcher}>
-            <TouchableOpacity onPress={handlePreviousWeek}>
-              <MaterialIcons name="arrow-back" size={24} color="#FF9C01" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-              <Text style={styles.weekText}>
-                {currentWeek.toLocaleDateString()} - {new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleNextWeek}>
-              <MaterialIcons name="arrow-forward" size={24} color="#FF9C01" />
-            </TouchableOpacity>
-          </View>
-          {showDatePicker && (
-            <DateTimePicker
-              value={currentWeek}
-              mode="date"
-              display="default"
-              onChange={handleDateChange}
-            />
-          )}
-            <View
-              style={{
-                backgroundColor: "#1F1F2E",
-                padding: 16,
-                flexDirection: "row",
-                justifyContent: "space-around",
-              }}
-            >
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#4A90E2",
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 8,
-                }}
-                onPress={() => setLogModalVisible(true)}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <MaterialIcons name="edit" size={18} color="white" />
-                  <Text style={{ color: "white", marginLeft: 8, fontSize: 16 }}>
-                    Log Mood
-                  </Text>
-                </View>
+              <TouchableOpacity onPress={handlePreviousWeek}>
+                <MaterialIcons name="arrow-back" size={24} color="#FF9C01" />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#B27CD0",
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 8,
-                }}
-                onPress={() => handleViewInsights(currentWeek)}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <MaterialIcons name="insights" size={18} color="white" />
-                  <Text style={{ color: "white", marginLeft: 8, fontSize: 16 }}>
-                    View Insights
-                  </Text>
-                </View>
+              <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                <Text style={styles.weekText}>
+                  {currentWeek.toLocaleDateString()} - {new Date(currentWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleNextWeek}>
+                <MaterialIcons name="arrow-forward" size={24} color="#FF9C01" />
               </TouchableOpacity>
             </View>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={currentWeek}
+                mode="date"
+                display="default"
+                onChange={handleDateChange}
+              />
+            )}
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.logMoodButton}
+                onPress={() => setLogModalVisible(true)}
+              >
+                <MaterialIcons name="edit" size={20} color="#B8A5CC" />
+                <Text style={styles.logMoodButtonText}>Log Mood</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.insightsButton}
+                onPress={() => handleViewInsights(currentWeek)}
+              >
+                <MaterialIcons name="insights" size={20} color="#A5CCB8" />
+                <Text style={styles.insightsButtonText}>View Insights</Text>
+              </TouchableOpacity>
+            </View>
+
             <Portal>
-              <Modal
-                visible={chartModalVisible}
-                onDismiss={() => setChartModalVisible(false)}
-                contentContainerStyle={{
-                  backgroundColor: "white",
-                  padding: 20,
-                  marginHorizontal: 20,
-                  borderRadius: 10,
-                }}
-              >
-                <Text className="text-lg font-psemibold mb-5">Mood Description on {selectedDay}</Text>
-                <View
-                  style={{
-                    backgroundColor: "#f0f0f0",
-                    padding: 15,
-                    borderRadius: 10,
-                    marginBottom: 20,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      color: "#333",
-                      textAlign: "center",
-                    }}
-                  >
-                    {selectedDescription}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  className="bg-black p-2 rounded-lg items-center"
-                  onPress={() => setChartModalVisible(false)}
-                >
-                  <Text className="text-white text-lg">Close</Text>
-                </TouchableOpacity>
-              </Modal>
-              <Modal
-                visible={logModalVisible}
-                onDismiss={() => setLogModalVisible(false)}
-                contentContainerStyle={{
-                  backgroundColor: "white",
-                  padding: 20,
-                  marginHorizontal: 20,
-                  borderRadius: 10,
-                }}
-              >
-                <Text className="text-lg font-psemibold mb-5">Record Mood</Text>
-                <View className="flex-row justify-around my-5">
-                  {["😭", "😢", "😐", "😊", "😁"].map((emoji) =>
-                    renderMoodButton(emoji)
-                  )}
-                </View>
-                <TextInput
-                  label="Add a description (optional)"
-                  value={description}
-                  onChangeText={(text: string) => setDescription(text)}
-                  className="mb-5"
-                  maxLength={255}
-                  multiline={true}
-                />
-                <TouchableOpacity
-                  className="bg-black p-2 rounded-lg items-center"
-                  onPress={saveMoodToDatabase}
-                >
-                  <Text className="text-white text-lg">Save Mood</Text>
-                </TouchableOpacity>
-              </Modal>
               <Modal
                 visible={insightModalVisible}
                 onDismiss={() => setInsightModalVisible(false)}
-                contentContainerStyle={{
-                  backgroundColor: "white",
-                  padding: 20,
-                  marginHorizontal: 20,
-                  borderRadius: 10,
-                }}
+                contentContainerStyle={styles.modalContainer}
               >
-                <View
-                  style={{
-                    padding: 16,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}>
-                  <Text className="text-lg font-psemibold mb-5">Mood Insight</Text>
-                  <TouchableOpacity onPress={() => regenerateInsight(currentWeek)}>
-                    <MaterialIcons name="refresh" size={22} />
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Mood Insights</Text>
+                  <View style={styles.modalHeaderButtons}>
+                    <TouchableOpacity 
+                      style={styles.modalCloseButton}
+                      onPress={() => regenerateInsight(currentWeek)}
+                    >
+                      <MaterialIcons name="refresh" size={24} color="#FF9C01" />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.modalCloseButton}
+                      onPress={() => setInsightModalVisible(false)}
+                    >
+                      <MaterialIcons name="close" size={24} color="#FF9C01" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <View style={{ maxHeight: 300 }}>
+                  <ScrollView 
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    <Text style={styles.insightText}>
+                      {isLoading ? "Loading..." : moodInsight}
+                    </Text>
+                  </ScrollView>
+                </View>
+              </Modal>
+
+              <Modal
+                visible={chartModalVisible}
+                onDismiss={() => setChartModalVisible(false)}
+                contentContainerStyle={styles.modalContainer}
+              >
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Mood on {selectedDay}</Text>
+                  <TouchableOpacity 
+                    style={styles.modalCloseButton}
+                    onPress={() => setChartModalVisible(false)}
+                  >
+                    <MaterialIcons name="close" size={24} color="#FF9C01" />
                   </TouchableOpacity>
                 </View>
-                <View
-                  style={{
-                    backgroundColor: "#f0f0f0",
-                    padding: 15,
-                    borderRadius: 10,
-                    marginBottom: 20,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      color: "#333",
-                      textAlign: "center",
-                    }}
-                  >
-                    {isLoading ? "Loading..." : moodInsight}
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalText}>
+                    {selectedDescription}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  className="bg-black p-2 rounded-lg items-center"
-                  onPress={() => setInsightModalVisible(false)}
-                >
-                  <Text className="text-white text-lg">Close</Text>
-                </TouchableOpacity>
+              </Modal>
+
+              <Modal
+                visible={logModalVisible}
+                onDismiss={handleCloseLogModal}
+                contentContainerStyle={styles.modalContainer}
+              >
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>How are you feeling?</Text>
+                  <TouchableOpacity 
+                    style={styles.modalCloseButton}
+                    onPress={handleCloseLogModal}
+                  >
+                    <MaterialIcons name="close" size={24} color="#FF9C01" />
+                  </TouchableOpacity>
+                </View>
+                <View style={{ maxHeight: 400 }}>
+                  <ScrollView 
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    <View style={styles.moodButtonsContainer}>
+                      {["😭", "😢", "😐", "😊", "😁"].map((emoji) => (
+                        <TouchableOpacity
+                          key={emoji}
+                          onPress={() => setSelectedMood(emoji)}
+                          style={[
+                            styles.moodButton,
+                            selectedMood === emoji && styles.selectedMoodButton,
+                          ]}
+                        >
+                          <Text style={styles.moodButtonEmoji}>{emoji}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        mode="outlined"
+                        placeholder="How are you feeling today? (optional)"
+                        placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                        value={description}
+                        onChangeText={(text: string) => setDescription(text)}
+                        multiline
+                        numberOfLines={4}
+                        style={{
+                          backgroundColor: '#2A2A3C',
+                          color: '#FFFFFF',
+                          fontSize: 16,
+                          borderRadius: 12,
+                          width: '100%',
+                        }}
+                        outlineStyle={{
+                          borderRadius: 12,
+                          borderColor: 'rgba(255, 156, 1, 0.2)',
+                        }}
+                        textColor="#FFFFFF"
+                        theme={{
+                          colors: {
+                            primary: '#FF9C01',
+                            text: '#FFFFFF',
+                            placeholder: 'rgba(255, 255, 255, 0.4)',
+                          },
+                        }}
+                      />
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.modalButton, { marginBottom: 8 }]}
+                      onPress={saveMoodToDatabase}
+                    >
+                      <Text style={styles.modalButtonText}>Save Mood</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                </View>
               </Modal>
             </Portal>
           </View>
         </Provider>
-      </SafeAreaView >
-    </ScrollView >
+      </SafeAreaView>
+    </View>
   );
 };
 

@@ -114,8 +114,8 @@ const SpendingBlock = ({
   return (
     <View>
       <View className="flex-row justify-between items-center bg-primary">
-        <Text className="text-white text-1.5xl mb-3">
-          <Text className="font-bold">Spending</Text>
+        <Text className="text-1.5xl mb-3">
+          <Text className="font-bold text-yellow-400">Spending</Text>
         </Text>
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <View style={{ backgroundColor: "#333333", borderRadius: 25 }}>

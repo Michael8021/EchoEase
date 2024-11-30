@@ -24,34 +24,35 @@ const ExpenseBlock = ({
   expensedata: ExpenseItem[];
   categoryData: { category: string; percentage: string; totalAmount: number }[];
 }) => {
+  // console.log(expensedata);
+  
   const [modalVisible, setModalVisible] = useState(false);
   const [expenseCategory, setExpenseCategory] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
 
   const handleDelete = async (expenseTypeId: string) => {
-    // Alert.alert(
-    //   "Delete Expense",
-    //   "Are you sure you want to delete this expense?",
-    //   [
-    //     {
-    //       text: "Cancel",
-    //       style: "cancel",
-    //     },
-    //     {
-    //       text: "Delete",
-    //       onPress: async () => {
-    //         try {
-    //           await deleteExpenseTypes(expenseTypeId);
-    //           setData((prevData) => prevData.filter((item) => item.id !== expenseTypeId));
-    //         } catch (error) {
-    //           console.error("Failed to delete expense type:", error);
-    //           alert("Failed to delete expense type. Please try again.");
-    //         }
-    //       },
-    //       style: "destructive",
-    //     },
-    //   ]
-    // );
+    Alert.alert(
+      "Delete Expense",
+      "Are you sure you want to delete this expense?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: async () => {
+            try {
+              deleteExpenseTypes(expenseTypeId); 
+            } catch (error) {
+              console.error("Failed to delete expense type:", error);
+              alert("Failed to delete expense type. Please try again.");
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
   };
 
   const renderItem: ListRenderItem<ExpenseItem> = ({ item, index }) => {
@@ -127,6 +128,10 @@ const ExpenseBlock = ({
 
                   <TouchableOpacity
                     onPress={() => {
+                      if (!expenseCategory || !selectedColor) {
+                        Alert.alert("Error", "Please select both a category and a color.");
+                        return;
+                      }
                       addExpenseType(expenseCategory, selectedColor);
                       setModalVisible(false);
                       setExpenseCategory("");

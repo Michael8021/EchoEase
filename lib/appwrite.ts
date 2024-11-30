@@ -465,7 +465,123 @@ export async function deleteSchedule(documentId: string) {
     throw new Error(String(error));
   }
 }
+//----------------------------------------------schedule---------------------------------------------------------
+//----------------------------------------------Home---------------------------------------------------------
+export async function getMoodByDate(date: Date) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not authenticated");
 
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const moodData = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.moodCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.greaterThanEqual("datetime", startOfDay.toISOString()),
+        Query.lessThanEqual("datetime", endOfDay.toISOString()),
+      ]
+    );
+
+    return moodData.documents; 
+  } catch (error) {
+    console.error("Error retrieving mood data:", error);
+    alert("Failed to retrieve the mood of today. Please try again.");
+    return []; 
+  }
+}
+
+export const getSpendingByMonth = async (currentDate: Date) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString(); 
+    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59).toISOString(); 
+
+    // Query the spending documents from the Appwrite database
+    const spending = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.spendingId,
+      [
+        Query.equal("userId", currentUser.$id), 
+        Query.greaterThanEqual("date", startOfMonth), 
+        Query.lessThanEqual("date", endOfMonth)       
+      ]
+    );
+    return spending.documents;
+  } catch (error) {
+    console.error('Error retrieving expense types:', error);
+    alert('Failed to retrieve expense types. Please try again.');
+    return [];
+  }
+};
+
+export async function getRemindersByDate(date: Date) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not authenticated");
+
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const reminders = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.scheduleCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.equal("type", "reminder"),
+        Query.greaterThanEqual("due_date", startOfDay.toISOString()),
+        Query.lessThanEqual("due_date", endOfDay.toISOString()),
+
+      ]
+    );
+
+    return reminders.documents;
+  } catch (error) {
+    console.error(`Error fetching reminders: ${error}`);
+    alert('Failed to retrieve reminders. Please try again.');
+    return [];
+  }
+}
+
+export async function getEventsByDate(date: Date) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not authenticated");
+
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const events= await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.scheduleCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.equal("type", "event"),
+        Query.greaterThanEqual("start_time", startOfDay.toISOString()),
+        Query.lessThanEqual("start_time", endOfDay.toISOString()),
+
+      ]
+    );
+    return events.documents;
+  } catch (error) {
+    console.error(`Error fetching events: ${error}`);
+    alert('Failed to retrieve events. Please try again.');
+    return [];
+  }
+}
+
+//----------------------------------------------Home---------------------------------------------------------
+//----------------------------------------------Mood---------------------------------------------------------
 export async function createMood(mood: Mood) {
   try {
     // Set the start and end of the day for the given date
@@ -622,3 +738,153 @@ export async function getMoodInsight(userId: string, weekStart: Date) {
   );
   return moodInsight;
 }
+//----------------------------------------------Mood---------------------------------------------------------
+export const addExpenseType = async (expenseCategory:string,selectedColor:string) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    await databases.createDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.expense_typeId, 
+      ID.unique(), 
+      {
+        category: expenseCategory,
+        amount:"0.0", 
+        color: selectedColor,
+        userId: currentUser.$id,
+      },
+    );
+  } catch (error) {
+    console.error('Error saving document:', error);
+    alert('Failed to save expense. Please try again.');
+  }
+};
+
+//get expense type
+export const getExpenseTypes = async () => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    const ExpenseTypes = await databases.listDocuments(
+      appwriteConfig.databaseId, 
+      appwriteConfig.expense_typeId,
+      [Query.equal("userId", currentUser.$id)]
+    );
+    return ExpenseTypes.documents;
+  } catch (error) {
+    console.error('Error retrieving expense types:', error);
+    alert('Failed to retrieve expense types. Please try again.');
+    return [];
+  }
+};
+
+//delete expense type
+export const deleteExpenseTypes = async (expenseTypeId: string) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not found");
+
+    if (!expenseTypeId) throw new Error("ExpenseType ID is required");
+
+    await databases.deleteDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.expense_typeId,
+      expenseTypeId
+    );
+  } catch (error) {
+    console.error('Error deleting expense type:', error);
+    alert('Failed to delete expense type. Please try again.');
+  }
+};
+
+//add spending
+export const addSpending = async (newSpending:SpendingItem) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    await databases.createDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.spendingId, 
+      ID.unique(), 
+      {
+        category: newSpending.category,
+        name:newSpending.name,
+        amount:newSpending.amount,
+        date:newSpending.date,
+        userId: currentUser.$id,
+      },
+    );
+  } catch (error) {
+    console.error('Error saving document:', error);
+    alert('Failed to save spending. Please try again.');
+  }
+};
+
+//get spending
+export const getSpending = async () => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw Error;
+
+    const spending = await databases.listDocuments(
+      appwriteConfig.databaseId, 
+      appwriteConfig.spendingId,
+      [Query.equal("userId", currentUser.$id)]
+    );
+
+    return spending.documents;
+  } catch (error) {
+    console.error('Error retrieving expense types:', error);
+    alert('Failed to retrieve expense types. Please try again.');
+    return [];
+  }
+};
+
+//update spending
+export const updateSpending = async (spending: SpendingItem) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not found");
+
+    if (!spending.id) throw new Error("Spending ID is required");
+
+    await databases.updateDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.spendingId, 
+      spending.id, 
+      {
+        category: spending.category,
+        name: spending.name,
+        amount: spending.amount,
+        date: spending.date,
+        userId: currentUser.$id,
+      }
+    );
+  } catch (error) {
+    console.error('Error updating spending:', error);
+    alert('Failed to update spending. Please try again.');
+  }
+};
+
+// delete spending
+export const deleteSpending = async (spending: SpendingItem) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) throw new Error("User not found");
+
+    if (!spending.id) throw new Error("Spending ID is required");
+
+    await databases.deleteDocument(
+      appwriteConfig.databaseId, 
+      appwriteConfig.spendingId, 
+      spending.id
+    );
+  } catch (error) {
+    console.error('Error deleting spending:', error);
+    alert('Failed to delete spending. Please try again.');
+  }
+};
+//----------------------------------------------finance---------------------------------------------------------

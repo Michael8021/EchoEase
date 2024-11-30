@@ -13,7 +13,6 @@ import { testScheduleOperations } from '../lib/test/scheduleTest';
 
 import { useMoodContext } from '../context/MoodContext';
 
-
 const FloatingButton = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [promptText, setPromptText] = useState('');
@@ -24,6 +23,31 @@ const FloatingButton = () => {
 
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [permissionResponse, requestPermission] = Audio.usePermissions();
+
+    const [isLongPress, setIsLongPress] = useState(false);
+    const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
+    const buttonRef = useRef<View>(null);
+
+    const handlePressIn = () => {
+        longPressTimeout.current = setTimeout(() => {
+            setIsLongPress(true);
+            startRecording();
+        }, 100);
+    };
+
+    const handlePressOut = async () => {
+        if (longPressTimeout.current) {
+            clearTimeout(longPressTimeout.current);
+            longPressTimeout.current = null;
+        }
+
+        if (isLongPress) {
+            await stopRecording();
+            setIsLongPress(false);
+        } else {
+            setModalVisible(true);
+        }
+    };
 
     const startRecording = async () => {
         try {
@@ -63,7 +87,7 @@ const FloatingButton = () => {
                 try {
                     await FileSystem.getInfoAsync(uri);
                 } catch {
-                    // Handle error silently or with minimal logging if necessary
+                    // Handle error silently
                 }
 
                 setRecording(null);
@@ -136,7 +160,6 @@ const FloatingButton = () => {
                 refreshMoods();
             });
 
-
             return;
         } catch (error) {
             console.error('Error handling text to widget:', error);
@@ -149,37 +172,8 @@ const FloatingButton = () => {
         setPromptText('');
     };
 
-    // Track if we're in a long press
-    const [isLongPress, setIsLongPress] = useState(false);
-    const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
-
-    const handlePressIn = () => {
-        // Start a timeout to detect long press
-        longPressTimeout.current = setTimeout(() => {
-            setIsLongPress(true);
-            startRecording();
-        }, 100); // 100ms delay for long press detection
-    };
-
-    const handlePressOut = async () => {
-        // Clear the timeout if press is released before long press is detected
-        if (longPressTimeout.current) {
-            clearTimeout(longPressTimeout.current);
-            longPressTimeout.current = null;
-        }
-
-        if (isLongPress) {
-            // If this was a long press, stop recording
-            await stopRecording();
-            setIsLongPress(false);
-        } else {
-            // If this was a short press, show modal
-            setModalVisible(true);
-        }
-    };
-
     return (
-        <View style={styles.container} pointerEvents="box-none">
+        <View style={styles.container} pointerEvents="box-none" ref={buttonRef}>
             <Modal
                 visible={modalVisible}
                 transparent
@@ -218,7 +212,11 @@ const FloatingButton = () => {
             </Modal>
 
             <TouchableOpacity
-                style={[styles.button, isProcessing && styles.buttonDisabled]}
+                style={[
+                    styles.button,
+                    isLongPress && styles.recording,
+                    isProcessing && styles.processing
+                ]}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 activeOpacity={0.7}
@@ -234,18 +232,18 @@ const FloatingButton = () => {
     );
 };
 
-const TAB_BAR_HEIGHT = 84; // Match the height from the tab bar configuration
-const BOTTOM_SPACING = 16;
+const TAB_BAR_HEIGHT = 84;
+const BOTTOM_SPACING = 14;
 
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        bottom: TAB_BAR_HEIGHT + BOTTOM_SPACING, // Position above tab bar with some spacing
-        right: 20,
+        bottom: TAB_BAR_HEIGHT + BOTTOM_SPACING,
+        right: 14,
         zIndex: 100,
     },
     button: {
-        backgroundColor: '#FFA001',
+        backgroundColor: 'rgba(255, 160, 1, 0.75)',
         width: 60,
         height: 60,
         borderRadius: 30,
@@ -253,9 +251,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,
+    },
+    recording: {
+        backgroundColor: 'rgba(255, 68, 68, 0.75)',
+        transform: [{ scale: 1.1 }],
+    },
+    processing: {
+        backgroundColor: 'rgba(255, 68, 68, 0.75)',
+        transform: [{ scale: 1 }],
     },
     modalOverlay: {
         flex: 1,

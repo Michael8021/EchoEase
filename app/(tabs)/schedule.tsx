@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native'
-import {Card, Avatar} from 'react-native-paper';
+import {Card, Avatar, Checkbox} from 'react-native-paper';
 import {Calendar, CalendarList, Agenda} from 'react-native-calendars';
+import { Ionicons } from '@expo/vector-icons';
 
 import React, { useEffect, useState, useCallback } from 'react'
-import { getSchedules } from '@/lib/appwrite';
+import { getSchedules, updateSchedule } from '@/lib/appwrite';
 import tailwind from 'tailwindcss';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useFocusEffect } from '@react-navigation/native';
@@ -54,61 +55,60 @@ const Schedule = () => {
   // const [items, setItems] = useState<ScheduleItems>(initialItems);
   const [items, setItems] = useState<ScheduleItems>({});
 
-
-  const fetchSchedules = () => {
+  const fetchSchedules = useCallback(async () => {
     setLoading(true);
-    return getSchedules()
-      .then(schedules => {
-        const formattedItems: ScheduleItems = {};
+    try {
+      const schedules = await getSchedules();
+      const formattedItems: ScheduleItems = {};
 
-        schedules.forEach(schedule => {
-          // Handle null start_time and end_time
-          const startTime = schedule.start_time;
-          const endTime =schedule.end_time;
-          const dueDate = schedule.due_date;
-          const notifyAt = schedule.notify_at;
-          const type = schedule.type;
+      schedules.forEach(schedule => {
+        // Handle null start_time and end_time
+        const startTime = schedule.start_time;
+        const endTime =schedule.end_time;
+        const dueDate = schedule.due_date;
+        const notifyAt = schedule.notify_at;
+        const type = schedule.type;
 
-          let date = null;
-          if (type === 'event' && startTime) {
-            date = startTime.split('T')[0]; 
-          } else if (type === 'reminder' && dueDate) {
-            date = dueDate.split('T')[0]; 
-          }  
-          const formattedTime = startTime ? formatTime(startTime) : null; 
-          const formattedEndTime = endTime ? formatTime(endTime) : null; 
+        let date = null;
+        if (type === 'event' && startTime) {
+          date = startTime.split('T')[0]; 
+        } else if (type === 'reminder' && dueDate) {
+          date = dueDate.split('T')[0]; 
+        }  
+        const formattedTime = startTime ? formatTime(startTime) : null; 
+        const formattedEndTime = endTime ? formatTime(endTime) : null; 
+        const formattedDueDate = dueDate ? formatTime(dueDate) : null;
 
-          if (date) {
-            if (!formattedItems[date]) {
-              formattedItems[date] = []; 
-            }
-            formattedItems[date].push({
-              name: schedule.title,
-              start_time: formattedTime,
-              end_time: formattedEndTime,
-              description: schedule.description,
-              type: schedule.type,
-              status: schedule.status,
-              notify_at: notifyAt ? formatTime(notifyAt) : null,
-            });
+        if (date) {
+          if (!formattedItems[date]) {
+            formattedItems[date] = []; 
           }
-        });
-
-        setItems(formattedItems);
-      })
-      .catch(error => {
-        console.error('Error fetching schedules:', error);
-      })
-      .finally(() => {
-        setLoading(false);
+          formattedItems[date].push({
+            name: schedule.title,
+            start_time: formattedTime,
+            end_time: formattedEndTime,
+            description: schedule.description,
+            type: schedule.type,
+            status: schedule.status,
+            notify_at: notifyAt ? formatTime(notifyAt) : null,
+            $id: schedule.$id,
+            due_date: formattedDueDate
+          });
+        }
       });
-  };
+      setItems(formattedItems);
+    } catch (error) {
+      console.error('Error fetching schedules:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Use useFocusEffect instead of useEffect with interval
   useFocusEffect(
     useCallback(() => {
       fetchSchedules();
-    }, [])
+    }, [fetchSchedules])
   );
 
   // Export fetchSchedules for use by FloatingButton
@@ -128,10 +128,111 @@ const Schedule = () => {
     );
   };
 
+  const renderItem = (item: ScheduleItem) => {
+    const isEvent = item.type === 'event';
+    const bgColor = isEvent 
+      ? 'rgba(36, 59, 45, 0.15)' 
+      : 'rgba(255, 249, 219, 0.05)'; 
+    const borderColor = isEvent 
+      ? 'rgba(138, 176, 157, 0.2)' 
+      : 'rgba(255, 236, 153, 0.2)'; 
+    const accentColor = isEvent ? '#A5CCB8' : '#FFE082'; 
+    const statusColor = item.status === 'completed' ? '#34D399' : '#F87171';
+    const showStatus = !isEvent && item.status;
+
+    const handleStatusChange = async (item: ScheduleItem) => {
+      try {
+        if (!item.$id || isEvent) return;
+        item.status = item.status === 'completed' ? 'pending' : 'completed';
+        setItems({ ...items });
+        
+        await updateSchedule(item.$id, { status: item.status });
+      } catch (error) {
+        console.error('Error updating schedule status:', error);
+      }
+    };
+    // console.log(item.type, item.status);
+    return (
+      <View className="px-2 mb-3">
+        <View 
+          style={{
+            backgroundColor: bgColor,
+            borderColor: borderColor,
+          }}
+          className="rounded-xl p-4 border shadow-lg"
+        >
+          <View className="flex-row relative">
+            <View className="flex-1">
+              {/* Header with type indicator */}
+              <View className="flex-row items-center mb-2">
+                <View className={`w-1 h-5 rounded-full mr-3`} style={{ backgroundColor: accentColor }} />
+                <Text className="text-base font-psemibold" style={{ color: accentColor }}>
+                  {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                </Text>
+              </View>
+
+              {/* Title */}
+              <Text className="text-lg font-pmedium text-gray-100 mb-1">
+                {item.name}
+              </Text>
+
+              {/* Time */}
+              {(item.start_time || item.end_time) && (
+                <View className="flex-row items-center mb-1">
+                  <Text className="text-sm font-plight text-gray-300">
+                    {item.start_time} {item.end_time ? `- ${item.end_time}` : ''}
+                  </Text>
+                </View>
+              )}
+
+              {/* Description */}
+              {item.description && (
+                <Text className="text-sm font-plight text-gray-300/80">
+                  {item.description}
+                </Text>
+              )}
+
+              {/* Notification time if exists */}
+              {item.notify_at && (
+                <View className="mt-2 flex-row items-center">
+                  <View className="w-1 h-3 rounded-full mr-2" style={{ backgroundColor: `${accentColor}40` }} />
+                  <Text className="text-xs font-plight text-gray-400">
+                    Reminder at {item.notify_at}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {item.type === 'reminder' && (
+              <View className="absolute right-0 top-0 bottom-0 justify-center">
+                <TouchableOpacity 
+                  onPress={() => handleStatusChange(item)}
+                  className="flex items-center justify-center"
+                >
+                  <View 
+                    className="w-8 h-8 rounded border flex items-center justify-center"
+                    style={{ 
+                      borderColor: accentColor,
+                      backgroundColor: item.status === 'completed' ? accentColor : 'transparent'
+                    }}
+                  >
+                    {item.status === 'completed' && (
+                      <Ionicons name="checkmark" size={22} color="#161622" />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-primary" >
       <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
-        <Text className="text-3xl font-psemibold text-secondary">Schedule</Text>
+        <Text className="text-4xl font-pbold text-secondary">Schedule</Text>
       </View>
 
       <View className='flex-1'>
@@ -156,8 +257,8 @@ const Schedule = () => {
             textDisabledColor: '#374151',
             agendaDayTextColor: '#FF9C01',
 
-            agendaTodayColor: '#FF0000', // Today's color in the agenda
-            agendaKnobColor: '#FF9C01', // Knob color for the agenda
+            agendaTodayColor: '#FF0000', 
+            agendaKnobColor: '#FF9C01', 
           }}
         />
       </View>
@@ -173,48 +274,12 @@ type ScheduleItem = {
   description: string;
   type: string;
   status: 'completed' | 'pending' | null;
+  $id: string | null;
+  due_date: string | null
 };
 
 type ScheduleItems = {
   [key: string]: ScheduleItem[];
-};
-
-const renderItem = (item: ScheduleItem) => {
-  const avatarLabel = item.status === 'completed' ? '✔️' : item.status === 'pending' ? '⏳' : null;
-  const avatarColor = item.status === 'completed' ? 'bg-green-500' : item.status === 'pending' ? 'bg-red-500' : '';
-
-  const formattedStartTime = item.start_time;
-  const formattedEndTime = item.end_time;
-
-  return (
-    <TouchableOpacity className='bg-primary mr-2 mt-4 p-2'>
-      <Card>
-        <Card.Content className='bg-stone-600 rounded-md relative pb-14'>
-          <View>
-            <View className='flex-row justify-between items-center'>
-              <Text className="text-xl text-gray-100">{item.name}</Text>
-              <Text className="text-xl text-gray-400">{item.type}</Text>
-            </View>
-
-            {(formattedStartTime || formattedEndTime) && (
-              <Text className="text-slate-50">
-                {formattedStartTime} {formattedEndTime ? `- ${formattedEndTime}` : ''}
-              </Text>
-            )}
-            <Text className="text-gray-100">{item.description}</Text>
-            
-          </View>
-          {item.status && avatarLabel && ( 
-            <Avatar.Text 
-              label={avatarLabel} 
-              className={`absolute bottom-2 right-2 ${avatarColor} text-white w-9 h-9`} 
-              style={{ backgroundColor: item.status === 'completed' ? '#34D399' : '#F87171' }} 
-            />
-          )}
-        </Card.Content>
-      </Card>
-    </TouchableOpacity>
-  );
 };
 
 const formatTime = (dateString: string | null): string => {
@@ -223,14 +288,5 @@ const formatTime = (dateString: string | null): string => {
   const date = new Date(dateString);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
-
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#000000",
-//     marginTop: 100,
-//   },
-// });
 
 export default Schedule
