@@ -338,3 +338,114 @@ Return a string with the mood pattern analysis and insights.`,
     throw error;
   }
 };
+
+export const recognizeReceipt = async (
+  imageBase64Array: string[],
+  expenseTypes: { category: string }[]
+): Promise<{ name: string; amount: number; category: string; date: string }[]> => {
+  try {
+    const categories = expenseTypes.map(type => type.category).join(', ');
+
+    const response = await fetch(`${process.env.EXPO_PUBLIC_OPENAI_API_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.EXPO_PUBLIC_OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Analyze these receipt images and extract the following information in a structured format for each receipt. Available expense categories are: ${categories}. 
+                    Choose the most appropriate category for each receipt. Return an array of objects.   
+                   **Instructions**:
+                    - The date return should be in ISO 8601 string format(YYYY-MM-DDThh:mm:ss±hh:mm).
+                    - You should be aware of the current time is ${new Intl.DateTimeFormat('en-US', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false
+                }).format(new Date())}.
+                 - The timezone of the user is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.`,
+              },
+              ...imageBase64Array.map(base64 => ({
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64}`
+                }
+              }))
+            ]
+          }
+        ],
+        max_tokens: 1000,
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'categorized_data',
+            schema: {
+              type: 'object',
+              properties: {
+                finance: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      amount: { type: 'number' },
+                      category: { type: 'string' },
+                      date: { type: 'string' },
+                      name: { type: 'string' },
+                    },
+                    required: [
+                      'amount',
+                      'category',
+                      'date',
+                      'name',
+                    ],
+                    additionalProperties: false,
+                  },
+                }
+              },
+              required: ['finance'],
+              additionalProperties: false,
+            },
+            strict: true,
+          },
+        },
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      throw new Error(`API request failed: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    // console.log('API Response:', data);
+
+    const result = data.choices[0].message.content;
+    // console.log('Parsed Receipt Data:', result);
+
+    const parsedResult = JSON.parse(result);
+    return parsedResult.finance;
+  } catch (error: any) {
+    console.error('Receipt recognition error:', error);
+    console.error('Error details:', {
+      name: error?.name || 'Unknown',
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack trace'
+    });
+    throw error;
+  }
+};
