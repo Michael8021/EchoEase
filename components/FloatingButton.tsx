@@ -235,13 +235,13 @@ const FloatingButton = () => {
 };
 
 const TAB_BAR_HEIGHT = 84; // Match the height from the tab bar configuration
-const BOTTOM_SPACING = 16;
+const BOTTOM_SPACING = 14;
 
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
         bottom: TAB_BAR_HEIGHT + BOTTOM_SPACING, // Position above tab bar with some spacing
-        right: 20,
+        right: 14,
         zIndex: 100,
     },
     button: {
