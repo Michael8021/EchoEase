@@ -25,6 +25,7 @@ import {
   addSpending,
   addExpenseType,
 } from "../lib/appwrite";
+import { AIFinanceData, SpendingItem } from "@/type";
 
 const FloatingButton = () => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -186,7 +187,7 @@ const FloatingButton = () => {
         userId: createdHistory.userId,
       };
       addHistory(history);
-      console.log("categories",categories);
+
       const contentData: CategorizedData = await categorizeAndExtractData(
         text,
         history.$id,
@@ -194,36 +195,59 @@ const FloatingButton = () => {
       );
       console.log("Content Data:", contentData);
 
-      if (contentData.schedule) {
-        Promise.all(contentData.schedule.map((item) => createSchedule(item)))
-          .then(() => {
-            if (typeof global.fetchSchedules === "function") {
-              global.fetchSchedules();
-            }
-          })
-          .catch((error) => console.error("Error creating schedules:", error));
-      }
-      if (contentData.mood) {
-        contentData.mood.forEach(async (item) => {
-          await createMood(item);
-          refreshMoods();
+      // Create an array to store all promises
+      const promises: Promise<any>[] = [];
+
+      // Handle schedules
+      if (contentData.schedule?.length > 0) {
+        const schedulePromise = Promise.all(
+          contentData.schedule.map((item) => createSchedule(item))
+        ).then(() => {
+          if (typeof global.fetchSchedules === "function") {
+            global.fetchSchedules();
+          }
         });
+        promises.push(schedulePromise);
       }
 
-      if (contentData.finance) {
-        if (contentData.finance[0].create_type) {
-          addExpenseType(contentData.finance[0].category, getBeautifulColor());
-        }
-        const transformedSpending = {
-          id: '',
-          name: contentData.finance[0].description,
-          amount: contentData.finance[0].amount.toString(),
-          date: contentData.finance[0].date,
-          category: contentData.finance[0].category,
-          historyId: contentData.finance[0].historyId,
-        };
-        addSpending(transformedSpending);
+      // Handle moods
+      if (contentData.mood?.length > 0) {
+        const moodPromises = contentData.mood.map((item) => createMood(item));
+        const moodPromise = Promise.all(moodPromises).then(() => {
+          refreshMoods();
+        });
+        promises.push(moodPromise);
       }
+
+      // Handle finances
+      if (contentData.finance?.length > 0) {
+        const financePromises = contentData.finance.map(async (financeData: AIFinanceData) => {
+          const operations: Promise<any>[] = [];
+          
+          // Add new expense type if needed
+          if (financeData.create_type) {
+            operations.push(addExpenseType(financeData.category, getBeautifulColor()));
+          }
+
+          // Transform and add spending
+          const transformedSpending: SpendingItem = {
+            id: '',
+            name: financeData.description,
+            amount: financeData.amount.toString(),
+            date: financeData.date,
+            category: financeData.category,
+            historyId: financeData.historyId || new Date().toISOString(),
+          };
+          operations.push(addSpending(transformedSpending));
+
+          // Wait for both operations to complete
+          await Promise.all(operations);
+        });
+        promises.push(Promise.all(financePromises));
+      }
+
+      // Wait for all operations to complete
+      await Promise.all(promises);
       return;
     } catch (error) {
       console.error("Error handling text to widget:", error);

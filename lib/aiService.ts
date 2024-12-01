@@ -58,15 +58,8 @@ export const categorizeAndExtractData = async (
 ): Promise<CategorizedData> => {
   try {
     // Define the chat request
-    const instructions = 
-    `Please classify this expense into one of these existing categories: ${categories.map((c: Category) => c.category).join(', ')}
-    If you can not find a proper one. Please suggest an appropriate category name for this expense. Use a general category name (like food, school, home, transport, utilities) that could group similar expenses together and
-    and please set 'create_type' to true.`;
-
-
-
     const chatRequest = {
-      model: 'gpt-4o-mini-2024-07-18',
+      model: 'gpt-4o-2024-11-20',
       messages: [
         {
           role: 'system',
@@ -96,14 +89,33 @@ export const categorizeAndExtractData = async (
         - end_time: leave blank
 
 2. **Finance**:
-    - Here is the instruction:${instructions}
-    - transaction_type: "expense"
+    <Insturctions>
+      1. **Existing Categories:** Start with the list of existing categories: {${categories.map((c: Category) => c.category).join(', ')}}.
+
+      2. **Capitalization:** Capitalize the first letter of each category name. Retain the original capitalization style for each name.
+
+      3. **Expense Categorization:**
+        - Determine if the expense belongs to any of the existing categories.
+        - If it does belong, set 'create_type' to false.
+        - If it does not belong, set 'create_type' to true for the first instance of a new category.
+
+      4. **Category Naming:**
+        - Assign an appropriate category name to the expense.
+        - Use broad, general category names (such as Food, School, Home, Transport, Utilities) to group similar expenses together.
+
+      5. **New Category Handling:**
+        - For the first expense that does not match any existing category, set 'create_type' to true.
+        - For any subsequent expenses that fall under the newly created category, set 'create_type' to false.
+    </Insturctions>
+
+    <Attributes>
     - amount: number
     - currency: string (e.g., "USD")
     - category: string (e.g., "rent", "salary")
     - date: ISO 8601 string
     - description: string (make it concise)
-    - create_type: boolean (default value is false)
+    - create_type: boolean (default value is true)
+    </Attributes>
 
 3. **Mood**:
     - mood_type: string (e.g., "Very Sad", "Sad", "Neutral", "Happy", "Very Happy")
@@ -125,7 +137,8 @@ export const categorizeAndExtractData = async (
       second: '2-digit',
       hour12: false // Use 24-hour format
     }).format(new Date())}.
-    - The timezone of the user is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.
+    - The timezone of the user is ${Intl.DateTimeFormat().resolvedOptions().timeZone}. 
+    - All dates should be in ISO 8601 format. Always use this format: YYYY-MM-DDThh:mm:ss±hh:mm
     - Analyze the input text.
     - Categorize each relevant part into one or more of the above categories.
     - Extract the required fields for each categorized entry.
@@ -316,12 +329,12 @@ export const genMoodInsight = async (
           role: 'system',
           content: `You are an AI assistant that analyzes mood data for insights. Analyze the following mood data for the week: ${JSON.stringify(moodData)}. Provide a brief summary of mood patterns and trends. 
           
-Note: 'No data' means mood not logged for future days. The number of mood entries indicates today's day (e.g., 3 entries mean today is Wednesday), so avoid mentioning missing moods after today, as they pertain to the future. Please keep your insights concise.
+                    Note: 'No data' means mood not logged for future days. The number of mood entries indicates today's day (e.g., 3 entries mean today is Wednesday), so avoid mentioning missing moods after today, as they pertain to the future. Please keep your insights concise.
 
-Important: Please provide the analysis in ${language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English'}.
-          
-**Final Output**:
-Return a string with the mood pattern analysis and insights in the specified language.`,
+                    Important: Please provide the analysis in ${language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English'}.
+                              
+                    **Final Output**:
+                    Return a string with the mood pattern analysis and insights in the specified language.`,
         },
         {
           role: 'user',
@@ -360,11 +373,17 @@ Return a string with the mood pattern analysis and insights in the specified lan
 
 export const recognizeReceipt = async (
   imageBase64Array: string[],
-  expenseTypes: { category: string }[]
-): Promise<{ name: string; amount: number; category: string; date: string }[]> => {
+  expenseTypes: { category: string }[],
+): Promise<{
+    transaction_type: 'expense' | 'income';
+    amount: number;
+    currency: string;
+    category: string;
+    date: string;
+    description: string;
+    create_type: boolean;
+}[]> => {
   try {
-    const categories = expenseTypes.map(type => type.category).join(', ');
-
     const response = await fetch(`${process.env.EXPO_PUBLIC_OPENAI_API_URL}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -372,27 +391,36 @@ export const recognizeReceipt = async (
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4o-2024-11-20",
         messages: [
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Analyze these receipt images and extract the following information in a structured format for each receipt. Available expense categories are: ${categories}. 
-                    Choose the most appropriate category for each receipt. Return an array of objects.   
-                   **Instructions**:
-                    - The date return should be in ISO 8601 string format(YYYY-MM-DDThh:mm:ss±hh:mm).
-                    - You should be aware of the current time is ${new Intl.DateTimeFormat('en-US', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                  hour12: false
-                }).format(new Date())}.
-                 - The timezone of the user is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.`,
+                text: `Analyze these receipt images and extract the following information in a structured format for each receipt.
+                    <Instructions>
+                      1. **Existing Categories:** Start with the list of existing categories: {{${expenseTypes.map(type => type.category).join(', ')}}}.
+
+                      2. **Capitalization:** Capitalize the first letter of each category name while retaining the original capitalization for the rest of the name.
+
+                      3. **Expense Categorization:**
+                        - Determine if the expense belongs to any of the existing categories.
+                        - If it belongs to an existing category, set 'create_type' to false.
+                        - If it does not belong to any existing category, set 'create_type' to true for the first instance of a new category.
+
+                      4. **Category Naming:**
+                        - Assign an appropriate category name to the expense.
+                        - Use broad, general category names (such as Food, School, Home, Transport, Utilities) to group similar expenses together.
+
+                      5. **New Category Handling:**
+                        - For the first expense that does not match any existing category, set 'create_type' to true and create a new category.
+                        - For any subsequent expenses that fall under the newly created category, set 'create_type' to false.
+
+                      6. **Timezone and Date Format:**
+                        - The timezone of the user is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.
+                        - All dates should be in ISO 8601 format. Use the following format: YYYY-MM-DDThh:mm:ss±hh:mm.
+                    </Instructions>`,
               },
               ...imageBase64Array.map(base64 => ({
                 type: "image_url",
@@ -407,7 +435,7 @@ export const recognizeReceipt = async (
         response_format: {
           type: 'json_schema',
           json_schema: {
-            name: 'categorized_data',
+            name: 'finance_data',
             schema: {
               type: 'object',
               properties: {
@@ -416,16 +444,22 @@ export const recognizeReceipt = async (
                   items: {
                     type: 'object',
                     properties: {
+                      transaction_type: { type: 'string', enum: ['expense', 'income'] },
                       amount: { type: 'number' },
+                      currency: { type: 'string' },
                       category: { type: 'string' },
                       date: { type: 'string' },
-                      name: { type: 'string' },
+                      description: { type: 'string' },
+                      create_type: {type: 'boolean'}
                     },
                     required: [
+                      'transaction_type',
                       'amount',
+                      'currency',
                       'category',
                       'date',
-                      'name',
+                      'description',
+                      'create_type',
                     ],
                     additionalProperties: false,
                   },
