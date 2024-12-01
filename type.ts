@@ -17,5 +17,6 @@ export interface ExpenseItem {
     amount: string;
     date: string;
     category:string;
+    historyId: String;
   }
 

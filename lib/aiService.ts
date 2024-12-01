@@ -1,8 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import * as Localization from 'expo-localization';
 import { CategorizedData, MoodInsight } from './types';
-import { getCurrentUser } from './appwrite';
-
+import { getCurrentUser} from '../lib/appwrite';
 
 export const transcribeAudio = async (audioUri: string): Promise<string> => {
 
@@ -46,13 +45,26 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
   }
 };
 
+type Category = {
+  id: string;
+  category: string;
+};
+
 // Main function to categorize and extract information
 export const categorizeAndExtractData = async (
   text: string,
-  historyId: string
+  historyId: string,
+  categories:any
 ): Promise<CategorizedData> => {
   try {
     // Define the chat request
+    const instructions = 
+    `Please classify this expense into one of these existing categories: ${categories.map((c: Category) => c.category).join(', ')}
+    If you can not find a proper one. Please suggest an appropriate category name for this expense. Use a general category name (like food, school, home, transport, utilities) that could group similar expenses together and
+    and please set 'create_type' to true.`;
+
+
+
     const chatRequest = {
       model: 'gpt-4o-mini-2024-07-18',
       messages: [
@@ -84,12 +96,14 @@ export const categorizeAndExtractData = async (
         - end_time: leave blank
 
 2. **Finance**:
-    - transaction_type: "expense" or "income"
+    - Here is the instruction:${instructions}
+    - transaction_type: "expense"
     - amount: number
     - currency: string (e.g., "USD")
     - category: string (e.g., "rent", "salary")
     - date: ISO 8601 string
-    - description: string
+    - description: string (make it concise)
+    - create_type: boolean (default value is false)
 
 3. **Mood**:
     - mood_type: string (e.g., "Very Sad", "Sad", "Neutral", "Happy", "Very Happy")
@@ -181,6 +195,7 @@ export const categorizeAndExtractData = async (
                     category: { type: 'string' },
                     date: { type: 'string' },
                     description: { type: 'string' },
+                    create_type: {type: 'boolean'}
                   },
                   required: [
                     'transaction_type',
@@ -189,6 +204,7 @@ export const categorizeAndExtractData = async (
                     'category',
                     'date',
                     'description',
+                    'create_type',
                   ],
                   additionalProperties: false,
                 },

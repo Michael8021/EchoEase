@@ -33,7 +33,7 @@ const Finance = () => {
       }));
       setExpensedata(formattedExpenses);
     } catch (error) {
-      console.error("Error fetching expenses:", error);
+      console.error("Error fetching expenses types:", error);
     }
   };
 
@@ -52,6 +52,7 @@ const Finance = () => {
         amount: spending.amount,
         date: spending.date,
         category: spending.category ? spending.category.category : null,
+        historyId: spending.historyId,
       }));
       setSpendingdata(formattedSpendings);
     } catch (error) {
@@ -176,6 +177,7 @@ const Finance = () => {
             amount: spending.amount,
             date: spending.date,
             category: spending.category.category,
+            historyId: spending.historyId,
           };
           setSpendingdata((prevData) => [...prevData, newSpending]);
         }
