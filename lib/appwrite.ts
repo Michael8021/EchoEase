@@ -804,7 +804,6 @@ export const addSpending = async (newSpending: SpendingItem) => {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) throw Error;
-    console.log("currentUser",currentUser);
 
     const expenseTypes = await getExpenseTypes();
     if (!expenseTypes || expenseTypes.length === 0) {
@@ -845,7 +844,6 @@ export const getSpending = async () => {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) throw Error;
-    console.log("currentUser",currentUser);
 
     const spending = await databases.listDocuments(
       appwriteConfig.databaseId, 

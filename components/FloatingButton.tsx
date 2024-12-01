@@ -41,7 +41,7 @@ const FloatingButton = () => {
   const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
   const buttonRef = useRef<View>(null);
   const [categories, setCategories] = useState<any[]>([]);
-  const [submit, setSubmit] = useState(false);
+
   const fetchCategories = async () => {
     try {
       const expenses = await getExpenseTypes();
@@ -55,7 +55,7 @@ const FloatingButton = () => {
   };
   useEffect(() => {
     fetchCategories();
-  }, [submit]);
+  }, [recording,modalVisible]);
 
   function getBeautifulColor() {
     const colors = [
@@ -143,7 +143,7 @@ const FloatingButton = () => {
             return;
           }
           console.log("Transcribed Text:", transcribedText);
-          setSubmit(true);
+          
           await handleTextToWidget(transcribedText, categories);
         } catch (transcriptionError) {
           alert("Failed to process audio. Please try again.");
@@ -166,7 +166,6 @@ const FloatingButton = () => {
     setIsProcessing(true);
     setModalVisible(false);
     try {
-      setSubmit(true);
       await handleTextToWidget(promptText, categories);
     } catch (error) {
       console.error("Error handling chatbot response:", error);
@@ -225,7 +224,6 @@ const FloatingButton = () => {
         };
         addSpending(transformedSpending);
       }
-      setSubmit(false);
       return;
     } catch (error) {
       console.error("Error handling text to widget:", error);
