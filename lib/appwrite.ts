@@ -19,7 +19,7 @@ export const appwriteConfig = {
     databaseId: '672874b7001bef17e4d6',
     userCollectionId: '672874c60003d32a2491',
     expense_typeId: '673833fe0036fd646922',
-    spendingId:'673df70f000e35b7d8c1',
+    spendingCollectionId:'674c4b7e001858ebb772',
     scheduleCollectionId: '672878b6000297694b47',
     historyCollectionId: '672eeced0003474523e6',
     moodCollectionId: '672ce11300183b1fd08f',
@@ -506,7 +506,7 @@ export const getSpendingByMonth = async (currentDate: Date) => {
     // Query the spending documents from the Appwrite database
     const spending = await databases.listDocuments(
       appwriteConfig.databaseId,
-      appwriteConfig.spendingId,
+      appwriteConfig.spendingCollectionId,
       [
         Query.equal("userId", currentUser.$id), 
         Query.greaterThanEqual("date", startOfMonth), 
@@ -515,8 +515,8 @@ export const getSpendingByMonth = async (currentDate: Date) => {
     );
     return spending.documents;
   } catch (error) {
-    console.error('Error retrieving expense types:', error);
-    alert('Failed to retrieve expense types. Please try again.');
+    console.error('Error retrieving spending by month:', error);
+    alert('Failed to retrieve spending by month. Please try again.');
     return [];
   }
 };
@@ -800,28 +800,43 @@ export const deleteExpenseTypes = async (expenseTypeId: string) => {
 };
 
 //add spending
-export const addSpending = async (newSpending:SpendingItem) => {
+export const addSpending = async (newSpending: SpendingItem) => {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) throw Error;
 
+    const expenseTypes = await getExpenseTypes();
+    if (!expenseTypes || expenseTypes.length === 0) {
+      alert('No valid expense categories found. Please create one first.');
+      return;
+    }
+
+    const categoryDoc = expenseTypes.find((type: any) => type.category === newSpending.category);
+    if (!categoryDoc) {
+      alert(`Invalid category: ${newSpending.category}. Please select a valid category.`);
+      return;
+    }
+
     await databases.createDocument(
       appwriteConfig.databaseId, 
-      appwriteConfig.spendingId, 
+      appwriteConfig.spendingCollectionId, 
       ID.unique(), 
       {
-        category: newSpending.category,
-        name:newSpending.name,
-        amount:newSpending.amount,
-        date:newSpending.date,
+        category: categoryDoc.$id, 
+        name: newSpending.name,
+        amount: newSpending.amount,
+        date: newSpending.date,
         userId: currentUser.$id,
       },
     );
+
   } catch (error) {
     console.error('Error saving document:', error);
     alert('Failed to save spending. Please try again.');
+    return [];
   }
 };
+
 
 //get spending
 export const getSpending = async () => {
@@ -831,14 +846,14 @@ export const getSpending = async () => {
 
     const spending = await databases.listDocuments(
       appwriteConfig.databaseId, 
-      appwriteConfig.spendingId,
+      appwriteConfig.spendingCollectionId,
       [Query.equal("userId", currentUser.$id)]
     );
 
     return spending.documents;
   } catch (error) {
-    console.error('Error retrieving expense types:', error);
-    alert('Failed to retrieve expense types. Please try again.');
+    console.error('Error retrieving spending:', error);
+    alert('Failed to retrieve spending. Please try again.');
     return [];
   }
 };
@@ -851,23 +866,38 @@ export const updateSpending = async (spending: SpendingItem) => {
 
     if (!spending.id) throw new Error("Spending ID is required");
 
+    const expenseTypes = await getExpenseTypes();
+    if (!expenseTypes || expenseTypes.length === 0) {
+      alert('No valid expense categories found. Please create one first.');
+      return;
+    }
+
+    const matchingCategory = expenseTypes.find((type: any) => type.category === spending.category);
+    if (!matchingCategory) {
+      alert(`Invalid category: ${spending.category}. Please select a valid category.`);
+      return;
+    }
+
     await databases.updateDocument(
       appwriteConfig.databaseId, 
-      appwriteConfig.spendingId, 
+      appwriteConfig.spendingCollectionId, 
       spending.id, 
       {
-        category: spending.category,
+        category: matchingCategory.$id, 
         name: spending.name,
         amount: spending.amount,
         date: spending.date,
         userId: currentUser.$id,
       }
     );
+
   } catch (error) {
     console.error('Error updating spending:', error);
     alert('Failed to update spending. Please try again.');
+    return [];
   }
 };
+
 
 // delete spending
 export const deleteSpending = async (spending: SpendingItem) => {
@@ -879,7 +909,7 @@ export const deleteSpending = async (spending: SpendingItem) => {
 
     await databases.deleteDocument(
       appwriteConfig.databaseId, 
-      appwriteConfig.spendingId, 
+      appwriteConfig.spendingCollectionId, 
       spending.id
     );
   } catch (error) {

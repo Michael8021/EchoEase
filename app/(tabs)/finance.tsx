@@ -51,7 +51,7 @@ const Finance = () => {
         name: spending.name,
         amount: spending.amount,
         date: spending.date,
-        category: spending.category,
+        category: spending.category ? spending.category.category : null,
       }));
       setSpendingdata(formattedSpendings);
     } catch (error) {
@@ -100,10 +100,10 @@ const Finance = () => {
           };
         }
       );
-      const maxCategory = categoriesWithPercentage.reduce((max, current) =>
-        parseFloat(current.percentage) > parseFloat(max.percentage)
-          ? current
-          : max
+      const maxCategory = categoriesWithPercentage.reduce(
+        (max, current) =>
+          parseFloat(current.percentage) > parseFloat(max.percentage) ? current : max,
+        { category: "None", percentage: "0.00", totalAmount: 0, color: "#ccc" } 
       );
       setMaxPercentage(maxCategory.percentage)
       
@@ -122,6 +122,11 @@ const Finance = () => {
       }));
 
       setPieData(computedPieData);
+    }
+    else{
+      setTotalAmount(0.0);
+      setPieData([]);
+      setMaxPercentage('0.00');
     }
   }, [spendingdata, expensedata]);
 
@@ -152,12 +157,13 @@ const Finance = () => {
               (existingExpense) => existingExpense.category !== expense.category
             )
           );
+          fetchSpending();
         }
       }
     );
     const unsubscribe_spendings = client.subscribe(
       [
-        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.spendingId}.documents`,
+        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.spendingCollectionId}.documents`,
       ],
       (response) => {
         const { events, payload } = response;
@@ -169,7 +175,7 @@ const Finance = () => {
             name: spending.name,
             amount: spending.amount,
             date: spending.date,
-            category: spending.category,
+            category: spending.category.category,
           };
           setSpendingdata((prevData) => [...prevData, newSpending]);
         }
@@ -183,7 +189,7 @@ const Finance = () => {
           setSpendingdata((prevData) =>
             prevData.map((item) =>
               item.id === spending.$id
-                ? { ...item, ...spending } 
+                ? { ...item, ...spending,category: item.category } 
                 : item
             )
           );

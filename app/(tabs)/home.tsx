@@ -143,7 +143,7 @@ const Home = () => {
       const spendingByCategory = spending.reduce(
         (acc: { [category: string]: number }, item: any) => {
           const amount = parseFloat(item.amount);
-          const category = item.category;
+          const category = item.category.category;
           // console.log('Processing item:', { category, amount, raw: item });
 
           if (!isNaN(amount)) {
@@ -240,11 +240,8 @@ const Home = () => {
         `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.moodCollectionId}.documents`,
       ],
       (response) => {
-        const { events, payload } = response;
-        if (events.some((event) => event.includes(".create"))) {
-          fetchMoods(currentdate);
-        }
-        if (events.some((event) => event.includes(".delete"))) {
+        const { events } = response;
+        if (events.some((event) => [".create", ".delete", ".update"].some((type) => event.includes(type)))) {
           fetchMoods(currentdate);
         }
       }
@@ -252,21 +249,16 @@ const Home = () => {
     // Subscribe to real-time updates for spending data
     const unsubscribeSpending = client.subscribe(
       [
-        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.spendingId}.documents`,
+        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.spendingCollectionId}.documents`,
       ],
       (response) => {
-        const { events, payload } = response;
-        if (events.some((event) => event.includes(".create"))) {
-          fetchSpending(currentdate);
-        }
-        if (events.some((event) => event.includes(".delete"))) {
-          fetchSpending(currentdate);
-        }
-        if (events.some((event) => event.includes(".update"))) {
+        const { events } = response;
+        if (events.some((event) => [".create", ".delete", ".update"].some((type) => event.includes(type)))) {
           fetchSpending(currentdate);
         }
       }
     );
+    
 
     // Subscribe to real-time updates for expense types
     const unsubscribeExpenses = client.subscribe(
@@ -274,13 +266,10 @@ const Home = () => {
         `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.expense_typeId}.documents`,
       ],
       (response) => {
-        const { events, payload } = response;
-
-        if (events.some((event) => event.includes(".create"))) {
+        const { events } = response;
+        if (events.some((event) => [".create", ".delete", ".update"].some((type) => event.includes(type)))) {
           fetchExpensesType();
-        }
-        if (events.some((event) => event.includes(".delete"))) {
-          fetchExpensesType();
+          fetchSpending(currentdate);
         }
       }
     );
@@ -291,11 +280,8 @@ const Home = () => {
         `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.scheduleCollectionId}.documents`,
       ],
       (response) => {
-        const { events, payload } = response;
-        if (events.some((event) => event.includes(".create"))) {
-          fetchSchedules(currentdate);
-        }
-        if (events.some((event) => event.includes(".delete"))) {
+        const { events } = response;
+        if (events.some((event) => [".create", ".delete", ".update"].some((type) => event.includes(type)))) {
           fetchSchedules(currentdate);
         }
       }
