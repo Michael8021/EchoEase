@@ -204,9 +204,37 @@ const styles = StyleSheet.create({
     marginRight: 32,
   },
   modalContent: {
-    padding: 16,
-    maxHeight: 200,
+    padding: 10,
     backgroundColor: '#1F1F2E',
+    borderRadius: 12,
+  },
+  moodEmojiContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: 'rgba(255, 156, 1, 0.1)',
+    borderRadius: 12,
+  },
+  moodEmoji: {
+    fontSize: 30,
+    marginBottom: 8,
+  },
+  moodTypeText: {
+    color: '#FF9C01',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  descriptionContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 16,
+    borderRadius: 12,
+  },
+  descriptionLabel: {
+    color: '#FF9C01',
+    fontSize: 14,
+    marginBottom: 8,
+    opacity: 0.8,
   },
   modalText: {
     color: '#FFFFFF',
@@ -275,20 +303,20 @@ const styles = StyleSheet.create({
   },
 });
 
-const moodMap: { [key: string]: string } = {
-  "😭": "Very Sad",
-  "😢": "Sad",
-  "😐": "Neutral",
-  "😊": "Happy",
-  "😁": "Very Happy",
+const moodMap: { [key: string]: { type: string; translationKey: string } } = {
+  "😭": { type: "Very Sad", translationKey: "home.verySad" },
+  "😢": { type: "Sad", translationKey: "home.sad" },
+  "😐": { type: "Neutral", translationKey: "home.neutral" },
+  "😊": { type: "Happy", translationKey: "home.happy" },
+  "😁": { type: "Very Happy", translationKey: "home.veryHappy" },
 };
 
-const moodMap2: { [key: string]: { value: number, emoji: string } } = {
-  "Very Sad": { value: 1, emoji: "😭" },
-  "Sad": { value: 2, emoji: "😢" },
-  "Neutral": { value: 3, emoji: "😐" },
-  "Happy": { value: 4, emoji: "😊" },
-  "Very Happy": { value: 5, emoji: "😁" },
+const moodMap2: { [key: string]: { value: number; emoji: string; translationKey: string } } = {
+  "Very Sad": { value: 1, emoji: "😭", translationKey: "home.verySad" },
+  "Sad": { value: 2, emoji: "😢", translationKey: "home.sad" },
+  "Neutral": { value: 3, emoji: "😐", translationKey: "home.neutral" },
+  "Happy": { value: 4, emoji: "😊", translationKey: "home.happy" },
+  "Very Happy": { value: 5, emoji: "😁", translationKey: "home.veryHappy" },
 };
 
 const moodColors: { [key: string]: { bg: string; text: string; accent: string } } = {
@@ -321,7 +349,7 @@ const moodColors: { [key: string]: { bg: string; text: string; accent: string } 
 
 const getMoodColor = (mood: string) => {
   const moodEmoji = mood?.split(" ")[0] || "😐";
-  const moodType = moodMap[moodEmoji] || "Neutral";
+  const moodType = moodMap[moodEmoji].type || "Neutral";
   return moodColors[moodType];
 };
 
@@ -344,7 +372,7 @@ const Mood = () => {
   const [selectedDay, setSelectedDay] = useState<string>("");
   const [selectedDescription, setSelectedDescription] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [moodData, setMoodData] = useState<{ value: number; label: string; labelTextStyle: { color: string; }; topLabelComponent: () => JSX.Element; }[]>([]);
+  const [moodData, setMoodData] = useState<{ value: number; label: string; labelTextStyle: { color: string; }; topLabelComponent: () => JSX.Element; moodType: string; description: string }[]>([]);
   const [moodTypes, setMoodType] = useState<string[]>(Array(7).fill("No Data"));
   const [todayMood, setTodayMood] = useState("");
   const [moodInsight, setmoodInsight] = useState<string>("");
@@ -363,7 +391,7 @@ const Mood = () => {
     if (!currentUser) return;
     try {
       const fetchedMoods = await getMoods(currentUser.$id, weekStart);
-      const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const labels = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
       const days = new Date().getDay();
       const moodTypes = Array(currentWeek < new Date() ? 7 : days).fill("No Data");
       const data = labels.map((label, index) => {
@@ -382,17 +410,18 @@ const Mood = () => {
           setTodayMood(moodEmoji + " " + fetchedMoods[index]!.mood_type);
         }
         return {
-          value: moodValue, label, labelTextStyle: { color: '#FF9C01' }, topLabelComponent: () => (
-            <Text style={{ fontSize: 14, marginBottom: 6 }}>{moodEmoji}</Text>
+          value: moodValue,
+          label,
+          labelTextStyle: { color: '#FF9C01' },
+          topLabelComponent: () => (
+            <Text style={{ fontSize:14, marginBottom: 6 }}>{moodEmoji}</Text>
           ),
+          moodType: moodType,
+          description: fetchedMoods[index]!.description
         };
-      });
-      const data2 = labels.map((label, index) => {
-        return { label, description: fetchedMoods[index]!.description }
       });
       setMoodData(data);
       setMoodType(moodTypes);
-      setDescriptionData(data2);
     } catch (error) {
       console.error("Error fetching mood data:", error);
     } finally {
@@ -494,7 +523,7 @@ const Mood = () => {
   const saveMoodToDatabase = async () => {
     if (selectedMood) {
       const datetime = new Date().toISOString();
-      const mood_type = moodMap[selectedMood];
+      const mood_type = moodMap[selectedMood].type;
       const newMood = {
         userId: userId!,
         datetime: datetime,
@@ -555,7 +584,9 @@ const Mood = () => {
             <View style={styles.todayMoodContainer}>
               <Text style={styles.moodText}>{t('mood.todayMood')}</Text>
               {todayMood ? (
-                <Text style={[styles.moodText, { color: getMoodColor(todayMood).text }]}>{todayMood}</Text>
+                <Text style={[styles.moodText, { color: getMoodColor(todayMood).text }]}>
+                  {todayMood.split(" ")[0]} {t(moodMap2[todayMood.split(" ").slice(1).join(" ")]?.translationKey || '')}
+                </Text>
               ) : (
                 <TouchableOpacity
                   style={styles.todayMoodButton}
@@ -595,7 +626,7 @@ const Mood = () => {
                 hideRules
                 isAnimated
                 onPress={(item: any, index: any) => {
-                  const description = descriptionData.find((entry: any) => entry.label === item.label)?.description || "No description"
+                  const description = moodData.find(data => data.label === item.label)?.description || "No description";
                   setSelectedDay(item.label);
                   setSelectedDescription(description);
                   setChartModalVisible(true);
@@ -685,7 +716,7 @@ const Mood = () => {
               >
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>
-                    {t('mood.moodOnDay', { day: selectedDay })}
+                    {t('mood.moodOnDay', { day: t(`mood.days.${selectedDay}`) })}
                   </Text>
                   <TouchableOpacity 
                     style={styles.modalCloseButton}
@@ -695,9 +726,22 @@ const Mood = () => {
                   </TouchableOpacity>
                 </View>
                 <View style={styles.modalContent}>
-                  <Text style={styles.modalText}>
-                    {selectedDescription}
-                  </Text>
+                  <View style={styles.moodEmojiContainer}>
+                    <Text style={styles.moodEmoji}>
+                      {moodMap2[moodData.find(item => item.label === selectedDay)?.moodType || "Neutral"]?.emoji || "😐"}
+                    </Text>
+                    <Text style={styles.moodTypeText}>
+                      {t(moodMap2[moodData.find(item => item.label === selectedDay)?.moodType || "Neutral"]?.translationKey || '')}
+                    </Text>
+                  </View>
+                  {selectedDescription && (
+                    <View style={styles.descriptionContainer}>
+                      <Text style={styles.descriptionLabel}>{t('mood.feelingDescription')}</Text>
+                      <Text style={styles.modalText}>
+                        {selectedDescription}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </Modal>
 

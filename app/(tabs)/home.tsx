@@ -32,12 +32,12 @@ interface ScheduleItem {
   task: string;
 }
 
-const moodMap: { [key: string]: { value: number; emoji: string } } = {
-  "Very Sad": { value: 1, emoji: "😭" },
-  Sad: { value: 2, emoji: "😢" },
-  Neutral: { value: 3, emoji: "😐" },
-  Happy: { value: 4, emoji: "😊" },
-  "Very Happy": { value: 5, emoji: "😁" },
+const moodMap: { [key: string]: { value: number; emoji: string; translationKey: string } } = {
+  "Very Sad": { value: 1, emoji: "😭", translationKey: "home.verySad" },
+  Sad: { value: 2, emoji: "😢", translationKey: "home.sad" },
+  Neutral: { value: 3, emoji: "😐", translationKey: "home.neutral" },
+  Happy: { value: 4, emoji: "😊", translationKey: "home.happy" },
+  "Very Happy": { value: 5, emoji: "😁", translationKey: "home.veryHappy" },
 };
 
 // Mock data
@@ -409,7 +409,7 @@ const Home = () => {
                     className="flex-row items-center justify-between bg-black-400/30 rounded-xl p-3 mb-3 last:mb-0 border border-component-mood-accent/10"
                   >
                     <Text className="text-component-mood-text text-base font-pmedium">
-                      {moodDetails?.emoji || "❓"} {mood.mood_type}
+                      {moodDetails?.emoji || "❓"} {t(moodDetails?.translationKey || '')}
                     </Text>
                     <View className="ml-4 flex-1 items-end">
                       <Text className="text-component-mood-text/85 text-sm font-plight">
@@ -435,7 +435,7 @@ const Home = () => {
                     >
                       <Text className="text-2xl mb-1">{details.emoji}</Text>
                       <Text className="text-component-mood-text/70 text-xs font-plight">
-                        {t(`home.${moodType.toLowerCase().replace(/\s+/g, '')}`)}
+                        {t(details.translationKey)}
                       </Text>
                     </TouchableOpacity>
                   ))}

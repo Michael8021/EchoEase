@@ -146,9 +146,18 @@
     "moodInsights": "Mood Insights",
     "loading": "Loading insights...",
     "howAreYouFeeling": "How are you feeling?",
-    "feelingDescription": "Describe how you're feeling...",
+    "feelingDescription": "Mood Description",
     "saveMood": "Save Mood",
     "moodOnDay": "Mood on {{day}}",
+    "days": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    },
     "alerts": {
       "success": "Success",
       "error": "Error",
@@ -179,6 +188,8 @@
     "delete": "Delete",
     "save": "Save",
     "cancel": "Cancel",
+    "success": "Success",
+    "processSuccess": "Successfully processed {{count}} receipts",
     "alerts": {
       "fillAllFields": "Please fill in all fields.",
       "deleteExpense": "Delete Expense",
