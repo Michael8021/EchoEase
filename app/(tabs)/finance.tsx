@@ -295,7 +295,7 @@ const Finance = () => {
         <ScrollView 
           showsVerticalScrollIndicator={false}
         >
-          <View className="mx-5 flex flex-row justify-between items-center">
+          <View className="mx-10 flex flex-row justify-between items-center">
             <View>
               <Text className="text-yellow-400 text-1.5xl">
                 {t('finance.myExpenses')}
@@ -304,6 +304,7 @@ const Finance = () => {
                 ${whole}.<Text className="text-2xl font-light">{decimal}</Text>
               </Text>
             </View>
+            
             <View>
               <PieChart
                 data={pieData}
