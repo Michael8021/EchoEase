@@ -4,8 +4,8 @@
     "home": "首頁",
     "finance": "財務",
     "profile": "個人資料",
-    "history": "歷史紀錄",
-    "schedule": "行程表",
+    "history": "歷史記錄",
+    "schedule": "行程",
     "mood": "心情",
     "delete": "刪除",
     "cancel": "取消",
@@ -19,18 +19,67 @@
     "password": "密碼",
     "forgotPassword": "忘記密碼？",
     "noAccount": "還沒有帳號？",
-    "haveAccount": "已經有帳號了？",
+    "haveAccount": "已經有帳號？",
     "loginTitle": "登入 EchoEase",
     "signupTitle": "註冊 EchoEase",
     "continueWithEmail": "使用電子郵件繼續",
-    "fillAllFields": "請填寫所有欄位"
+    "fillAllFields": "請填寫所有欄位",
+    "welcome": {
+      "title": "簡化您的生活",
+      "withApp": "使用",
+      "appDescription": "透過 EchoEase，輕鬆整合您的任務、情緒和財務。",
+      "continueWithEmail": "使用電子郵件繼續"
+    },
+    "signIn": {
+      "title": "登入 EchoEase",
+      "email": "電子郵件",
+      "password": "密碼",
+      "submit": "登入",
+      "noAccount": "還沒有帳號？",
+      "signUp": "註冊"
+    },
+    "signUp": {
+      "title": "註冊 EchoEase",
+      "username": "使用者名稱",
+      "email": "電子郵件",
+      "password": "密碼",
+      "submit": "註冊",
+      "haveAccount": "已經有帳號了？",
+      "signIn": "登入"
+    },
+    "errors": {
+      "fillFields": "請填寫所有欄位"
+    }
   },
   "home": {
     "title": "EchoEase",
     "content": "首頁內容",
     "slogan": "讓生活更簡單",
     "with": "與",
-    "appDescription": "透過 EchoEase，輕鬆整合您的任務、情緒和財務。"
+    "appDescription": "透過 EchoEase，輕鬆整合您的任務、情緒和財務。",
+    "dailyOverview": "今日概覽",
+    "todaySchedule": "今日行程",
+    "noSchedule": "今天沒有行程",
+    "todayMood": "今日心情",
+    "howAreYouFeeling": "今天心情如何？",
+    "monthlyFinance": "本月財務數據",
+    "totalSpent": "總支出",
+    "categories": "類別",
+    "spendingByCategory": "支出分類",
+    "trackSpending": "追蹤您的支出，掌握預算。",
+    "verySad": "非常難過",
+    "sad": "難過",
+    "neutral": "普通",
+    "happy": "開心",
+    "veryHappy": "非常開心"
+  },
+  "schedule": {
+    "title": "行程",
+    "noEvents": "今天沒有行程",
+    "event": "活動",
+    "reminder": "提醒",
+    "reminderAt": "提醒時間",
+    "noTimeAvailable": "無時間資訊"
   },
   "settings": {
     "title": "設定",
@@ -64,16 +113,56 @@
     "cancel": "取消",
     "delete": "刪除"
   },
-  "schedule": {
-    "noEvents": "今天沒有行程",
-    "example": "範例項目 1"
-  },
   "history": {
-    "noHistory": "找不到歷史紀錄",
-    "deleteError": "刪除歷史紀錄時發生錯誤",
-    "fetchError": "擷取歷史紀錄時發生錯誤",
-    "updateError": "更新歷史紀錄失敗",
-    "deleteConfirm": "您確定要刪除此歷史紀錄嗎？"
+    "title": "歷史記錄",
+    "recentActivities": "最近活動",
+    "noHistory": "暫無歷史記錄",
+    "deleteError": "刪除記錄時出錯",
+    "fetchError": "獲取記錄時出錯",
+    "updateError": "更新記錄失敗",
+    "deleteConfirm": "確定要刪除這條記錄嗎？",
+    "trackingDescription": "追蹤你的日常活動和進度"
+
+  },
+  "finance": {
+    "title": "財務",
+    "myExpenses": "我的支出",
+    "expenses": "支出",
+    "spending": "消費",
+    "income": "收入",
+    "myIncome": "我的收入",
+    "scanReceipt": "掃描收據",
+    "addExpenseType": "新增支出類型",
+    "addSpending": "新增支出",
+    "editSpending": "編輯支出",
+    "expenseCategory": "支出類別",
+    "selectColor": "選擇顏色",
+    "expenseName": "支出名稱",
+    "amount": "金額",
+    "category": "類別",
+    "date": "日期",
+    "delete": "刪除",
+    "save": "儲存",
+    "cancel": "取消",
+    "success": "成功",
+    "processSuccess": "已成功處理 {{count}} 張收據",
+    "alerts": {
+      "fillAllFields": "請填寫所有欄位",
+      "deleteExpense": "刪除支出",
+      "deleteExpenseConfirm": "確定要刪除這筆支出嗎？",
+      "deleteError": "刪除支出類型失敗，請重試",
+      "selectBoth": "請同時選擇類別和顏色",
+      "permissionDenied": "無法存取相簿",
+      "uploadError": "上傳收據時發生錯誤",
+      "scanError": "掃描收據時發生錯誤"
+    }
+  },
+  "tabs": {
+    "home": "首頁",
+    "schedule": "行程",
+    "finance": "財務",
+    "mood": "心情",
+    "history": "歷史"
   },
   "alerts": {
     "success": "成功",
@@ -87,5 +176,36 @@
     "deleteFailed": "刪除帳號失敗。請再試一次。",
     "profilePictureFailed": "更新個人頭像失敗",
     "imagePickerFailed": "啟動圖片選擇器失敗"
+  },
+  "mood": {
+    "title": "心情",
+    "todayMood": "今日心情",
+    "setTodayMood": "設定今日心情",
+    "logMood": "記錄心情",
+    "viewInsights": "查看分析",
+    "moodInsights": "心情分析",
+    "loading": "正在載入分析...",
+    "howAreYouFeeling": "你現在感覺如何？",
+    "feelingDescription": "心情描述",
+    "saveMood": "儲存心情",
+    "moodOnDay": "{{day}}的心情",
+    "days": {
+      "mon": "星期一",
+      "tue": "星期二",
+      "wed": "星期三",
+      "thu": "星期四",
+      "fri": "星期五",
+      "sat": "星期六",
+      "sun": "星期日"
+    },
+    "alerts": {
+      "success": "成功",
+      "error": "錯誤",
+      "moodSaved": "已保存你的心情！",
+      "saveFailed": "保存心情失敗",
+      "selectMood": "請選擇一個心情",
+      "insightError": "獲取心情分析失敗",
+      "regenerateFailed": "重新生成分析失敗"
+    }
   }
 }

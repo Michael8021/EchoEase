@@ -6,9 +6,11 @@ import { ScrollView } from "react-native";
 import { images } from "../constants";
 import CustomButton from "../components/CustomButton";
 import { useGlobalContext } from "../context/GlobalProvider";
+import { useTranslation } from "react-i18next";
 
 export default function Index() {
   const { loading, isLogged } = useGlobalContext();
+  const { t } = useTranslation();
 
   if (!loading && isLogged) return <Redirect href="/home" />;
 
@@ -34,18 +36,18 @@ export default function Index() {
 
           <View className="relative mt-5">
             <Text className="text-3xl text-white font-bold text-center">
-              Streamline Your Life{"\n"}
-              with{" "}
+              {t('auth.welcome.title')}{"\n"}
+              {t('auth.welcome.withApp')}{" "}
               <Text className="text-secondary-200">EchoEase</Text>
             </Text>
           </View>
 
           <Text className="text-sm font-pregular text-gray-100 mt-7 text-center">
-            Where Your Tasks, Emotions, and Finances Come Together Effortlessly with EchoEase.
+            {t('auth.welcome.appDescription')}
           </Text>
 
           <CustomButton
-            title="Continue with Email"
+            title={t('auth.welcome.continueWithEmail')}
             handlePress={() => router.push("/sign-in")}
             containerStyles="w-full mt-7"
           />

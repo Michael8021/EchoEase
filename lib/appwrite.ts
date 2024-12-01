@@ -802,7 +802,6 @@ export const deleteExpenseTypes = async (expenseTypeId: string) => {
 //add spending
 export const addSpending = async (newSpending: SpendingItem) => {
   try {
-    console.log("add");
     const currentUser = await getCurrentUser();
     if (!currentUser) throw Error;
 

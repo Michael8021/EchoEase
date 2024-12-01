@@ -19,18 +19,68 @@
     "password": "Password",
     "forgotPassword": "Forgot Password?",
     "noAccount": "Don't have an account?",
-    "haveAccount": "Have an account already?",
-    "loginTitle": "Log in to EchoEase",
-    "signupTitle": "Sign up to EchoEase",
+    "haveAccount": "Already have an account?",
+    "loginTitle": "Login to EchoEase",
+    "signupTitle": "Sign up for EchoEase",
     "continueWithEmail": "Continue with Email",
-    "fillAllFields": "Please fill in all fields"
+    "fillAllFields": "Please fill in all fields",
+    "welcome": {
+      "title": "Streamline Your Life",
+      "withApp": "with",
+      "appDescription": "Where Your Tasks, Emotions, and Finances Come Together Effortlessly with EchoEase.",
+      "continueWithEmail": "Continue with Email"
+    },
+    "signIn": {
+      "title": "Log in to EchoEase",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign In",
+      "noAccount": "Don't have an account?",
+      "signUp": "Signup"
+    },
+    "signUp": {
+      "title": "Sign up to EchoEase",
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign Up",
+      "haveAccount": "Have an account already?",
+      "signIn": "Sign in"
+    },
+    "errors": {
+      "fillFields": "Please fill in all fields"
+    }
   },
   "home": {
     "title": "EchoEase",
     "content": "Home Content",
-    "slogan": "Streamline Your Life",
+    "slogan": "Make Life Easier",
     "with": "with",
-    "appDescription": "Where Your Tasks, Emotions, and Finances Come Together Effortlessly with EchoEase."
+    "appDescription": "Seamlessly integrate your tasks, moods, and finances with EchoEase.",
+    "dailyOverview": "Your daily overview",
+    "todaySchedule": "Today's Schedule",
+    "noSchedule": "No schedule for today",
+    "todayMood": "Today's Mood",
+    "howAreYouFeeling": "How are you feeling today?",
+    "monthlyFinance": "This Month's Financial Data",
+    "totalSpent": "Total Spent",
+    "categories": "Categories",
+    "spendingByCategory": "Spending by Category",
+    "trackSpending": "Track your spending and stay within your budget.",
+    "verySad": "Very Sad",
+    "sad": "Sad",
+    "neutral": "Neutral",
+    "happy": "Happy",
+    "veryHappy": "Very Happy"
+  },
+  "schedule": {
+    "title": "Schedule",
+    "noEvents": "No events for today",
+    "event": "Event",
+    "reminder": "Reminder",
+    "reminderAt": "Reminder at",
+    "noTimeAvailable": "No time available",
+    "example": "Example Item 1"
   },
   "settings": {
     "title": "Settings",
@@ -43,10 +93,10 @@
     "accountActions": "Account Actions",
     "signOut": "Sign Out",
     "deleteAccount": "Delete Account",
-    "updateDisplayName": "Update your display name",
-    "updateSecurityCredentials": "Update your security credentials",
-    "manageNotifications": "Manage your notifications",
-    "changeAppLanguage": "Change app language",
+    "updateDisplayName": "Update Display Name",
+    "updateSecurityCredentials": "Update Security Credentials",
+    "manageNotifications": "Manage Notifications",
+    "changeAppLanguage": "Change App Language",
     "logOutAccount": "Log out of your account",
     "permanentlyDeleteAccount": "Permanently delete your account",
     "newUsername": "New Username",
@@ -56,7 +106,7 @@
     "newPassword": "New Password",
     "enterNewPassword": "Enter new password",
     "updatePassword": "Update Password",
-    "soon": "SOON",
+    "soon": "Coming Soon",
     "permissionRequired": "Permission Required",
     "photoLibraryAccess": "Please allow access to your photo library to change profile picture.",
     "deleteConfirmTitle": "Delete Account",
@@ -65,11 +115,14 @@
     "delete": "Delete"
   },
   "history": {
+    "title": "History",
+    "recentActivities": "Recent Activities",
     "noHistory": "No history found",
     "deleteError": "Error deleting history",
-    "fetchError": "Error fetching histories",
+    "fetchError": "Error fetching history",
     "updateError": "Failed to update history",
-    "deleteConfirm": "Are you sure you want to delete this history item?"
+    "deleteConfirm": "Are you sure you want to delete this history?",
+    "trackingDescription": "Track your daily activities and progress"
   },
   "alerts": {
     "success": "Success",
@@ -83,5 +136,76 @@
     "deleteFailed": "Failed to delete account. Please try again.",
     "profilePictureFailed": "Failed to update profile picture",
     "imagePickerFailed": "Failed to launch image picker"
+  },
+  "mood": {
+    "title": "Mood",
+    "todayMood": "Today's Mood",
+    "setTodayMood": "Set Today's Mood",
+    "logMood": "Log Mood",
+    "viewInsights": "View Insights",
+    "moodInsights": "Mood Insights",
+    "loading": "Loading insights...",
+    "howAreYouFeeling": "How are you feeling?",
+    "feelingDescription": "Mood Description",
+    "saveMood": "Save Mood",
+    "moodOnDay": "Mood on {{day}}",
+    "days": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    },
+    "alerts": {
+      "success": "Success",
+      "error": "Error",
+      "moodSaved": "Your mood has been saved!",
+      "saveFailed": "Failed to save mood",
+      "selectMood": "Please select a mood",
+      "insightError": "Failed to fetch mood insights",
+      "regenerateFailed": "Failed to regenerate insights"
+    }
+  },
+  "finance": {
+    "title": "Finance",
+    "myExpenses": "My Expenses",
+    "expenses": "Expenses",
+    "spending": "Spending",
+    "income": "Income",
+    "myIncome": "My Income",
+    "scanReceipt": "Scan Receipt",
+    "addExpenseType": "Add Expense Type",
+    "addSpending": "Add Spending",
+    "editSpending": "Edit Spending",
+    "expenseCategory": "Expense category",
+    "selectColor": "Select Color",
+    "expenseName": "Expense Name",
+    "amount": "Amount",
+    "category": "Category",
+    "date": "Date",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "success": "Success",
+    "processSuccess": "Successfully processed {{count}} receipts",
+    "alerts": {
+      "fillAllFields": "Please fill in all fields.",
+      "deleteExpense": "Delete Expense",
+      "deleteExpenseConfirm": "Are you sure you want to delete this expense?",
+      "deleteError": "Failed to delete expense type. Please try again.",
+      "selectBoth": "Please select both a category and a color.",
+      "permissionDenied": "Permission denied to access photo library",
+      "uploadError": "Error uploading receipt",
+      "scanError": "Error scanning receipt"
+    }
+  },
+  "tabs": {
+    "home": "Home",
+    "schedule": "Schedule",
+    "finance": "Finance",
+    "mood": "Mood",
+    "history": "History"
   }
 }

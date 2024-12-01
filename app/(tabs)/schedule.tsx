@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform } from 'react-native'
 import {Card, Avatar, Checkbox} from 'react-native-paper';
 import {Calendar, CalendarList, Agenda} from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +8,7 @@ import { getSchedules, updateSchedule } from '@/lib/appwrite';
 import tailwind from 'tailwindcss';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useFocusEffect } from '@react-navigation/native';
-
+import { useTranslation } from 'react-i18next';
 
 // thing that will fetch from database
 // ------------------------------------------
@@ -41,7 +41,15 @@ import { useFocusEffect } from '@react-navigation/native';
 
 const Schedule = () => {
   const [loading, setLoading] = useState(true);
-  
+  const { t } = useTranslation();
+
+  const formatTime = (dateString: string | null): string => {
+    if (!dateString) return t('schedule.noTimeAvailable');
+
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   // const initialItems: ScheduleItems = {
   //   '2024-11-15': [{ name: 'example item 1', start_time: '09:00AM', end_time: '11:00AM', notify_at: '08:30AM', description: 'No description', type: 'event', status: 'pending' }],
   //   '2024-11-25': [{ name: 'item 2 - any js object', start_time: null, end_time: null, notify_at: null, description: 'No description', type: 'reminder', status: 'completed' }],
@@ -123,7 +131,7 @@ const Schedule = () => {
   const renderEmptyData = () => {
     return (
       <View className='flex-1 justify-center items-center bg-primary'>
-        <Text className='text-gray-100'>No events for this day</Text>
+        <Text className='text-gray-100'>{t('schedule.noEvents')}</Text>
       </View>
     );
   };
@@ -167,7 +175,7 @@ const Schedule = () => {
               <View className="flex-row items-center mb-2">
                 <View className={`w-1 h-5 rounded-full mr-3`} style={{ backgroundColor: accentColor }} />
                 <Text className="text-base font-psemibold" style={{ color: accentColor }}>
-                  {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                  {t(`schedule.${item.type}`)}
                 </Text>
               </View>
 
@@ -197,7 +205,7 @@ const Schedule = () => {
                 <View className="mt-2 flex-row items-center">
                   <View className="w-1 h-3 rounded-full mr-2" style={{ backgroundColor: `${accentColor}40` }} />
                   <Text className="text-xs font-plight text-gray-400">
-                    Reminder at {item.notify_at}
+                    {t('schedule.reminderAt')} {item.notify_at}
                   </Text>
                 </View>
               )}
@@ -230,9 +238,13 @@ const Schedule = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-primary" >
-      <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
-        <Text className="text-4xl font-pbold text-secondary">Schedule</Text>
+    <SafeAreaView style={styles.androidSafeArea} >
+      <View className="bg-primary px-6 pt-2 pb-4">
+        <View className="flex-row justify-between items-center">
+          <Text className="text-4xl font-pbold text-secondary">
+            {t('schedule.title')}
+          </Text>
+        </View>
       </View>
 
       <View className='flex-1'>
@@ -282,11 +294,12 @@ type ScheduleItems = {
   [key: string]: ScheduleItem[];
 };
 
-const formatTime = (dateString: string | null): string => {
-  if (!dateString) return 'No time available';
+const styles = StyleSheet.create({
+  androidSafeArea: {
+    flex: 1,
+    backgroundColor: "#161622",
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  }});
 
-  const date = new Date(dateString);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
 
 export default Schedule

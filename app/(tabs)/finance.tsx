@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from "react-native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PieChart } from "react-native-gifted-charts";
@@ -10,8 +10,13 @@ import {
   getSpending,
   client,
   appwriteConfig,
+  addSpending
 } from "../../lib/appwrite";
 import { ExpenseItem, SpendingItem} from "../../type";
+import * as ImagePicker from 'expo-image-picker';
+import { recognizeReceipt } from "../../lib/aiService";
+import { icons } from "../../constants";
+import { useTranslation } from "react-i18next";
 
 type PickerItem = {
   label: string;
@@ -20,8 +25,10 @@ type PickerItem = {
 };
 
 const Finance = () => {
+  const { t } = useTranslation();
   //expense type
   const [expensedata, setExpensedata] = useState<ExpenseItem[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fetchExpenses = async () => {
     try {
       const expenses = await getExpenseTypes();
@@ -205,17 +212,93 @@ const Finance = () => {
     };
   }, []);
 
+  const handleImageUpload = async () => {
+    try {
+      // Request permission
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert(t('finance.permissionRequired'), t('finance.permissionMessage'));
+        return;
+      }
+
+      // Pick multiple images
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: "images",
+        base64: true,
+        quality: 1,
+        allowsMultipleSelection: true,
+        selectionLimit: 4,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        setIsProcessing(true);
+        try {
+          // Get expense types for categorization
+          const expenses = await getExpenseTypes();
+          const formattedExpenses = expenses.map((expense: any) => ({
+            category: expense.category,
+          }));
+
+          // Get base64 strings from all selected images
+          const base64Array = result.assets.map(asset => asset.base64!);
+
+          // Recognize receipts
+          const receiptDataArray = await recognizeReceipt(base64Array, formattedExpenses);
+
+          // Add all receipts to spending
+          for (const receiptData of receiptDataArray) {
+            await addSpending({
+              id: "",
+              name: receiptData.name,
+              amount: receiptData.amount.toString(),
+              date: receiptData.date,
+              category: receiptData.category,
+            });
+          }
+
+          // Refresh spending data
+          fetchSpending();
+          Alert.alert(t('finance.success'), t('finance.processSuccess', { count: receiptDataArray.length }));
+        } finally {
+          setIsProcessing(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error processing receipts:", error);
+      Alert.alert(t('finance.error'), t('finance.processError'));
+      setIsProcessing(false);
+    }
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-primary">
-      <View className="flex-row justify-between items-center px-4 py-6 bg-primary">
-        <Text className="text-4xl font-pbold text-secondary">Finance</Text>
+    <SafeAreaView className="flex-1 bg-primary" edges={['top', 'left', 'right']}>
+      {/* Fixed Header */}
+      <View className="bg-primary px-6 pt-2 pb-4">
+        <View className="flex-row justify-between items-center">
+          <Text className="text-4xl font-pbold text-secondary">
+            {t('finance.title')}
+          </Text>
+          <TouchableOpacity 
+            onPress={handleImageUpload}
+            disabled={isProcessing}
+            className="bg-black-100/50 p-2 rounded-full border border-gray-100/10"
+          >
+            {isProcessing ? (
+              <ActivityIndicator color="#FF9C01" size="small" />
+            ) : (
+              <Image source={icons.photo} className="w-6 h-6 opacity-85" tintColor="#FF9C01" />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
-      <View>
-        <ScrollView showsVerticalScrollIndicator={false}>
+      <View className="flex-1">
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+        >
           <View className="mx-5 flex flex-row justify-between items-center">
             <View>
               <Text className="text-yellow-400 text-1.5xl">
-                My <Text className="font-bold">Expenses</Text>
+                {t('finance.myExpenses')}
               </Text>
               <Text className="text-white my-3 text-4xl font-semibold">
                 ${whole}.<Text className="text-2xl font-light">{decimal}</Text>

@@ -186,7 +186,6 @@ const FloatingButton = () => {
         userId: createdHistory.userId,
       };
       addHistory(history);
-      console.log("categories", categories);
 
       const contentData: CategorizedData = await categorizeAndExtractData(
         text,

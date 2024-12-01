@@ -107,12 +107,14 @@ const HistoryScreen = () => {
       {/* Fixed Header */}
       <View className="bg-primary px-6 pt-2 pb-4">
         <View className="flex-row justify-between items-center">
-          <Text className="text-4xl font-pbold text-secondary">{t('common.history')}</Text>
+          <Text className="text-4xl font-pbold text-secondary">
+            {t('history.title')}
+          </Text>
           <TouchableOpacity 
             onPress={() => router.push("/settings")}
             className="bg-black-100/50 p-2 rounded-full border border-gray-100/10"
           >
-            <Image source={icons.settings} className="w-6 h-6 opacity-85" />
+            <Image source={icons.settings} className="w-6 h-6 opacity-85" tintColor="#FF9C01" />
           </TouchableOpacity>
         </View>
       </View>
@@ -144,7 +146,7 @@ const HistoryScreen = () => {
             <View className="flex-row items-center mb-4">
               <View className="w-1 h-6 bg-component-schedule-accent rounded-full mr-3" />
               <Text className="text-xl font-psemibold text-component-schedule-text">
-                Recent Activities
+                {t('history.recentActivities')}
               </Text>
             </View>
 
@@ -204,7 +206,7 @@ const HistoryScreen = () => {
 
           <View className="flex-row justify-center mt-4 mb-8">
             <Text className="text-sm text-gray-200 font-plight">
-              Track your daily activities and progress
+              {t('history.trackingDescription')}
             </Text>
           </View>
         </View>

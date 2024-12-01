@@ -9,8 +9,11 @@ import {
 } from "react-native";
 import { IncomeItem } from "../type";
 import { Feather } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 const IncomeBlock = ({ incomedata }: { incomedata: IncomeItem[] }) => {
+  const { t } = useTranslation();
+
   const renderItem: ListRenderItem<IncomeItem> = ({ item }) => {
     return (
         <View>
@@ -21,7 +24,7 @@ const IncomeBlock = ({ incomedata }: { incomedata: IncomeItem[] }) => {
   return (
     <View>
       <Text className="text-white text-1.5xl">
-        My <Text className="font-bold">Income</Text>
+        {t('finance.myIncome')}
       </Text>
       <FlatList
         data={incomedata}

@@ -1,106 +1,126 @@
-# Welcome to EchoEase 👋
+# EchoEase - Your Personal Life Management App 🌟
 
-## Get started
+EchoEase is a comprehensive mobile application built with React Native and Expo that helps you manage various aspects of your life, including mood tracking, scheduling, finance management, and more. With a beautiful dark-themed UI and support for multiple languages, EchoEase makes personal management both efficient and enjoyable.
+
+## 🚀 Quick Start
 
 1. Install dependencies
-
    ```bash
    npm install
    ```
 
-   ```bash
-   npx expo install react-native-appwrite react-native-url-polyfill
-   npx expo install react-native-gifted-charts expo-linear-gradient react-native-svg
-   npm install nativewind tailwindcss react-native-reanimated react-native-safe-area-context
-   npm install @react-native-community/datetimepicker --save
-   npm install react-native-input-select
-   ```
-3. Start the app
-
+2. Start the app
    ```bash
    npm start
    ```
 
-   Android:
-
+   For platform-specific development:
    ```bash
+   # iOS
+   npm run ios
+
+   # Android
    npm run android
    ```
 
-   Ios:
+## 🎯 Key Features
 
-   ```bash
-   npm run ios
-   ```
+### 1. Mood Tracking & Analysis
+- 🎭 Interactive emoji-based mood selection
+- 📊 Weekly mood visualization with charts
+- 🤖 AI-powered mood insights generation
+- 📝 Detailed mood descriptions and history
+- 🌍 Multi-language mood analysis
 
-## Project Structure
+### 2. Financial Management
+- 💰 Expense tracking and categorization
+- 📈 Visual spending analytics
+- 🧾 Receipt scanning and processing
+- 📊 Category-wise spending breakdown
+- 💸 Monthly budget overview
 
-### Key Directories
+### 3. Schedule Management
+- 📅 Event planning and reminders
+- ⏰ Task scheduling
+- 📌 Important date tracking
+- 📋 Daily agenda view
 
-- `/app` - Main application screens using file-based routing
-  - `/(auth)` - Authentication screens (sign-in, sign-up)
-  - `/(tabs)` - Main tab screens (home, schedule, finance, mood, history)
-- `/components` - Reusable UI components
-- `/constants` - App constants including colors, icons, and images
-- `/context` - Global state management
-- `/lib` - Utility functions and API configurations
-- `/assets` - Static assets (fonts, images, icons)
+### 4. Internationalization
+- 🌐 Multi-language support (English, Traditional Chinese)
+- 🔄 Dynamic content translation
+- 💾 Language preference persistence
+- 📱 Localized UI elements
+- 🎯 Context-aware translations
 
-### Key Features
+### 5. User Experience
+- 🎨 Modern dark theme UI
+- 🔒 Secure authentication system
+- 💫 Smooth animations
+- 📱 Responsive design
+- 🎯 Intuitive navigation
 
-1. **Styling**
+## 🏗 Project Structure
 
-   - Using NativeWind (Tailwind CSS for React Native)
-   - Custom color scheme defined in `tailwind.config.js`
-   - Custom Poppins font family integration
-2. **Authentication**
+```
+EchoEase/
+├── app/                    # Main application screens
+│   ├── (auth)/            # Authentication screens
+│   ├── (tabs)/            # Main tab screens
+│   └── _layout.tsx        # Root layout configuration
+├── components/            # Reusable UI components
+├── constants/             # App constants and assets
+├── context/              # Global state management
+├── lib/                  # Utility functions
+│   ├── appwrite/         # Backend integration
+│   ├── i18n/             # Internationalization
+│   └── aiService/        # AI services integration
+└── assets/              # Static assets
+```
 
-   - Appwrite backend integration
-   - Email/password authentication
-   - User session management
-3. **Database Setup**
+## 🛠 Technical Stack
 
-   - Appwrite database configuration in `lib/appwrite.ts`
-   - Collections for users and other data
-4. **Navigation**
+- **Framework**: React Native + Expo
+- **Navigation**: Expo Router
+- **Styling**: NativeWind (Tailwind CSS)
+- **Backend**: Appwrite
+- **State Management**: React Context
+- **Charts**: react-native-gifted-charts
+- **Internationalization**: react-i18next
+- **UI Components**: react-native-paper
+- **Type Safety**: TypeScript
 
-   - File-based routing with Expo Router
-   - Tab-based navigation
-   - Stack navigation for auth flow
+## 🔧 Development Notes
 
-### Screens
+### Environment Setup
+- Uses Expo managed workflow
+- TypeScript for type safety
+- Custom fonts loaded in `app/_layout.tsx`
+- Environment variables in `lib/appwrite.ts`
 
-1. **Authentication**
+### Key Configurations
+- Tailwind styles in `tailwind.config.js`
+- i18n setup in `lib/i18n/config.ts`
+- Navigation in `app/_layout.tsx`
 
-   - Sign In
-   - Sign Up
-2. **Main Tabs**
+### Adding New Features
+1. **Translations**
+   - Add keys in `lib/i18n/locales/en.json`
+   - Create corresponding translations in other locales
+   - Use `useTranslation` hook in components
 
-   - Home - Dashboard
-   - Schedule - Task management
-   - Finance - Financial tracking
-   - Mood - Mood tracking
-   - History - Activity history
-3. **Settings**
+2. **New Screens**
+   - Add screen in appropriate directory under `app/`
+   - Update navigation if needed
+   - Implement i18n support
 
-   - User preferences
-   - Logout functionality
+3. **Components**
+   - Create in `components/` directory
+   - Use NativeWind for styling
+   - Ensure proper TypeScript typing
 
-### Development Notes
+## 📚 Learn More
 
-- The project uses TypeScript for type safety
-- Custom fonts are loaded in `app/_layout.tsx`
-- Global state is managed using Context API
-- Tailwind styles can be customized in `tailwind.config.js`
-- Environment variables and API keys are in `lib/appwrite.ts`
-
-## Learn more
-
-- [Expo documentation](https://docs.expo.dev/)
-- [NativeWind documentation](https://www.nativewind.dev/)
-- [Appwrite documentation](https://appwrite.io/docs)
-
-## Join the community
-
-- [Expo on GitHub](https://github.com/expo/expo)
-- [Discord community](https://chat.expo.dev)
+- [Expo Documentation](https://docs.expo.dev/)
+- [NativeWind Documentation](https://www.nativewind.dev/)
+- [Appwrite Documentation](https://appwrite.io/docs)
+- [React i18next Documentation](https://react.i18next.com/)

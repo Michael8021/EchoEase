@@ -16,6 +16,7 @@ import { ExpenseItem } from "../type";
 import { Feather } from "@expo/vector-icons";
 import { addExpenseType, deleteExpenseTypes } from "../lib/appwrite";
 import { expenseTypeColors } from "../constants/Colors";
+import { useTranslation } from "react-i18next";
 
 const ExpenseBlock = ({
   expensedata,
@@ -24,7 +25,7 @@ const ExpenseBlock = ({
   expensedata: ExpenseItem[];
   categoryData: { category: string; percentage: string; totalAmount: number }[];
 }) => {
-  // console.log(expensedata);
+  const { t } = useTranslation();
   
   const [modalVisible, setModalVisible] = useState(false);
   const [expenseCategory, setExpenseCategory] = useState("");
@@ -32,21 +33,21 @@ const ExpenseBlock = ({
 
   const handleDelete = async (expenseTypeId: string) => {
     Alert.alert(
-      "Delete Expense",
-      "Are you sure you want to delete this expense?",
+      t('finance.alerts.deleteExpense'),
+      t('finance.alerts.deleteExpenseConfirm'),
       [
         {
-          text: "Cancel",
+          text: t('finance.cancel'),
           style: "cancel",
         },
         {
-          text: "Delete",
+          text: t('finance.delete'),
           onPress: async () => {
             try {
               deleteExpenseTypes(expenseTypeId); 
             } catch (error) {
               console.error("Failed to delete expense type:", error);
-              alert("Failed to delete expense type. Please try again.");
+              alert(t('finance.alerts.deleteError'));
             }
           },
           style: "destructive",
@@ -86,18 +87,18 @@ const ExpenseBlock = ({
             <View className="flex-1 justify-center items-center bg-[rgba(0,0,0,0.5)]">
               <View className="w-[90%] p-5 bg-primary rounded-lg border-white">
                 <Text className="text-[18px] font-bold mb-2.5 text-secondary">
-                  Add Expense Type
+                  {t('finance.addExpenseType')}
                 </Text>
 
                 <TextInput
-                  placeholder="Expense category"
+                  placeholder={t('finance.expenseCategory')}
                   style={styles.input}
                   value={expenseCategory}
                   onChangeText={setExpenseCategory}
                   placeholderTextColor="#888"
                 />
 
-                <Text className="text-white mb-3 ">Select Color:</Text>
+                <Text className="text-white mb-3">{t('finance.selectColor')}:</Text>
                 <View className="flex-row justify-around mb-5">
                   {expenseTypeColors.map((color, index) => (
                     <TouchableOpacity
@@ -123,13 +124,13 @@ const ExpenseBlock = ({
                     }}
                     className="bg-primary px-4 py-2 rounded-md"
                   >
-                    <Text className="text-white text-center">Cancel</Text>
+                    <Text className="text-white text-center">{t('finance.cancel')}</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     onPress={() => {
                       if (!expenseCategory || !selectedColor) {
-                        Alert.alert("Error", "Please select both a category and a color.");
+                        Alert.alert(t('finance.error'), t('finance.alerts.selectBoth'));
                         return;
                       }
                       addExpenseType(expenseCategory, selectedColor);
@@ -139,7 +140,7 @@ const ExpenseBlock = ({
                     }}
                     className="bg-secondary px-4 py-2 rounded-md"
                   >
-                    <Text className="text-black text-center">Save</Text>
+                    <Text className="text-black text-center">{t('finance.save')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -171,6 +172,7 @@ const ExpenseBlock = ({
   };
   const staticitem = [
     {
+      id: "add-item",
       category: "add item",
       amount: "0.0",
       color: "",

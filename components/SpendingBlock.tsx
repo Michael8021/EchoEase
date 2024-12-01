@@ -22,6 +22,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { updateSpending } from "../lib/appwrite";
 import { addSpending, deleteSpending } from "../lib/appwrite";
 import Dropdown from "react-native-input-select";
+import { useTranslation } from "react-i18next";
 
 type PickerItem = {
   label: string;
@@ -43,6 +44,7 @@ const SpendingBlock = ({
   spendingdata: SpendingItem[];
   expensedata: ExpenseItem[];
 }) => {
+  const { t } = useTranslation();
   //modal(add spending)
   const [modalVisible, setModalVisible] = useState(false);
   const [newSpending, setNewSpending] = useState({
@@ -65,7 +67,7 @@ const SpendingBlock = ({
         category: "",
       });
     } else {
-      alert("Please fill in all fields.");
+      alert(t('finance.alerts.fillAllFields'));
     }
   };
 
@@ -115,7 +117,7 @@ const SpendingBlock = ({
     <View>
       <View className="flex-row justify-between items-center bg-primary">
         <Text className="text-1.5xl mb-3">
-          <Text className="font-bold text-yellow-400">Spending</Text>
+          <Text className="font-bold text-yellow-400">{t('finance.spending')}</Text>
         </Text>
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <View style={{ backgroundColor: "#333333", borderRadius: 25 }}>
@@ -134,10 +136,10 @@ const SpendingBlock = ({
         <View className="flex-1 justify-center items-center bg-[rgba(0,0,0,0.5)]">
           <View className="w-[90%] p-5 bg-primary rounded-lg border-white">
             <Text className="text-[18px] font-bold mb-2.5 text-secondary">
-              Add Spending
+              {t('finance.addSpending')}
             </Text>
             <TextInput
-              placeholder="Expense Name"
+              placeholder={t('finance.expenseName')}
               value={newSpending.name}
               onChangeText={(text) =>
                 setNewSpending((prev) => ({ ...prev, name: text }))
@@ -146,7 +148,7 @@ const SpendingBlock = ({
               placeholderTextColor="#888"
             />
             <TextInput
-              placeholder="Amount"
+              placeholder={t('finance.amount')}
               keyboardType="numeric"
               value={newSpending.amount}
               onChangeText={(text) => {
@@ -159,7 +161,7 @@ const SpendingBlock = ({
               placeholderTextColor="#888"
             />
             <Dropdown
-              placeholder="Category"
+              placeholder={t('finance.category')}
               options={categories}
               selectedValue={newSpending.category}
               onValueChange={(value) =>
@@ -187,19 +189,19 @@ const SpendingBlock = ({
                 right: 10,
               }}
               placeholderStyle={{
-                color: "#888", // Placeholder text color
+                color: "#888",
               }}
               selectedItemStyle={{
                 color: "#FFFFFF",
               }}
             />
             <View className="flex-row items-center mt-[-10]">
-              <Text className="text-white">Date:</Text>
+              <Text className="text-white">{t('finance.date')}:</Text>
               <DateTimePicker
                 mode="date"
                 value={new Date(newSpending.date)}
                 onChange={handleDateChange}
-                display="spinner" // Optional: use 'spinner', 'calendar', etc.
+                display="spinner"
                 textColor="white"
               />
             </View>
@@ -217,14 +219,14 @@ const SpendingBlock = ({
                 }}
                 className="bg-primary px-4 py-2 rounded-md"
               >
-                <Text className="text-white text-center">Cancel</Text>
+                <Text className="text-white text-center">{t('finance.cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleAddSpending}
                 className="bg-secondary px-4 py-2 rounded-md"
               >
-                <Text className="text-black text-center">Add</Text>
+                <Text className="text-black text-center">{t('finance.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -241,12 +243,12 @@ const SpendingBlock = ({
         <View className="flex-1 justify-center items-center bg-[rgba(0,0,0,0.5)]">
           <View className="w-[90%] p-5 bg-primary rounded-lg border-white">
             <Text className="text-[18px] font-bold mb-2.5 text-secondary">
-              Edit Spending
+              {t('finance.editSpending')}
             </Text>
             {selectedSpending && (
               <>
                 <TextInput
-                  placeholder="Expense Name"
+                  placeholder={t('finance.expenseName')}
                   value={selectedSpending.name}
                   onChangeText={(text) =>
                     setSelectedSpending((prev) => ({ ...prev, name: text }))
@@ -255,7 +257,7 @@ const SpendingBlock = ({
                   placeholderTextColor="#888"
                 />
                 <TextInput
-                  placeholder="Amount"
+                  placeholder={t('finance.amount')}
                   keyboardType="numeric"
                   value={selectedSpending.amount}
                   onChangeText={(text) =>
@@ -265,7 +267,7 @@ const SpendingBlock = ({
                   placeholderTextColor="#888"
                 />
                 <Dropdown
-                  placeholder="Category"
+                  placeholder={t('finance.category')}
                   options={categories}
                   selectedValue={selectedSpending.category}
                   onValueChange={(value) =>
@@ -300,7 +302,7 @@ const SpendingBlock = ({
                   }}
                 />
                 <View className="flex-row items-center mt-[-10]">
-                  <Text className="text-white">Date:</Text>
+                  <Text className="text-white">{t('finance.date')}:</Text>
                   <DateTimePicker
                     mode="date"
                     value={new Date(selectedSpending.date)}
@@ -323,7 +325,7 @@ const SpendingBlock = ({
                 onPress={() => setDetailModalVisible(false)}
                 className="bg-primary px-4 py-2 rounded-md"
               >
-                <Text className="text-white text-center">Cancel</Text>
+                <Text className="text-white text-center">{t('finance.cancel')}</Text>
               </TouchableOpacity>
 
               <View className="flex-row space-x-2">
@@ -339,7 +341,7 @@ const SpendingBlock = ({
                   }}
                   className="bg-red-500 px-4 py-2 rounded-md mx-5"
                 >
-                  <Text className="text-white text-center">Delete</Text>
+                  <Text className="text-white text-center">{t('finance.delete')}</Text>
                 </TouchableOpacity>
 
                 {/* Save Button */}
@@ -354,7 +356,7 @@ const SpendingBlock = ({
                   }}
                   className="bg-secondary px-4 py-2 rounded-md"
                 >
-                  <Text className="text-black text-center">Save</Text>
+                  <Text className="text-black text-center">{t('finance.save')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
