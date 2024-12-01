@@ -143,6 +143,7 @@ const FloatingButton = () => {
             return;
           }
           console.log("Transcribed Text:", transcribedText);
+          setSubmit(true);
           await handleTextToWidget(transcribedText, categories);
         } catch (transcriptionError) {
           alert("Failed to process audio. Please try again.");
@@ -165,6 +166,7 @@ const FloatingButton = () => {
     setIsProcessing(true);
     setModalVisible(false);
     try {
+      setSubmit(true);
       await handleTextToWidget(promptText, categories);
     } catch (error) {
       console.error("Error handling chatbot response:", error);
@@ -176,7 +178,6 @@ const FloatingButton = () => {
 
   const handleTextToWidget = async (text: string, categories: any) => {
     try {
-      setSubmit(true);
       const createdHistory = await createHistory(text);
       const history: History = {
         $id: createdHistory.$id,
@@ -215,7 +216,7 @@ const FloatingButton = () => {
           addExpenseType(contentData.finance[0].category, getBeautifulColor());
         }
         const transformedSpending = {
-          id: contentData.finance[0].historyId,
+          id: '',
           name: contentData.finance[0].description,
           amount: contentData.finance[0].amount.toString(),
           date: contentData.finance[0].date,
@@ -224,6 +225,7 @@ const FloatingButton = () => {
         };
         addSpending(transformedSpending);
       }
+      setSubmit(false);
       return;
     } catch (error) {
       console.error("Error handling text to widget:", error);

@@ -10,7 +10,8 @@ import {
   getSpending,
   client,
   appwriteConfig,
-  addSpending
+  addSpending,
+  getCurrentUser
 } from "../../lib/appwrite";
 import { ExpenseItem, SpendingItem} from "../../type";
 import * as ImagePicker from 'expo-image-picker';
@@ -148,23 +149,12 @@ const Finance = () => {
       ],
       (response) => {
         const { events, payload } = response;
-        const expense = payload as any;
-
+        
         if (events.some((event) => event.includes(".create"))) {
-          const newExpense = {
-            id: expense.$id, 
-            category: expense.category,
-            amount: expense.amount,
-            color: expense.color,
-          };
-          setExpensedata((prevData) => [...prevData, newExpense]);
+          fetchExpenses();
         } 
         if (events.some((event) => event.includes(".delete"))) {
-          setExpensedata((prevData) =>
-            prevData.filter(
-              (existingExpense) => existingExpense.category !== expense.category
-            )
-          );
+          fetchExpenses();
           fetchSpending();
         }
       }
@@ -174,34 +164,9 @@ const Finance = () => {
         `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.spendingCollectionId}.documents`,
       ],
       (response) => {
-        const { events, payload } = response;
-        const spending = payload as any;
-    
-        if (events.some((event) => event.includes(".create"))) {
-          const newSpending = {
-            id: spending.$id, 
-            name: spending.name,
-            amount: spending.amount,
-            date: spending.date,
-            category: spending.category.category,
-            historyId: spending.historyId,
-          };
-          setSpendingdata((prevData) => [...prevData, newSpending]);
-        }
-    
-        if (events.some((event) => event.includes(".delete"))) {
-          setSpendingdata((prevData) =>
-            prevData.filter((item) => item.id !== spending.$id)
-          );
-        }
-        if (events.some((event) => event.includes(".update"))) {
-          setSpendingdata((prevData) =>
-            prevData.map((item) =>
-              item.id === spending.$id
-                ? { ...item, ...spending,category: item.category } 
-                : item
-            )
-          );
+        const { events } = response;
+        if (events.some((event) => [".create", ".delete", ".update"].some((type) => event.includes(type)))) {
+          fetchSpending();
         }
       }
     );
