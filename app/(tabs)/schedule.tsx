@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform } from 'react-native'
 import {Card, Avatar, Checkbox} from 'react-native-paper';
 import {Calendar, CalendarList, Agenda} from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
@@ -238,7 +238,7 @@ const Schedule = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-primary" >
+    <SafeAreaView style={styles.androidSafeArea} >
       <View className="bg-primary px-6 pt-2 pb-4">
         <View className="flex-row justify-between items-center">
           <Text className="text-4xl font-pbold text-secondary">
@@ -293,5 +293,13 @@ type ScheduleItem = {
 type ScheduleItems = {
   [key: string]: ScheduleItem[];
 };
+
+const styles = StyleSheet.create({
+  androidSafeArea: {
+    flex: 1,
+    backgroundColor: "#161622",
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  }});
+
 
 export default Schedule
