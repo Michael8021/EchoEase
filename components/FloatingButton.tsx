@@ -58,7 +58,7 @@ const FloatingButton = () => {
   }, [submit]);
 
   function getBeautifulColor() {
-    const darkColors = [
+    const colors = [
       "#D57B7B", // Dark Red
       "#D08561", // Dark Peach
       "#C0C06A", // Dark Yellow
