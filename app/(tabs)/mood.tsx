@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, Alert, Dimensions, StyleSheet, ActivityIndicator, ScrollView, RefreshControl } from "react-native";
+import { View, Text, TouchableOpacity, Image, Alert, Dimensions, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -698,14 +698,9 @@ const Mood = () => {
                   </View>
                 </View>
                 <View style={{ maxHeight: 300 }}>
-                  <ScrollView 
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    <Text style={styles.insightText}>
-                      {isLoading ? t('mood.loading') : moodInsight}
-                    </Text>
-                  </ScrollView>
+                  <Text style={styles.insightText}>
+                    {isLoading ? t('mood.loading') : moodInsight}
+                  </Text>
                 </View>
               </Modal>
 
@@ -760,61 +755,56 @@ const Mood = () => {
                   </TouchableOpacity>
                 </View>
                 <View style={{ maxHeight: 400 }}>
-                  <ScrollView 
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
+                  <View style={styles.moodButtonsContainer}>
+                    {["😭", "😢", "😐", "😊", "😁"].map((emoji) => (
+                      <TouchableOpacity
+                        key={emoji}
+                        onPress={() => setSelectedMood(emoji)}
+                        style={[
+                          styles.moodButton,
+                          selectedMood === emoji && styles.selectedMoodButton,
+                        ]}
+                      >
+                        <Text style={styles.moodButtonEmoji}>{emoji}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      mode="outlined"
+                      placeholder={t('mood.feelingDescription')}
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      value={description}
+                      onChangeText={(text: string) => setDescription(text)}
+                      multiline
+                      numberOfLines={4}
+                      style={{
+                        backgroundColor: '#2A2A3C',
+                        color: '#FFFFFF',
+                        fontSize: 16,
+                        borderRadius: 12,
+                        width: '100%',
+                      }}
+                      outlineStyle={{
+                        borderRadius: 12,
+                        borderColor: 'rgba(255, 156, 1, 0.2)',
+                      }}
+                      textColor="#FFFFFF"
+                      theme={{
+                        colors: {
+                          primary: '#FF9C01',
+                          text: '#FFFFFF',
+                          placeholder: 'rgba(255, 255, 255, 0.4)',
+                        },
+                      }}
+                    />
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.modalButton, { marginBottom: 8 }]}
+                    onPress={saveMoodToDatabase}
                   >
-                    <View style={styles.moodButtonsContainer}>
-                      {["😭", "😢", "😐", "😊", "😁"].map((emoji) => (
-                        <TouchableOpacity
-                          key={emoji}
-                          onPress={() => setSelectedMood(emoji)}
-                          style={[
-                            styles.moodButton,
-                            selectedMood === emoji && styles.selectedMoodButton,
-                          ]}
-                        >
-                          <Text style={styles.moodButtonEmoji}>{emoji}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                    <View style={styles.inputContainer}>
-                      <TextInput
-                        mode="outlined"
-                        placeholder={t('mood.feelingDescription')}
-                        placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                        value={description}
-                        onChangeText={(text: string) => setDescription(text)}
-                        multiline
-                        numberOfLines={4}
-                        style={{
-                          backgroundColor: '#2A2A3C',
-                          color: '#FFFFFF',
-                          fontSize: 16,
-                          borderRadius: 12,
-                          width: '100%',
-                        }}
-                        outlineStyle={{
-                          borderRadius: 12,
-                          borderColor: 'rgba(255, 156, 1, 0.2)',
-                        }}
-                        textColor="#FFFFFF"
-                        theme={{
-                          colors: {
-                            primary: '#FF9C01',
-                            text: '#FFFFFF',
-                            placeholder: 'rgba(255, 255, 255, 0.4)',
-                          },
-                        }}
-                      />
-                    </View>
-                    <TouchableOpacity
-                      style={[styles.modalButton, { marginBottom: 8 }]}
-                      onPress={saveMoodToDatabase}
-                    >
-                      <Text style={styles.modalButtonText}>{t('mood.saveMood')}</Text>
-                    </TouchableOpacity>
-                  </ScrollView>
+                    <Text style={styles.modalButtonText}>{t('mood.saveMood')}</Text>
+                  </TouchableOpacity>
                 </View>
               </Modal>
             </Portal>

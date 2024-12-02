@@ -11,6 +11,7 @@ import {
   client,
   appwriteConfig,
   addSpending,
+  addExpenseType,
   getCurrentUser
 } from "../../lib/appwrite";
 import { ExpenseItem, SpendingItem} from "../../type";
@@ -190,6 +191,20 @@ const Finance = () => {
   }, []);
 
   const handleImageUpload = async () => {
+    function getBeautifulColor() {
+      const colors = [
+        "#D57B7B", // Dark Red
+        "#D08561", // Dark Peach
+        "#C0C06A", // Dark Yellow
+        "#7BBF7F", // Dark Mint Green
+        "#66B3D2", // Dark Sky Blue
+        "#5A7DFF", // Dark Light Blue
+        "#8F82D8", // Dark Lavender
+        "#D080D3", // Dark Pink
+      ];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
     try {
       // Request permission
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -212,7 +227,7 @@ const Finance = () => {
         try {
           // Get expense types for categorization
           const expenses = await getExpenseTypes();
-          const formattedExpenses = expenses.map((expense: any) => ({
+          const expenseTypes = expenses.map((expense: any) => ({
             category: expense.category,
           }));
 
@@ -220,21 +235,39 @@ const Finance = () => {
           const base64Array = result.assets.map(asset => asset.base64!);
 
           // Recognize receipts
-          const receiptDataArray = await recognizeReceipt(base64Array, formattedExpenses);
+          const receiptDataArray = await recognizeReceipt(base64Array, expenseTypes);
 
-          // Add all receipts to spending
-          for (const receiptData of receiptDataArray) {
-            await addSpending({
-              id: "",
-              name: receiptData.name,
-              amount: receiptData.amount.toString(),
-              date: receiptData.date,
-              category: receiptData.category,
+          // Process all receipts in parallel
+          if (receiptDataArray && receiptDataArray.length > 0) {
+            const processPromises = receiptDataArray.map(async (financeData) => {
+              const operations: Promise<any>[] = [];
+
+              // Add new expense type if needed
+              if (financeData.create_type) {
+                operations.push(addExpenseType(financeData.category, getBeautifulColor()));
+              }
+
+              // Create spending item
+              const transformedSpending: SpendingItem = {
+                id: '',
+                name: financeData.description,
+                amount: financeData.amount.toString(),
+                date: financeData.date,
+                category: financeData.category,
+                historyId: new Date().toISOString(),
+              };
+              operations.push(addSpending(transformedSpending));
+
+              // Wait for both operations to complete for this receipt
+              await Promise.all(operations);
             });
+
+            // Wait for all receipts to be processed
+            await Promise.all(processPromises);
           }
 
-          // Refresh spending data
-          fetchSpending();
+          // Refresh spending data after all operations complete
+          await fetchSpending();
           Alert.alert(t('finance.success'), t('finance.processSuccess', { count: receiptDataArray.length }));
         } finally {
           setIsProcessing(false);

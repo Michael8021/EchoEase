@@ -20,3 +20,11 @@ export interface ExpenseItem {
     historyId: String;
   }
 
+  export interface AIFinanceData {
+    description: string;
+    amount: number | string;
+    date: string;
+    category: string;
+    create_type?: boolean;
+    historyId?: string;
+  }
