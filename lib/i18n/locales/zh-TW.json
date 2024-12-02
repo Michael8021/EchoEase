@@ -133,6 +133,8 @@
     "income": "收入",
     "myIncome": "我的收入",
     "scanReceipt": "掃描收據",
+    "permissionRequired": "需要權限",
+    "permissionMessage": "請允許存取相簿以上傳收據。",
     "addExpenseType": "新增支出類型",
     "addSpending": "新增支出",
     "editSpending": "編輯支出",
@@ -157,9 +159,7 @@
       "uploadError": "上傳收據時發生錯誤",
       "scanError": "掃描收據時發生錯誤",
       "error": "錯誤",
-      "processError": "處理收據時發生錯誤",
-      "permissionRequired": "需要權限",
-      "permissionMessage": "請允許存取相簿以上傳收據。"
+      "processError": "處理收據時發生錯誤"
     }
   },
   "tabs": {

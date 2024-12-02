@@ -177,6 +177,8 @@
     "income": "Income",
     "myIncome": "My Income",
     "scanReceipt": "Scan Receipt",
+    "permissionRequired": "Permission Required",
+    "permissionMessage": "Please allow access to your photo library to upload receipts.",
     "addExpenseType": "Add Expense Type",
     "addSpending": "Add Spending",
     "editSpending": "Edit Spending",
@@ -201,9 +203,7 @@
       "uploadError": "Error uploading receipt",
       "scanError": "Error scanning receipt",
       "error": "Error",
-      "processError": "Error processing receipt",
-      "permissionRequired": "Permission Required",
-      "permissionMessage": "Please allow access to your photo library to upload receipts."
+      "processError": "Error processing receipt"
     }
   },
   "tabs": {
