@@ -194,7 +194,7 @@ const FloatingButton = () => {
       );
       console.log("Content Data:", contentData);
 
-      if (contentData.schedule) {
+      if (contentData.schedule && contentData.schedule.length>0) {
         Promise.all(contentData.schedule.map((item) => createSchedule(item)))
           .then(() => {
             if (typeof global.fetchSchedules === "function") {
@@ -203,14 +203,14 @@ const FloatingButton = () => {
           })
           .catch((error) => console.error("Error creating schedules:", error));
       }
-      if (contentData.mood) {
+      if (contentData.mood && contentData.mood.length>0) {
         contentData.mood.forEach(async (item) => {
           await createMood(item);
           refreshMoods();
         });
       }
 
-      if (contentData.finance) {
+      if (contentData.finance && contentData.finance.length>0) {
         if (contentData.finance[0].create_type) {
           addExpenseType(contentData.finance[0].category, getBeautifulColor());
         }

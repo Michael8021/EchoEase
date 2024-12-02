@@ -289,6 +289,21 @@ const Home = () => {
       }
     );
 
+    const unsubscribe_history = client.subscribe(
+      [
+        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.historyCollectionId}.documents`,
+      ],
+      (response) => {
+        const { events } = response;
+        if (events.some((event) => [".create", ".delete", ".update"].some((type) => event.includes(type)))) {
+          fetchSchedules(currentdate);
+          fetchSpending(currentdate);
+          fetchMoods(currentdate);
+          fetchExpensesType();
+        }
+      }
+    );
+
     // Cleanup subscriptions on unmount
     return () => {
       unsubscribeMoods();

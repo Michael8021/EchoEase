@@ -170,10 +170,22 @@ const Finance = () => {
         }
       }
     );
+    const unsubscribe_history = client.subscribe(
+      [
+        `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.historyCollectionId}.documents`,
+      ],
+      (response) => {
+        const { events } = response;
+        if (events.some((event) => [".create", ".delete", ".update"].some((type) => event.includes(type)))) {
+          fetchSpending();
+        }
+      }
+    );
     
     return () => {
       unsubscribe_expenses();
       unsubscribe_spendings();
+      unsubscribe_history();
     };
   }, []);
 
