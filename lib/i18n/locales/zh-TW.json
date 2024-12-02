@@ -85,6 +85,7 @@
     "title": "設定",
     "accountSettings": "帳號設定",
     "changeUsername": "更改使用者名稱",
+    "updateUsername": "更新使用者名稱",
     "changePassword": "更改密碼",
     "appSettings": "應用程式設定",
     "notifications": "通知",
@@ -154,7 +155,9 @@
       "selectBoth": "請同時選擇類別和顏色",
       "permissionDenied": "無法存取相簿",
       "uploadError": "上傳收據時發生錯誤",
-      "scanError": "掃描收據時發生錯誤"
+      "scanError": "掃描收據時發生錯誤",
+      "error": "錯誤",
+      "processError": "處理收據時發生錯誤"
     }
   },
   "tabs": {

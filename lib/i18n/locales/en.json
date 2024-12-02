@@ -101,6 +101,7 @@
     "permanentlyDeleteAccount": "Permanently delete your account",
     "newUsername": "New Username",
     "enterNewUsername": "Enter new username",
+    "updateUsername": "Update Username",
     "currentPassword": "Current Password",
     "enterCurrentPassword": "Enter current password",
     "newPassword": "New Password",
@@ -198,7 +199,9 @@
       "selectBoth": "Please select both a category and a color.",
       "permissionDenied": "Permission denied to access photo library",
       "uploadError": "Error uploading receipt",
-      "scanError": "Error scanning receipt"
+      "scanError": "Error scanning receipt",
+      "error": "Error",
+      "processError": "Error processing receipt"
     }
   },
   "tabs": {
