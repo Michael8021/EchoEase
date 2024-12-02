@@ -310,6 +310,7 @@ const Home = () => {
       unsubscribeSpending();
       unsubscribeExpenses();
       unsubscribeSchedules();
+      unsubscribe_history();
     };
   }, []);
 
