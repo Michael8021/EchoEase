@@ -186,7 +186,7 @@ const Home = () => {
   };
 
   const barData = expensedata.map((expense) => {
-    const amount = categorySpending[expense.category] || 0;
+    const amount = Math.round(categorySpending[expense.category] || 0);
     return {
       value: amount,
       label: expense.category,
@@ -486,33 +486,45 @@ const Home = () => {
               <Text className="text-sm text-component-finance-text/85 font-pmedium mb-4">
                 {t('home.spendingByCategory')}
               </Text>
-              <View className="flex-1 justify-center items-center">
-                <BarChart
-                  showFractionalValues
-                  showYAxisIndices
-                  noOfSections={4}
-                  data={barData}
-                  isAnimated
-                  width={280}
-                  barBorderRadius={4}
-                  spacing={40}
-                  xAxisLabelTextStyle={{
-                    color: "#A5CCCC",
-                    fontSize: 11,
-                    fontFamily: "Poppins-Medium",
-                    rotation: 45
-                  }}
-                  yAxisTextStyle={{
-                    color: "#A5CCCC",
-                    fontSize: 11,
-                    fontFamily: "Poppins-Medium"
-                  }}
-                  dashWidth={0}
-                  yAxisIndicesColor="rgba(165, 204, 204, 0.1)"
-                  yAxisThickness={0}
-                  xAxisThickness={0}
-                />
-              </View>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 10 }}
+              >
+                <View style={{ minWidth: Math.max(280, barData.length * 80) }}>
+                  <BarChart
+                    showFractionalValues={false}
+                    roundToDigits={0}
+                    showYAxisIndices
+                    noOfSections={4}
+                    data={barData}
+                    isAnimated
+                    width={Math.max(280, barData.length * 80)}
+                    height={200}
+                    barBorderRadius={4}
+                    spacing={24}
+                    barWidth={32}
+                    xAxisLabelTextStyle={{
+                      color: "#A5CCCC",
+                      fontSize: 11,
+                      fontFamily: "Poppins-Medium",
+                      rotation: 45
+                    }}
+                    yAxisTextStyle={{
+                      color: "#A5CCCC",
+                      fontSize: 11,
+                      fontFamily: "Poppins-Medium"
+                    }}
+                    dashWidth={0}
+                    yAxisIndicesColor="rgba(165, 204, 204, 0.1)"
+                    yAxisThickness={0}
+                    xAxisThickness={0}
+                    hideRules
+                    rulesType="solid"
+                    rulesColor="rgba(165, 204, 204, 0.1)"
+                  />
+                </View>
+              </ScrollView>
             </View>
           </View>
 
