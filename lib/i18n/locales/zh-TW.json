@@ -157,7 +157,9 @@
       "uploadError": "上傳收據時發生錯誤",
       "scanError": "掃描收據時發生錯誤",
       "error": "錯誤",
-      "processError": "處理收據時發生錯誤"
+      "processError": "處理收據時發生錯誤",
+      "permissionRequired": "需要權限",
+      "permissionMessage": "請允許存取相簿以上傳收據。"
     }
   },
   "tabs": {
